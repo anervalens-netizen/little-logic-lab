@@ -1,0 +1,23 @@
+{
+  "id": "real-color-hunt-A-001",
+  "gameId": "real-color-hunt",
+  "seed": "hybrid-A-001",
+  "difficulty": {
+    "stepCount": 1,
+    "ruleCount": 1,
+    "memoryDelaySec": 0,
+    "parentPromptSupport": "full"
+  },
+  "contentPack": "hybrid-prompts",
+  "successRule": {
+    "kind": "parent_confirmed"
+  },
+  "hintPolicy": {
+    "afterErrors": 2,
+    "maxHints": 1
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 2,
+    "endOnDistress": true
+  }
+}

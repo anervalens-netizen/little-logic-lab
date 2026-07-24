@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://little-logic-lab.local/schemas/child-profile.schema.json",
+  "title": "LocalChildProfile",
+  "description": "Local-only profile. Never transmitted and does not require a full date of birth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profileId",
+    "ageBand",
+    "createdAtLocal",
+    "settings",
+    "mastery"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "profileId": {
+      "type": "string",
+      "description": "Random local UUID; never transmitted."
+    },
+    "displayName": {
+      "type": "string",
+      "maxLength": 32,
+      "description": "Optional local-only display name. Must not appear in logs or exports unless the parent explicitly requests it."
+    },
+    "ageMonthsAtSetup": {
+      "type": "integer",
+      "minimum": 30,
+      "maximum": 72,
+      "description": "Optional approximate age; a full birth date is intentionally unnecessary."
+    },
+    "ageBand": {
+      "enum": ["A30_36", "B36_48", "C48_60", "D60_72"]
+    },
+    "createdAtLocal": { "type": "string", "format": "date-time" },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessionMinutes",
+        "audioEnabled",
+        "musicEnabled",
+        "hapticsEnabled",
+        "reducedMotion",
+        "highContrast",
+        "targetSize",
+        "demonstrationSpeed",
+        "coPlayPrompts"
+      ],
+      "properties": {
+        "sessionMinutes": { "type": "integer", "enum": [3, 5, 7, 10, 15] },
+        "audioEnabled": { "type": "boolean" },
+        "musicEnabled": { "type": "boolean" },
+        "hapticsEnabled": { "type": "boolean" },
+        "reducedMotion": { "type": "boolean" },
+        "highContrast": { "type": "boolean" },
+        "targetSize": { "enum": ["large", "extra_large"] },
+        "demonstrationSpeed": { "enum": ["normal", "slow"] },
+        "coPlayPrompts": { "type": "boolean" }
+      }
+    },
+    "mastery": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["alpha", "beta", "evidenceCount", "lastPracticedAtLocal"],
+        "properties": {
+          "alpha": { "type": "number", "exclusiveMinimum": 0 },
+          "beta": { "type": "number", "exclusiveMinimum": 0 },
+          "evidenceCount": { "type": "integer", "minimum": 0 },
+          "lastPracticedAtLocal": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

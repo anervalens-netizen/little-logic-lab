@@ -1,0 +1,23 @@
+{
+  "id": "repeat-pattern-ab-A-001",
+  "gameId": "repeat-pattern-ab",
+  "seed": "pattern-A-001",
+  "difficulty": {
+    "patternLength": 4,
+    "patternFamily": "AB",
+    "missingPositions": 1,
+    "modalityCount": 1
+  },
+  "contentPack": "sample-items",
+  "successRule": {
+    "kind": "single_choice"
+  },
+  "hintPolicy": {
+    "afterErrors": 1,
+    "maxHints": 2
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 2,
+    "endOnDistress": true
+  }
+}

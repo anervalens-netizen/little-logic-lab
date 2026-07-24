@@ -1,0 +1,13 @@
+{
+  "app.name": "Minte în joacă",
+  "common.listen": "Ascultă",
+  "common.tryAgain": "Mai încearcă",
+  "common.showMe": "Arată-mi",
+  "common.greatThinking": "Ai găsit o idee bună",
+  "common.almost": "Aproape. Uită-te încă o dată.",
+  "common.break": "Gata pentru acum. Continuăm altă dată.",
+  "parent.gate": "Zonă pentru adulți",
+  "parent.deleteData": "Șterge progresul local",
+  "parent.exportData": "Exportă progresul local",
+  "session.finished": "Am terminat jocurile de azi."
+}

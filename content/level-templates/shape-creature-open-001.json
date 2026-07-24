@@ -1,0 +1,23 @@
+{
+  "id": "shape-creature-open-001",
+  "gameId": "shape-creature",
+  "seed": "open-001",
+  "difficulty": {
+    "partCount": 4,
+    "constraintCount": 0,
+    "promptSpecificity": "open",
+    "modelAvailability": "optional"
+  },
+  "contentPack": "shapes",
+  "successRule": {
+    "kind": "open_ended"
+  },
+  "hintPolicy": {
+    "afterErrors": 2,
+    "maxHints": 0
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 3,
+    "endOnDistress": true
+  }
+}

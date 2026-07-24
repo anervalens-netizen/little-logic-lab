@@ -1,0 +1,44 @@
+name: Deterministic game bug
+about: Report an unsolvable, incorrect or inaccessible level
+labels: [bug]
+body:
+  - type: input
+    id: game
+    attributes:
+      label: Game ID
+    validations:
+      required: true
+  - type: input
+    id: seed
+    attributes:
+      label: Seed
+      description: Required so the level can be replayed exactly.
+    validations:
+      required: true
+  - type: textarea
+    id: difficulty
+    attributes:
+      label: Difficulty vector
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed and expected behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Incorrect answer or rule
+        - Unsolvable generation
+        - Touch or drag problem
+        - Audio or instruction problem
+        - Accessibility problem
+        - Frustration or safety problem
+        - Persistence or privacy problem
+    validations:
+      required: true

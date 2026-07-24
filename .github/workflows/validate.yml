@@ -1,0 +1,27 @@
+name: Validate architecture and content
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install development dependencies
+        run: npm install --no-audit --no-fund
+      - name: Validate, compile and test
+        run: npm test
+      - name: Regenerate documentation and previews
+        run: npm run generate:catalog && npm run preview
+      - name: Verify committed generated artifacts
+        run: git diff --exit-code -- content/curriculum-map.json content/level-ladders.json docs/03-game-catalog.md examples/generated-levels.json

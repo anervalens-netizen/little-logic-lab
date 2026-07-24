@@ -1,0 +1,23 @@
+{
+  "id": "sequence-lights-B-001",
+  "gameId": "sequence-lights",
+  "seed": "sequence-B-001",
+  "difficulty": {
+    "sequenceLength": 2,
+    "presentationSpeedMs": 1100,
+    "modalityCount": 1,
+    "recallMode": "direct_replay"
+  },
+  "contentPack": "sample-items",
+  "successRule": {
+    "kind": "ordered_sequence"
+  },
+  "hintPolicy": {
+    "afterErrors": 1,
+    "maxHints": 2
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 2,
+    "endOnDistress": true
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://little-logic-lab.local/schemas/level-ladder.schema.json",
+  "title": "Level progression ladders",
+  "type": "object",
+  "required": ["version", "statistics", "ladders"],
+  "properties": {
+    "version": { "type": "string" },
+    "statistics": {
+      "type": "object",
+      "required": ["gameFamilies", "progressionAnchors"],
+      "properties": {
+        "gameFamilies": { "type": "integer", "minimum": 1 },
+        "progressionAnchors": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "ladders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gameId", "entryBand", "axes", "stages"],
+        "properties": {
+          "gameId": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "entryBand": { "enum": ["A30_36", "B36_48", "C48_60", "D60_72"] },
+          "axes": { "type": "object", "minProperties": 2 },
+          "stages": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "index", "recommendedBand", "difficulty", "purpose"],
+              "properties": {
+                "id": { "type": "string" },
+                "index": { "type": "integer", "minimum": 1 },
+                "recommendedBand": { "enum": ["A30_36", "B36_48", "C48_60", "D60_72"] },
+                "difficulty": { "type": "object", "minProperties": 2 },
+                "change": {
+                  "oneOf": [
+                    { "type": "null" },
+                    {
+                      "type": "object",
+                      "required": ["axis", "from", "to"],
+                      "properties": {
+                        "axis": { "type": "string" },
+                        "from": {},
+                        "to": {}
+                      }
+                    }
+                  ]
+                },
+                "purpose": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

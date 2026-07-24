@@ -1,0 +1,3236 @@
+{
+  "version": "1.0.0",
+  "productCodename": "Little Logic Lab / Minte în joacă",
+  "ageBands": [
+    {
+      "id": "A30_36",
+      "labelRo": "2 ani și 6 luni – 3 ani",
+      "labelEn": "30–36 months",
+      "minAgeMonths": 30,
+      "maxAgeMonths": 35
+    },
+    {
+      "id": "B36_48",
+      "labelRo": "3–4 ani",
+      "labelEn": "3–4 years",
+      "minAgeMonths": 36,
+      "maxAgeMonths": 47
+    },
+    {
+      "id": "C48_60",
+      "labelRo": "4–5 ani",
+      "labelEn": "4–5 years",
+      "minAgeMonths": 48,
+      "maxAgeMonths": 59
+    },
+    {
+      "id": "D60_72",
+      "labelRo": "5–6 ani",
+      "labelEn": "5–6 years",
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72
+    }
+  ],
+  "games": [
+    {
+      "id": "same-picture",
+      "title": {
+        "ro": "Găsește perechea identică",
+        "en": "Find the Same Picture"
+      },
+      "domain": "visual_attention",
+      "secondarySkills": [
+        "visual_discrimination",
+        "selective_attention"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "visual_choice",
+      "learningGoal": "Discriminare vizuală și atenție selectivă",
+      "mechanic": "Alege imaginea identică modelului dintre opțiuni.",
+      "difficultyAxes": [
+        "choiceCount",
+        "distractorSimilarity",
+        "targetCueDuration",
+        "sceneClutter"
+      ],
+      "progression": "Crește treptat numărul de opțiuni, asemănarea distractorilor și aglomerația vizuală; reduce indiciul vizual.",
+      "guardrails": [
+        "Nu folosi doar culoarea pentru a diferenția răspunsurile.",
+        "Fără obiecte minuscule sau scene excesiv de încărcate."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Găsiți în cameră două obiecte care seamănă.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "shadow-match",
+      "title": {
+        "ro": "Potrivește umbra",
+        "en": "Match the Shadow"
+      },
+      "domain": "visual_attention",
+      "secondarySkills": [
+        "visual_discrimination",
+        "selective_attention"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "visual_choice",
+      "learningGoal": "Contur, formă și constanță perceptivă",
+      "mechanic": "Potrivește obiectul cu silueta lui.",
+      "difficultyAxes": [
+        "choiceCount",
+        "distractorSimilarity",
+        "targetCueDuration",
+        "sceneClutter"
+      ],
+      "progression": "Crește treptat numărul de opțiuni, asemănarea distractorilor și aglomerația vizuală; reduce indiciul vizual.",
+      "guardrails": [
+        "Nu folosi doar culoarea pentru a diferenția răspunsurile.",
+        "Fără obiecte minuscule sau scene excesiv de încărcate."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Faceți umbre cu mâna și ghiciți forma.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "color-shape-match",
+      "title": {
+        "ro": "Aceeași culoare și formă",
+        "en": "Same Color and Shape"
+      },
+      "domain": "visual_attention",
+      "secondarySkills": [
+        "visual_discrimination",
+        "selective_attention"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "visual_choice",
+      "learningGoal": "Integrarea a două atribute vizuale",
+      "mechanic": "Alege obiectul care are aceeași formă și aceeași culoare.",
+      "difficultyAxes": [
+        "choiceCount",
+        "distractorSimilarity",
+        "targetCueDuration",
+        "sceneClutter"
+      ],
+      "progression": "Crește treptat numărul de opțiuni, asemănarea distractorilor și aglomerația vizuală; reduce indiciul vizual.",
+      "guardrails": [
+        "Nu folosi doar culoarea pentru a diferenția răspunsurile.",
+        "Fără obiecte minuscule sau scene excesiv de încărcate."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Căutați un obiect rotund și unul de aceeași culoare.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "odd-one-out",
+      "title": {
+        "ro": "Care este diferit?",
+        "en": "Odd One Out"
+      },
+      "domain": "visual_attention",
+      "secondarySkills": [
+        "visual_discrimination",
+        "selective_attention"
+      ],
+      "minAgeMonths": 32,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "visual_choice",
+      "learningGoal": "Detectarea diferențelor și formarea regulii",
+      "mechanic": "Identifică obiectul care diferă de restul printr-un atribut clar.",
+      "difficultyAxes": [
+        "choiceCount",
+        "distractorSimilarity",
+        "targetCueDuration",
+        "sceneClutter"
+      ],
+      "progression": "Crește treptat numărul de opțiuni, asemănarea distractorilor și aglomerația vizuală; reduce indiciul vizual.",
+      "guardrails": [
+        "Nu folosi doar culoarea pentru a diferenția răspunsurile.",
+        "Fără obiecte minuscule sau scene excesiv de încărcate."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Întindeți trei obiecte, două asemănătoare și unul diferit.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "visual-search",
+      "title": {
+        "ro": "Detectivul de imagini",
+        "en": "Picture Detective"
+      },
+      "domain": "visual_attention",
+      "secondarySkills": [
+        "visual_discrimination",
+        "selective_attention"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "visual_choice",
+      "learningGoal": "Căutare vizuală și menținerea țintei",
+      "mechanic": "Găsește ținta într-o scenă simplă.",
+      "difficultyAxes": [
+        "choiceCount",
+        "distractorSimilarity",
+        "targetCueDuration",
+        "sceneClutter"
+      ],
+      "progression": "Crește treptat numărul de opțiuni, asemănarea distractorilor și aglomerația vizuală; reduce indiciul vizual.",
+      "guardrails": [
+        "Nu folosi doar culoarea pentru a diferenția răspunsurile.",
+        "Fără obiecte minuscule sau scene excesiv de încărcate."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Căutați împreună un obiect ales în cameră.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "missing-piece",
+      "title": {
+        "ro": "Piesa lipsă",
+        "en": "Missing Piece"
+      },
+      "domain": "visual_attention",
+      "secondarySkills": [
+        "visual_discrimination",
+        "selective_attention"
+      ],
+      "minAgeMonths": 36,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "visual_choice",
+      "learningGoal": "Completare vizuală și relație parte–întreg",
+      "mechanic": "Alege piesa care completează imaginea.",
+      "difficultyAxes": [
+        "choiceCount",
+        "distractorSimilarity",
+        "targetCueDuration",
+        "sceneClutter"
+      ],
+      "progression": "Crește treptat numărul de opțiuni, asemănarea distractorilor și aglomerația vizuală; reduce indiciul vizual.",
+      "guardrails": [
+        "Nu folosi doar culoarea pentru a diferenția răspunsurile.",
+        "Fără obiecte minuscule sau scene excesiv de încărcate."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Completați un puzzle fizic cu 2–4 piese.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "spot-difference",
+      "title": {
+        "ro": "Micile diferențe",
+        "en": "Spot the Difference"
+      },
+      "domain": "visual_attention",
+      "secondarySkills": [
+        "visual_discrimination",
+        "selective_attention"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "visual_choice",
+      "learningGoal": "Comparare sistematică și memorie vizuală",
+      "mechanic": "Găsește diferențele dintre două scene aproape identice.",
+      "difficultyAxes": [
+        "choiceCount",
+        "distractorSimilarity",
+        "targetCueDuration",
+        "sceneClutter"
+      ],
+      "progression": "Crește treptat numărul de opțiuni, asemănarea distractorilor și aglomerația vizuală; reduce indiciul vizual.",
+      "guardrails": [
+        "Nu folosi doar culoarea pentru a diferenția răspunsurile.",
+        "Fără obiecte minuscule sau scene excesiv de încărcate."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Schimbați locul unui obiect și întrebați ce s-a schimbat.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "orientation-match",
+      "title": {
+        "ro": "Întors sau la fel?",
+        "en": "Orientation Match"
+      },
+      "domain": "visual_attention",
+      "secondarySkills": [
+        "visual_discrimination",
+        "selective_attention"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "visual_choice",
+      "learningGoal": "Orientare spațială și rotație mentală timpurie",
+      "mechanic": "Alege forma identică, chiar dacă unele distractoare sunt rotite sau oglindite.",
+      "difficultyAxes": [
+        "choiceCount",
+        "distractorSimilarity",
+        "targetCueDuration",
+        "sceneClutter"
+      ],
+      "progression": "Crește treptat numărul de opțiuni, asemănarea distractorilor și aglomerația vizuală; reduce indiciul vizual.",
+      "guardrails": [
+        "Nu folosi doar culoarea pentru a diferenția răspunsurile.",
+        "Fără obiecte minuscule sau scene excesiv de încărcate."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Rotiți o piesă de puzzle și potriviți-o.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "sort-by-color",
+      "title": {
+        "ro": "Coșurile de culori",
+        "en": "Color Baskets"
+      },
+      "domain": "classification",
+      "secondarySkills": [
+        "categorization",
+        "rule_learning"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "sort",
+      "learningGoal": "Clasificare după o regulă vizibilă",
+      "mechanic": "Mută obiectele în coșul culorii potrivite.",
+      "difficultyAxes": [
+        "itemCount",
+        "binCount",
+        "ruleCount",
+        "ruleCueVisibility"
+      ],
+      "progression": "Pornește cu două recipiente și o singură regulă vizibilă; adaugă obiecte, categorii și schimbări de regulă.",
+      "guardrails": [
+        "Schimbă o singură dimensiune de dificultate odată.",
+        "Arată regula prin exemplu, nu prin text."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Sortați cuburi sau șosete după culoare.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "sort-by-shape",
+      "title": {
+        "ro": "Casa formelor",
+        "en": "Shape Homes"
+      },
+      "domain": "classification",
+      "secondarySkills": [
+        "categorization",
+        "rule_learning"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "sort",
+      "learningGoal": "Clasificare după formă",
+      "mechanic": "Mută cercurile, pătratele și triunghiurile în locul potrivit.",
+      "difficultyAxes": [
+        "itemCount",
+        "binCount",
+        "ruleCount",
+        "ruleCueVisibility"
+      ],
+      "progression": "Pornește cu două recipiente și o singură regulă vizibilă; adaugă obiecte, categorii și schimbări de regulă.",
+      "guardrails": [
+        "Schimbă o singură dimensiune de dificultate odată.",
+        "Arată regula prin exemplu, nu prin text."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Căutați forme în obiectele din casă.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "sort-by-size",
+      "title": {
+        "ro": "Mic, mijlociu, mare",
+        "en": "Small, Medium, Large"
+      },
+      "domain": "classification",
+      "secondarySkills": [
+        "categorization",
+        "rule_learning"
+      ],
+      "minAgeMonths": 32,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "sort",
+      "learningGoal": "Seriere și comparație de mărime",
+      "mechanic": "Grupează sau ordonează obiectele după mărime.",
+      "difficultyAxes": [
+        "itemCount",
+        "binCount",
+        "ruleCount",
+        "ruleCueVisibility"
+      ],
+      "progression": "Pornește cu două recipiente și o singură regulă vizibilă; adaugă obiecte, categorii și schimbări de regulă.",
+      "guardrails": [
+        "Schimbă o singură dimensiune de dificultate odată.",
+        "Arată regula prin exemplu, nu prin text."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Puneți trei linguri în ordine de la mic la mare.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "semantic-sort",
+      "title": {
+        "ro": "Unde locuiește?",
+        "en": "Where Does It Belong?"
+      },
+      "domain": "classification",
+      "secondarySkills": [
+        "categorization",
+        "rule_learning"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "sort",
+      "learningGoal": "Categorii semantice și vocabular",
+      "mechanic": "Sortează animale, vehicule, alimente sau obiecte casnice.",
+      "difficultyAxes": [
+        "itemCount",
+        "binCount",
+        "ruleCount",
+        "ruleCueVisibility"
+      ],
+      "progression": "Pornește cu două recipiente și o singură regulă vizibilă; adaugă obiecte, categorii și schimbări de regulă.",
+      "guardrails": [
+        "Schimbă o singură dimensiune de dificultate odată.",
+        "Arată regula prin exemplu, nu prin text."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Sortați jucăriile în două categorii alese împreună.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "belongs-or-not",
+      "title": {
+        "ro": "Aparține grupului?",
+        "en": "Belongs or Not"
+      },
+      "domain": "classification",
+      "secondarySkills": [
+        "categorization",
+        "rule_learning"
+      ],
+      "minAgeMonths": 36,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "sort",
+      "learningGoal": "Regulă de categorie și excludere",
+      "mechanic": "Decide dacă obiectul aparține categoriei afișate.",
+      "difficultyAxes": [
+        "itemCount",
+        "binCount",
+        "ruleCount",
+        "ruleCueVisibility"
+      ],
+      "progression": "Pornește cu două recipiente și o singură regulă vizibilă; adaugă obiecte, categorii și schimbări de regulă.",
+      "guardrails": [
+        "Schimbă o singură dimensiune de dificultate odată.",
+        "Arată regula prin exemplu, nu prin text."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Spuneți pe rând obiecte care aparțin unei categorii.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "sort-two-features",
+      "title": {
+        "ro": "Două reguli odată",
+        "en": "Two Features"
+      },
+      "domain": "classification",
+      "secondarySkills": [
+        "categorization",
+        "rule_learning"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "sort",
+      "learningGoal": "Atenție la două atribute și logică conjunctivă",
+      "mechanic": "Sortează după combinații, de exemplu roșu și rotund.",
+      "difficultyAxes": [
+        "itemCount",
+        "binCount",
+        "ruleCount",
+        "ruleCueVisibility"
+      ],
+      "progression": "Pornește cu două recipiente și o singură regulă vizibilă; adaugă obiecte, categorii și schimbări de regulă.",
+      "guardrails": [
+        "Schimbă o singură dimensiune de dificultate odată.",
+        "Arată regula prin exemplu, nu prin text."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Căutați un obiect care este și moale, și albastru.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "rule-switch-sort",
+      "title": {
+        "ro": "Schimbăm regula",
+        "en": "Switch the Rule"
+      },
+      "domain": "classification",
+      "secondarySkills": [
+        "categorization",
+        "rule_learning"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "rule_switch",
+      "learningGoal": "Flexibilitate cognitivă și actualizarea regulii",
+      "mechanic": "Sortează după culoare, apoi după formă când semnalul se schimbă.",
+      "difficultyAxes": [
+        "trialCount",
+        "switchFrequency",
+        "ruleCueVisibility",
+        "conflictLevel"
+      ],
+      "progression": "Păstrează regula afișată la început, apoi alternează regulile și reduce treptat indiciul.",
+      "guardrails": [
+        "Semnalizează explicit schimbarea regulii.",
+        "Revino la regula simplă după frustrare repetată."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Sortați întâi după culoare, apoi refaceți după mărime.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "overlapping-categories",
+      "title": {
+        "ro": "Poate fi în ambele",
+        "en": "Can Belong to Both"
+      },
+      "domain": "classification",
+      "secondarySkills": [
+        "categorization",
+        "rule_learning"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "sort",
+      "learningGoal": "Categorii suprapuse și raționament flexibil",
+      "mechanic": "Plasează obiecte în una sau două categorii compatibile.",
+      "difficultyAxes": [
+        "itemCount",
+        "binCount",
+        "ruleCount",
+        "ruleCueVisibility"
+      ],
+      "progression": "Pornește cu două recipiente și o singură regulă vizibilă; adaugă obiecte, categorii și schimbări de regulă.",
+      "guardrails": [
+        "Schimbă o singură dimensiune de dificultate odată.",
+        "Arată regula prin exemplu, nu prin text."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Găsiți lucruri care sunt simultan rotunde și roșii.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "peek-and-find",
+      "title": {
+        "ro": "Privește și găsește",
+        "en": "Peek and Find"
+      },
+      "domain": "working_memory",
+      "secondarySkills": [
+        "working_memory",
+        "attention"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "memory_hide",
+      "learningGoal": "Memorie vizuală imediată",
+      "mechanic": "Privește un obiect, apoi alege-l după ce este acoperit.",
+      "difficultyAxes": [
+        "itemCount",
+        "delayMs",
+        "locationCount",
+        "transformation"
+      ],
+      "progression": "Mărește numărul de obiecte/locuri și întârzierea; introdu mutări sau schimbări controlate.",
+      "guardrails": [
+        "Nu folosi eșec brusc sau dispariții prea rapide.",
+        "Oferă revederea demonstrației după două erori."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Ascundeți o jucărie sub una dintre două căni.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "pair-memory",
+      "title": {
+        "ro": "Perechi ascunse",
+        "en": "Hidden Pairs"
+      },
+      "domain": "working_memory",
+      "secondarySkills": [
+        "working_memory",
+        "attention"
+      ],
+      "minAgeMonths": 32,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "memory_hide",
+      "learningGoal": "Memorie de locație și asociere",
+      "mechanic": "Întoarce cartonașe pentru a găsi perechi.",
+      "difficultyAxes": [
+        "itemCount",
+        "delayMs",
+        "locationCount",
+        "transformation"
+      ],
+      "progression": "Mărește numărul de obiecte/locuri și întârzierea; introdu mutări sau schimbări controlate.",
+      "guardrails": [
+        "Nu folosi eșec brusc sau dispariții prea rapide.",
+        "Oferă revederea demonstrației după două erori."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Jucați cu 2–4 perechi de cartonașe fizice.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "whats-missing",
+      "title": {
+        "ro": "Ce lipsește?",
+        "en": "What's Missing?"
+      },
+      "domain": "working_memory",
+      "secondarySkills": [
+        "working_memory",
+        "attention"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "memory_hide",
+      "learningGoal": "Actualizarea memoriei vizuale",
+      "mechanic": "Observă un grup, apoi identifică obiectul dispărut.",
+      "difficultyAxes": [
+        "itemCount",
+        "delayMs",
+        "locationCount",
+        "transformation"
+      ],
+      "progression": "Mărește numărul de obiecte/locuri și întârzierea; introdu mutări sau schimbări controlate.",
+      "guardrails": [
+        "Nu folosi eșec brusc sau dispariții prea rapide.",
+        "Oferă revederea demonstrației după două erori."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Arătați trei obiecte, ascundeți unul și ghiciți.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "hidden-location",
+      "title": {
+        "ro": "Unde s-a ascuns?",
+        "en": "Where Is It Hidden?"
+      },
+      "domain": "working_memory",
+      "secondarySkills": [
+        "working_memory",
+        "attention"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "memory_hide",
+      "learningGoal": "Memorie spațială",
+      "mechanic": "Ține minte sub ce recipient se află obiectul.",
+      "difficultyAxes": [
+        "itemCount",
+        "delayMs",
+        "locationCount",
+        "transformation"
+      ],
+      "progression": "Mărește numărul de obiecte/locuri și întârzierea; introdu mutări sau schimbări controlate.",
+      "guardrails": [
+        "Nu folosi eșec brusc sau dispariții prea rapide.",
+        "Oferă revederea demonstrației după două erori."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Ascundeți o piesă sub o cutie și mutați lent cutiile.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "sequence-lights",
+      "title": {
+        "ro": "Repetă luminile",
+        "en": "Repeat the Lights"
+      },
+      "domain": "working_memory",
+      "secondarySkills": [
+        "working_memory",
+        "attention"
+      ],
+      "minAgeMonths": 36,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "memory_sequence",
+      "learningGoal": "Memorie de lucru vizuo-spațială",
+      "mechanic": "Repetă o secvență scurtă de elemente luminoase.",
+      "difficultyAxes": [
+        "sequenceLength",
+        "presentationSpeedMs",
+        "modalityCount",
+        "recallMode"
+      ],
+      "progression": "Mărește lungimea secvenței cu câte un element și alternează vizual/auditiv fără presiune de timp.",
+      "guardrails": [
+        "Fără cronometru la copiii mici.",
+        "Secvențele audio au control de repetare."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Bateți o secvență de două-trei atingeri pe masă.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "auditory-sequence",
+      "title": {
+        "ro": "Ecoul sunetelor",
+        "en": "Sound Echo"
+      },
+      "domain": "working_memory",
+      "secondarySkills": [
+        "working_memory",
+        "attention"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "listen_tap",
+      "archetype": "memory_sequence",
+      "learningGoal": "Memorie auditivă secvențială",
+      "mechanic": "Ascultă o secvență de sunete și repetă ordinea prin atingere.",
+      "difficultyAxes": [
+        "sequenceLength",
+        "presentationSpeedMs",
+        "modalityCount",
+        "recallMode"
+      ],
+      "progression": "Mărește lungimea secvenței cu câte un element și alternează vizual/auditiv fără presiune de timp.",
+      "guardrails": [
+        "Fără cronometru la copiii mici.",
+        "Secvențele audio au control de repetare."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Repetați două-trei sunete făcute cu obiecte.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "multi-step-directions",
+      "title": {
+        "ro": "Fă pașii în ordine",
+        "en": "Follow the Steps"
+      },
+      "domain": "working_memory",
+      "secondarySkills": [
+        "working_memory",
+        "attention"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "listen_tap",
+      "archetype": "listen_choice",
+      "learningGoal": "Memorie verbală și urmarea instrucțiunilor",
+      "mechanic": "Execută instrucțiuni de două, apoi trei etape.",
+      "difficultyAxes": [
+        "choiceCount",
+        "utteranceLength",
+        "attributeCount",
+        "repeatAvailability"
+      ],
+      "progression": "Mărește numărul de opțiuni, lungimea instrucțiunii și numărul de atribute; permite repetarea.",
+      "guardrails": [
+        "Instrucțiuni scurte, voce calmă, repetabile.",
+        "Nu depinde exclusiv de audio; oferă indiciu vizual."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Dați o instrucțiune reală: ia cubul și pune-l pe masă.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "memory-grid",
+      "title": {
+        "ro": "Grila memoriei",
+        "en": "Memory Grid"
+      },
+      "domain": "working_memory",
+      "secondarySkills": [
+        "working_memory",
+        "attention"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "memory_hide",
+      "learningGoal": "Memorie vizuo-spațială și grupare",
+      "mechanic": "Reține pozițiile marcate într-o grilă și reproduce-le.",
+      "difficultyAxes": [
+        "itemCount",
+        "delayMs",
+        "locationCount",
+        "transformation"
+      ],
+      "progression": "Mărește numărul de obiecte/locuri și întârzierea; introdu mutări sau schimbări controlate.",
+      "guardrails": [
+        "Nu folosi eșec brusc sau dispariții prea rapide.",
+        "Oferă revederea demonstrației după două erori."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Așezați obiecte pe o tavă compartimentată și acoperiți-le.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "wait-for-go",
+      "title": {
+        "ro": "Așteaptă semnalul",
+        "en": "Wait for Go"
+      },
+      "domain": "inhibition_flexibility",
+      "secondarySkills": [
+        "inhibitory_control",
+        "cognitive_flexibility"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "tap_wait",
+      "archetype": "go_no_go",
+      "learningGoal": "Control inhibitor și așteptare",
+      "mechanic": "Atinge doar după apariția semnalului clar.",
+      "difficultyAxes": [
+        "trialCount",
+        "goNoGoRatio",
+        "signalDelayMs",
+        "ruleComplexity"
+      ],
+      "progression": "Mărește numărul de probe și întârzierea semnalului; adaugă reguli conflictuale doar după stăpânirea regulii simple.",
+      "guardrails": [
+        "Nu transforma jocul într-un test de reflexe.",
+        "Semnalul trebuie să fie clar vizual și auditiv."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Jucați «gata, pregătiți, start» cu o minge.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "tap-dont-tap",
+      "title": {
+        "ro": "Atinge, nu atinge",
+        "en": "Tap, Don't Tap"
+      },
+      "domain": "inhibition_flexibility",
+      "secondarySkills": [
+        "inhibitory_control",
+        "cognitive_flexibility"
+      ],
+      "minAgeMonths": 32,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "go_no_go",
+      "learningGoal": "Inhibarea răspunsului automat",
+      "mechanic": "Atinge țintele și ignoră obiectul interzis.",
+      "difficultyAxes": [
+        "trialCount",
+        "goNoGoRatio",
+        "signalDelayMs",
+        "ruleComplexity"
+      ],
+      "progression": "Mărește numărul de probe și întârzierea semnalului; adaugă reguli conflictuale doar după stăpânirea regulii simple.",
+      "guardrails": [
+        "Nu transforma jocul într-un test de reflexe.",
+        "Semnalul trebuie să fie clar vizual și auditiv."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Atinge masa când auzi «soare», nu când auzi «lună».",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "freeze-move",
+      "title": {
+        "ro": "Mișcă și îngheață",
+        "en": "Move and Freeze"
+      },
+      "domain": "inhibition_flexibility",
+      "secondarySkills": [
+        "inhibitory_control",
+        "cognitive_flexibility"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "go_no_go",
+      "learningGoal": "Autocontrol motor și atenție auditivă",
+      "mechanic": "Mișcă un personaj la muzică și oprește-l la semnal.",
+      "difficultyAxes": [
+        "trialCount",
+        "goNoGoRatio",
+        "signalDelayMs",
+        "ruleComplexity"
+      ],
+      "progression": "Mărește numărul de probe și întârzierea semnalului; adaugă reguli conflictuale doar după stăpânirea regulii simple.",
+      "guardrails": [
+        "Nu transforma jocul într-un test de reflexe.",
+        "Semnalul trebuie să fie clar vizual și auditiv."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Dans și îngheț împreună, fără ecran.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "opposite-day-night",
+      "title": {
+        "ro": "Spune opusul",
+        "en": "Day–Night Opposites"
+      },
+      "domain": "inhibition_flexibility",
+      "secondarySkills": [
+        "inhibitory_control",
+        "cognitive_flexibility"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "go_no_go",
+      "learningGoal": "Inhibiție și reprezentare opusă",
+      "mechanic": "La soare alege noapte; la lună alege zi.",
+      "difficultyAxes": [
+        "trialCount",
+        "goNoGoRatio",
+        "signalDelayMs",
+        "ruleComplexity"
+      ],
+      "progression": "Mărește numărul de probe și întârzierea semnalului; adaugă reguli conflictuale doar după stăpânirea regulii simple.",
+      "guardrails": [
+        "Nu transforma jocul într-un test de reflexe.",
+        "Semnalul trebuie să fie clar vizual și auditiv."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Jucați cu perechi de opuse: sus–jos, mare–mic.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "slow-fast-rule",
+      "title": {
+        "ro": "Încet sau repede",
+        "en": "Slow or Fast Rule"
+      },
+      "domain": "inhibition_flexibility",
+      "secondarySkills": [
+        "inhibitory_control",
+        "cognitive_flexibility"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "go_no_go",
+      "learningGoal": "Reglarea vitezei și urmarea semnalului",
+      "mechanic": "Mută obiectul lent sau rapid după semnal, fără cronometru de performanță.",
+      "difficultyAxes": [
+        "trialCount",
+        "goNoGoRatio",
+        "signalDelayMs",
+        "ruleComplexity"
+      ],
+      "progression": "Mărește numărul de probe și întârzierea semnalului; adaugă reguli conflictuale doar după stăpânirea regulii simple.",
+      "guardrails": [
+        "Nu transforma jocul într-un test de reflexe.",
+        "Semnalul trebuie să fie clar vizual și auditiv."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Mergeți încet ca țestoasa și repede ca iepurele.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "switch-rule",
+      "title": {
+        "ro": "Acum facem altfel",
+        "en": "Now Do It Differently"
+      },
+      "domain": "inhibition_flexibility",
+      "secondarySkills": [
+        "inhibitory_control",
+        "cognitive_flexibility"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "rule_switch",
+      "learningGoal": "Schimbarea setului mental",
+      "mechanic": "Răspunde după o regulă, apoi după alta semnalizată.",
+      "difficultyAxes": [
+        "trialCount",
+        "switchFrequency",
+        "ruleCueVisibility",
+        "conflictLevel"
+      ],
+      "progression": "Păstrează regula afișată la început, apoi alternează regulile și reduce treptat indiciul.",
+      "guardrails": [
+        "Semnalizează explicit schimbarea regulii.",
+        "Revino la regula simplă după frustrare repetată."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Alternați: bate din palme la roșu, ridică mâna la albastru.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "conflict-cards",
+      "title": {
+        "ro": "Culoarea sau forma?",
+        "en": "Color or Shape Conflict"
+      },
+      "domain": "inhibition_flexibility",
+      "secondarySkills": [
+        "inhibitory_control",
+        "cognitive_flexibility"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "rule_switch",
+      "learningGoal": "Controlul interferenței",
+      "mechanic": "Alege atributul cerut când culoarea și forma sugerează răspunsuri diferite.",
+      "difficultyAxes": [
+        "trialCount",
+        "switchFrequency",
+        "ruleCueVisibility",
+        "conflictLevel"
+      ],
+      "progression": "Păstrează regula afișată la început, apoi alternează regulile și reduce treptat indiciul.",
+      "guardrails": [
+        "Semnalizează explicit schimbarea regulii.",
+        "Revino la regula simplă după frustrare repetată."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Folosiți cartonașe și schimbați întrebarea: culoare sau formă.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "stop-signal-path",
+      "title": {
+        "ro": "Oprește pe drum",
+        "en": "Stop-Signal Path"
+      },
+      "domain": "inhibition_flexibility",
+      "secondarySkills": [
+        "inhibitory_control",
+        "cognitive_flexibility"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "tap_wait",
+      "archetype": "go_no_go",
+      "learningGoal": "Oprirea unei acțiuni deja pornite",
+      "mechanic": "Pornește personajul, dar oprește-l când apare semnalul.",
+      "difficultyAxes": [
+        "trialCount",
+        "goNoGoRatio",
+        "signalDelayMs",
+        "ruleComplexity"
+      ],
+      "progression": "Mărește numărul de probe și întârzierea semnalului; adaugă reguli conflictuale doar după stăpânirea regulii simple.",
+      "guardrails": [
+        "Nu transforma jocul într-un test de reflexe.",
+        "Semnalul trebuie să fie clar vizual și auditiv."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Împingeți o mașinuță și opriți-o la semnal.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "daily-order",
+      "title": {
+        "ro": "Ce facem întâi?",
+        "en": "What Comes First?"
+      },
+      "domain": "sequencing_patterns",
+      "secondarySkills": [
+        "sequencing",
+        "pattern_reasoning"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "drag_order",
+      "archetype": "order",
+      "learningGoal": "Secvențiere temporală a rutinelor",
+      "mechanic": "Pune în ordine două-trei imagini dintr-o rutină familiară.",
+      "difficultyAxes": [
+        "stepCount",
+        "distractorCount",
+        "causalDistance",
+        "verbalSupport"
+      ],
+      "progression": "Treci de la două imagini evidente la 4–6 pași, cu distractori și relații cauzale mai puțin directe.",
+      "guardrails": [
+        "Folosește povești familiare și cultural neutre.",
+        "Acceptă rearanjarea liberă înainte de verificare."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Povestiți pașii spălatului pe mâini.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "first-then",
+      "title": {
+        "ro": "Întâi și apoi",
+        "en": "First and Then"
+      },
+      "domain": "sequencing_patterns",
+      "secondarySkills": [
+        "sequencing",
+        "pattern_reasoning"
+      ],
+      "minAgeMonths": 32,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "order",
+      "learningGoal": "Relații înainte–după",
+      "mechanic": "Alege ce se întâmplă înainte sau după o acțiune.",
+      "difficultyAxes": [
+        "stepCount",
+        "distractorCount",
+        "causalDistance",
+        "verbalSupport"
+      ],
+      "progression": "Treci de la două imagini evidente la 4–6 pași, cu distractori și relații cauzale mai puțin directe.",
+      "guardrails": [
+        "Folosește povești familiare și cultural neutre.",
+        "Acceptă rearanjarea liberă înainte de verificare."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Întrebați ce faceți înainte de culcare și după trezire.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "repeat-pattern-ab",
+      "title": {
+        "ro": "Continuă modelul",
+        "en": "Continue the Pattern"
+      },
+      "domain": "sequencing_patterns",
+      "secondarySkills": [
+        "sequencing",
+        "pattern_reasoning"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "pattern",
+      "learningGoal": "Recunoașterea regularității AB",
+      "mechanic": "Completează modele simple de culori, forme sau obiecte.",
+      "difficultyAxes": [
+        "patternLength",
+        "patternFamily",
+        "missingPositions",
+        "modalityCount"
+      ],
+      "progression": "Evoluează de la AB la AAB/ABB/ABC, apoi la mai multe poziții lipsă și ritmuri.",
+      "guardrails": [
+        "Evită modele care pot avea mai multe răspunsuri valide.",
+        "Explică prin animație scurtă, nu prin instrucțiuni lungi."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Faceți un șir cub roșu–cub albastru și continuați.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "story-order",
+      "title": {
+        "ro": "Povestea în ordine",
+        "en": "Story in Order"
+      },
+      "domain": "sequencing_patterns",
+      "secondarySkills": [
+        "sequencing",
+        "pattern_reasoning"
+      ],
+      "minAgeMonths": 36,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "drag_order",
+      "archetype": "order",
+      "learningGoal": "Ordine narativă și cauzală",
+      "mechanic": "Aranjează imaginile unei povești scurte.",
+      "difficultyAxes": [
+        "stepCount",
+        "distractorCount",
+        "causalDistance",
+        "verbalSupport"
+      ],
+      "progression": "Treci de la două imagini evidente la 4–6 pași, cu distractori și relații cauzale mai puțin directe.",
+      "guardrails": [
+        "Folosește povești familiare și cultural neutre.",
+        "Acceptă rearanjarea liberă înainte de verificare."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Amestecați trei imagini și inventați ordinea.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "cause-next",
+      "title": {
+        "ro": "Ce urmează?",
+        "en": "What Happens Next?"
+      },
+      "domain": "sequencing_patterns",
+      "secondarySkills": [
+        "sequencing",
+        "pattern_reasoning"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "order",
+      "learningGoal": "Predicție cauzală",
+      "mechanic": "Alege consecința probabilă a unei acțiuni simple.",
+      "difficultyAxes": [
+        "stepCount",
+        "distractorCount",
+        "causalDistance",
+        "verbalSupport"
+      ],
+      "progression": "Treci de la două imagini evidente la 4–6 pași, cu distractori și relații cauzale mai puțin directe.",
+      "guardrails": [
+        "Folosește povești familiare și cultural neutre.",
+        "Acceptă rearanjarea liberă înainte de verificare."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Întrebați ce se întâmplă dacă turnăm apă într-un pahar.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "complex-patterns",
+      "title": {
+        "ro": "Modele AAB, ABB, ABC",
+        "en": "AAB, ABB, ABC Patterns"
+      },
+      "domain": "sequencing_patterns",
+      "secondarySkills": [
+        "sequencing",
+        "pattern_reasoning"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "pattern",
+      "learningGoal": "Abstractizarea unei reguli de repetiție",
+      "mechanic": "Completează modele cu trei elemente sau grupări.",
+      "difficultyAxes": [
+        "patternLength",
+        "patternFamily",
+        "missingPositions",
+        "modalityCount"
+      ],
+      "progression": "Evoluează de la AB la AAB/ABB/ABC, apoi la mai multe poziții lipsă și ritmuri.",
+      "guardrails": [
+        "Evită modele care pot avea mai multe răspunsuri valide.",
+        "Explică prin animație scurtă, nu prin instrucțiuni lungi."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Faceți modele cu pași și bătăi din palme.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "rhythm-copy",
+      "title": {
+        "ro": "Copiază ritmul",
+        "en": "Copy the Rhythm"
+      },
+      "domain": "sequencing_patterns",
+      "secondarySkills": [
+        "sequencing",
+        "pattern_reasoning"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "listen_tap",
+      "archetype": "pattern",
+      "learningGoal": "Memorie secvențială și structură ritmică",
+      "mechanic": "Reproduce un ritm scurt prin atingeri.",
+      "difficultyAxes": [
+        "patternLength",
+        "patternFamily",
+        "missingPositions",
+        "modalityCount"
+      ],
+      "progression": "Evoluează de la AB la AAB/ABB/ABC, apoi la mai multe poziții lipsă și ritmuri.",
+      "guardrails": [
+        "Evită modele care pot avea mai multe răspunsuri valide.",
+        "Explică prin animație scurtă, nu prin instrucțiuni lungi."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Bateți un ritm și repetați pe rând.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "algorithm-arrows",
+      "title": {
+        "ro": "Drumul din săgeți",
+        "en": "Arrow Algorithm"
+      },
+      "domain": "sequencing_patterns",
+      "secondarySkills": [
+        "sequencing",
+        "pattern_reasoning"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "drag_order",
+      "archetype": "order",
+      "learningGoal": "Gândire algoritmică și secvențe de comenzi",
+      "mechanic": "Ordonează săgeți pentru ca personajul să ajungă la țintă.",
+      "difficultyAxes": [
+        "stepCount",
+        "distractorCount",
+        "causalDistance",
+        "verbalSupport"
+      ],
+      "progression": "Treci de la două imagini evidente la 4–6 pași, cu distractori și relații cauzale mai puțin directe.",
+      "guardrails": [
+        "Folosește povești familiare și cultural neutre.",
+        "Acceptă rearanjarea liberă înainte de verificare."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Dați comenzi: doi pași înainte, întoarce-te, un pas.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "inset-puzzle",
+      "title": {
+        "ro": "Pune forma la loc",
+        "en": "Inset Puzzle"
+      },
+      "domain": "spatial_planning",
+      "secondarySkills": [
+        "spatial_reasoning",
+        "planning"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "spatial_fit",
+      "learningGoal": "Relații formă–spațiu și coordonare",
+      "mechanic": "Potrivește forme mari în decupajele lor.",
+      "difficultyAxes": [
+        "pieceCount",
+        "rotationEnabled",
+        "outlineSupport",
+        "similarity"
+      ],
+      "progression": "Adaugă piese, rotație, contururi mai puțin explicite și forme mai asemănătoare.",
+      "guardrails": [
+        "Ținte de atingere mari și snap generos.",
+        "Nu penaliza motricitatea fină atunci când obiectivul este spațial."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Folosiți un puzzle fizic cu piese mari.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "shape-builder",
+      "title": {
+        "ro": "Construiește imaginea",
+        "en": "Build the Picture"
+      },
+      "domain": "spatial_planning",
+      "secondarySkills": [
+        "spatial_reasoning",
+        "planning"
+      ],
+      "minAgeMonths": 32,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "construction",
+      "learningGoal": "Compoziție parte–întreg",
+      "mechanic": "Construiește un obiect din 2–5 forme simple.",
+      "difficultyAxes": [
+        "pieceCount",
+        "rotationEnabled",
+        "modelVisibility",
+        "symmetry"
+      ],
+      "progression": "Adaugă piese și rotații, apoi ascunde temporar modelul și introduce simetrie.",
+      "guardrails": [
+        "Piesele trebuie să se fixeze tolerant.",
+        "Modul fără model rămâne exploratoriu, nepunctat."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Construiți o casă din cuburi sau forme de hârtie.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "simple-maze",
+      "title": {
+        "ro": "Labirintul blând",
+        "en": "Gentle Maze"
+      },
+      "domain": "spatial_planning",
+      "secondarySkills": [
+        "spatial_reasoning",
+        "planning"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "drag_path",
+      "archetype": "maze",
+      "learningGoal": "Planificare spațială și urmărirea traseului",
+      "mechanic": "Ghidează personajul printr-un traseu fără fundături punitive.",
+      "difficultyAxes": [
+        "gridSize",
+        "branchCount",
+        "lookaheadSteps",
+        "movingHazards"
+      ],
+      "progression": "Mărește grila, ramificațiile și pașii de anticipat; evită viteza ca sursă principală de dificultate.",
+      "guardrails": [
+        "Fără vieți, căderi sau urmărire rapidă.",
+        "Arată calea parcursă și permite revenirea."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Faceți un traseu pe podea cu bandă adezivă.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "route-choice",
+      "title": {
+        "ro": "Alege drumul bun",
+        "en": "Choose the Route"
+      },
+      "domain": "spatial_planning",
+      "secondarySkills": [
+        "spatial_reasoning",
+        "planning"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "maze",
+      "learningGoal": "Compararea rutelor și anticipare",
+      "mechanic": "Alege ruta care ajunge la țintă sau evită obstacolul.",
+      "difficultyAxes": [
+        "gridSize",
+        "branchCount",
+        "lookaheadSteps",
+        "movingHazards"
+      ],
+      "progression": "Mărește grila, ramificațiile și pașii de anticipat; evită viteza ca sursă principală de dificultate.",
+      "guardrails": [
+        "Fără vieți, căderi sau urmărire rapidă.",
+        "Arată calea parcursă și permite revenirea."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Alegeți împreună drumul până la o jucărie din cameră.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "symmetry-complete",
+      "title": {
+        "ro": "Completează oglinda",
+        "en": "Complete the Mirror"
+      },
+      "domain": "spatial_planning",
+      "secondarySkills": [
+        "spatial_reasoning",
+        "planning"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "construction",
+      "learningGoal": "Simetrie și corespondență spațială",
+      "mechanic": "Completează jumătatea lipsă a unui model.",
+      "difficultyAxes": [
+        "pieceCount",
+        "rotationEnabled",
+        "modelVisibility",
+        "symmetry"
+      ],
+      "progression": "Adaugă piese și rotații, apoi ascunde temporar modelul și introduce simetrie.",
+      "guardrails": [
+        "Piesele trebuie să se fixeze tolerant.",
+        "Modul fără model rămâne exploratoriu, nepunctat."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Construiți un model simetric din cuburi.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "tangram-model",
+      "title": {
+        "ro": "Tangram după model",
+        "en": "Tangram Model"
+      },
+      "domain": "spatial_planning",
+      "secondarySkills": [
+        "spatial_reasoning",
+        "planning"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "construction",
+      "learningGoal": "Rotație, compoziție și planificare",
+      "mechanic": "Reproduce un model folosind forme geometrice.",
+      "difficultyAxes": [
+        "pieceCount",
+        "rotationEnabled",
+        "modelVisibility",
+        "symmetry"
+      ],
+      "progression": "Adaugă piese și rotații, apoi ascunde temporar modelul și introduce simetrie.",
+      "guardrails": [
+        "Piesele trebuie să se fixeze tolerant.",
+        "Modul fără model rămâne exploratoriu, nepunctat."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Folosiți forme de hârtie pentru a copia un model.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "mental-rotation",
+      "title": {
+        "ro": "Care se potrivește rotit?",
+        "en": "Mental Rotation"
+      },
+      "domain": "spatial_planning",
+      "secondarySkills": [
+        "spatial_reasoning",
+        "planning"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "spatial_fit",
+      "learningGoal": "Rotație mentală",
+      "mechanic": "Alege forma care devine identică după rotire.",
+      "difficultyAxes": [
+        "pieceCount",
+        "rotationEnabled",
+        "outlineSupport",
+        "similarity"
+      ],
+      "progression": "Adaugă piese, rotație, contururi mai puțin explicite și forme mai asemănătoare.",
+      "guardrails": [
+        "Ținte de atingere mari și snap generos.",
+        "Nu penaliza motricitatea fină atunci când obiectivul este spațial."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Rotiți o piesă reală și anticipați potrivirea.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "grid-commands",
+      "title": {
+        "ro": "Comenzi pe grilă",
+        "en": "Grid Commands"
+      },
+      "domain": "spatial_planning",
+      "secondarySkills": [
+        "spatial_reasoning",
+        "planning"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "drag_order",
+      "archetype": "maze",
+      "learningGoal": "Planificare multi-pas și orientare",
+      "mechanic": "Construiește o secvență de comenzi pe o grilă.",
+      "difficultyAxes": [
+        "gridSize",
+        "branchCount",
+        "lookaheadSteps",
+        "movingHazards"
+      ],
+      "progression": "Mărește grila, ramificațiile și pașii de anticipat; evită viteza ca sursă principală de dificultate.",
+      "guardrails": [
+        "Fără vieți, căderi sau urmărire rapidă.",
+        "Arată calea parcursă și permite revenirea."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Faceți o grilă pe podea și urmați comenzi.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "one-to-one-count",
+      "title": {
+        "ro": "Dă câte unul",
+        "en": "Give One to Each"
+      },
+      "domain": "numeracy",
+      "secondarySkills": [
+        "early_numeracy",
+        "reasoning"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "number_choice",
+      "learningGoal": "Corespondență unu-la-unu",
+      "mechanic": "Dă fiecărui personaj exact un obiect.",
+      "difficultyAxes": [
+        "maxQuantity",
+        "choiceCount",
+        "symbolSupport",
+        "perceptualControl"
+      ],
+      "progression": "Crește cantitățile și controlează mărimea/împrăștierea obiectelor, ca răspunsul să se bazeze pe număr, nu pe suprafață.",
+      "guardrails": [
+        "Controlează indiciile perceptuale neintenționate.",
+        "Nu introduce simboluri numerice înainte de cantități concrete."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Puneți câte o lingură lângă fiecare farfurie.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "quantity-match",
+      "title": {
+        "ro": "La fel de multe",
+        "en": "Same Quantity"
+      },
+      "domain": "numeracy",
+      "secondarySkills": [
+        "early_numeracy",
+        "reasoning"
+      ],
+      "minAgeMonths": 32,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "number_choice",
+      "learningGoal": "Recunoașterea și compararea cantităților",
+      "mechanic": "Potrivește două grupuri cu aceeași cantitate.",
+      "difficultyAxes": [
+        "maxQuantity",
+        "choiceCount",
+        "symbolSupport",
+        "perceptualControl"
+      ],
+      "progression": "Crește cantitățile și controlează mărimea/împrăștierea obiectelor, ca răspunsul să se bazeze pe număr, nu pe suprafață.",
+      "guardrails": [
+        "Controlează indiciile perceptuale neintenționate.",
+        "Nu introduce simboluri numerice înainte de cantități concrete."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Faceți două grupuri cu câte două obiecte.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "more-less",
+      "title": {
+        "ro": "Mai multe sau mai puține",
+        "en": "More or Less"
+      },
+      "domain": "numeracy",
+      "secondarySkills": [
+        "early_numeracy",
+        "reasoning"
+      ],
+      "minAgeMonths": 36,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "number_choice",
+      "learningGoal": "Compararea cantităților",
+      "mechanic": "Alege grupul cu mai multe, mai puține sau la fel.",
+      "difficultyAxes": [
+        "maxQuantity",
+        "choiceCount",
+        "symbolSupport",
+        "perceptualControl"
+      ],
+      "progression": "Crește cantitățile și controlează mărimea/împrăștierea obiectelor, ca răspunsul să se bazeze pe număr, nu pe suprafață.",
+      "guardrails": [
+        "Controlează indiciile perceptuale neintenționate.",
+        "Nu introduce simboluri numerice înainte de cantități concrete."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Comparați două grămezi mici de cuburi.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "number-order",
+      "title": {
+        "ro": "Numere în ordine",
+        "en": "Number Order"
+      },
+      "domain": "numeracy",
+      "secondarySkills": [
+        "early_numeracy",
+        "reasoning"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_order",
+      "archetype": "number_choice",
+      "learningGoal": "Ordinea numerelor și linia numerică timpurie",
+      "mechanic": "Așază cantități sau numere în ordine.",
+      "difficultyAxes": [
+        "maxQuantity",
+        "choiceCount",
+        "symbolSupport",
+        "perceptualControl"
+      ],
+      "progression": "Crește cantitățile și controlează mărimea/împrăștierea obiectelor, ca răspunsul să se bazeze pe număr, nu pe suprafață.",
+      "guardrails": [
+        "Controlează indiciile perceptuale neintenționate.",
+        "Nu introduce simboluri numerice înainte de cantități concrete."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Puneți cartonașe 1–5 în ordine.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "make-number",
+      "title": {
+        "ro": "Construiește numărul",
+        "en": "Make the Number"
+      },
+      "domain": "numeracy",
+      "secondarySkills": [
+        "early_numeracy",
+        "reasoning"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "number_operation",
+      "learningGoal": "Compunerea cantităților",
+      "mechanic": "Alege sau combină grupuri care formează cantitatea cerută.",
+      "difficultyAxes": [
+        "maxResult",
+        "operationSteps",
+        "manipulativeSupport",
+        "storyComplexity"
+      ],
+      "progression": "Pornește cu manipulare concretă și un singur pas; mărește rezultatul și complexitatea poveștii.",
+      "guardrails": [
+        "Folosește obiecte și povești scurte.",
+        "Nu cere memorarea faptelor aritmetice ca scop principal."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Faceți 5 din două grupe de nasturi.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "object-addition",
+      "title": {
+        "ro": "Mai vin câteva",
+        "en": "A Few More Arrive"
+      },
+      "domain": "numeracy",
+      "secondarySkills": [
+        "early_numeracy",
+        "reasoning"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "number_operation",
+      "learningGoal": "Adunare concretă prin transformarea mulțimii",
+      "mechanic": "Urmărește o poveste cu obiecte adăugate și alege totalul.",
+      "difficultyAxes": [
+        "maxResult",
+        "operationSteps",
+        "manipulativeSupport",
+        "storyComplexity"
+      ],
+      "progression": "Pornește cu manipulare concretă și un singur pas; mărește rezultatul și complexitatea poveștii.",
+      "guardrails": [
+        "Folosește obiecte și povești scurte.",
+        "Nu cere memorarea faptelor aritmetice ca scop principal."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Adăugați două cuburi la un grup și numărați.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "object-subtraction",
+      "title": {
+        "ro": "Câte au rămas?",
+        "en": "How Many Are Left?"
+      },
+      "domain": "numeracy",
+      "secondarySkills": [
+        "early_numeracy",
+        "reasoning"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "number_operation",
+      "learningGoal": "Scădere concretă",
+      "mechanic": "Urmărește obiectele care pleacă și alege ce rămâne.",
+      "difficultyAxes": [
+        "maxResult",
+        "operationSteps",
+        "manipulativeSupport",
+        "storyComplexity"
+      ],
+      "progression": "Pornește cu manipulare concretă și un singur pas; mărește rezultatul și complexitatea poveștii.",
+      "guardrails": [
+        "Folosește obiecte și povești scurte.",
+        "Nu cere memorarea faptelor aritmetice ca scop principal."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Luați un obiect dintr-un grup și numărați restul.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "balance-measure",
+      "title": {
+        "ro": "Mai lung, mai greu, egal",
+        "en": "Longer, Heavier, Equal"
+      },
+      "domain": "numeracy",
+      "secondarySkills": [
+        "early_numeracy",
+        "reasoning"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "number_choice",
+      "learningGoal": "Măsurare informală și comparație",
+      "mechanic": "Compară lungimi, capacități sau balanțe vizuale.",
+      "difficultyAxes": [
+        "maxQuantity",
+        "choiceCount",
+        "symbolSupport",
+        "perceptualControl"
+      ],
+      "progression": "Crește cantitățile și controlează mărimea/împrăștierea obiectelor, ca răspunsul să se bazeze pe număr, nu pe suprafață.",
+      "guardrails": [
+        "Controlează indiciile perceptuale neintenționate.",
+        "Nu introduce simboluri numerice înainte de cantități concrete."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Comparați două obiecte ca lungime sau greutate în palmă.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "listen-find",
+      "title": {
+        "ro": "Ascultă și găsește",
+        "en": "Listen and Find"
+      },
+      "domain": "language_social",
+      "secondarySkills": [
+        "receptive_language",
+        "social_reasoning"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "listen_tap",
+      "archetype": "listen_choice",
+      "learningGoal": "Înțelegere receptivă și vocabular",
+      "mechanic": "Ascultă numele sau descrierea și alege obiectul.",
+      "difficultyAxes": [
+        "choiceCount",
+        "utteranceLength",
+        "attributeCount",
+        "repeatAvailability"
+      ],
+      "progression": "Mărește numărul de opțiuni, lungimea instrucțiunii și numărul de atribute; permite repetarea.",
+      "guardrails": [
+        "Instrucțiuni scurte, voce calmă, repetabile.",
+        "Nu depinde exclusiv de audio; oferă indiciu vizual."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Cereți copilului să aducă un obiect numit.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "describe-find",
+      "title": {
+        "ro": "Găsește după indicii",
+        "en": "Find by Clues"
+      },
+      "domain": "language_social",
+      "secondarySkills": [
+        "receptive_language",
+        "social_reasoning"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "listen_tap",
+      "archetype": "listen_choice",
+      "learningGoal": "Integrarea atributelor verbale",
+      "mechanic": "Alege obiectul descris prin două-trei atribute.",
+      "difficultyAxes": [
+        "choiceCount",
+        "utteranceLength",
+        "attributeCount",
+        "repeatAvailability"
+      ],
+      "progression": "Mărește numărul de opțiuni, lungimea instrucțiunii și numărul de atribute; permite repetarea.",
+      "guardrails": [
+        "Instrucțiuni scurte, voce calmă, repetabile.",
+        "Nu depinde exclusiv de audio; oferă indiciu vizual."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Descrieți un obiect fără a-i spune numele.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "category-words",
+      "title": {
+        "ro": "Cuvinte din aceeași familie",
+        "en": "Word Families"
+      },
+      "domain": "language_social",
+      "secondarySkills": [
+        "receptive_language",
+        "social_reasoning"
+      ],
+      "minAgeMonths": 36,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "listen_choice",
+      "learningGoal": "Vocabular semantic și categorii",
+      "mechanic": "Alege cuvântul sau imaginea din aceeași categorie.",
+      "difficultyAxes": [
+        "choiceCount",
+        "utteranceLength",
+        "attributeCount",
+        "repeatAvailability"
+      ],
+      "progression": "Mărește numărul de opțiuni, lungimea instrucțiunii și numărul de atribute; permite repetarea.",
+      "guardrails": [
+        "Instrucțiuni scurte, voce calmă, repetabile.",
+        "Nu depinde exclusiv de audio; oferă indiciu vizual."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Spuneți pe rând animale sau alimente.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "first-sound",
+      "title": {
+        "ro": "Cu ce sunet începe?",
+        "en": "First Sound"
+      },
+      "domain": "language_social",
+      "secondarySkills": [
+        "receptive_language",
+        "social_reasoning"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "listen_tap",
+      "archetype": "sound_language",
+      "learningGoal": "Conștiință fonologică timpurie",
+      "mechanic": "Potrivește cuvinte care încep cu același sunet.",
+      "difficultyAxes": [
+        "choiceCount",
+        "phonologicalDistance",
+        "wordLength",
+        "audioSupport"
+      ],
+      "progression": "Treci de la contraste sonore mari la rime/sunete apropiate și cuvinte mai lungi.",
+      "guardrails": [
+        "Conținut românesc verificat de vorbitor nativ.",
+        "Nu folosi recunoaștere vocală sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Găsiți obiecte care încep cu un sunet ales.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "rhyme-match",
+      "title": {
+        "ro": "Cuvinte care rimează",
+        "en": "Rhyme Match"
+      },
+      "domain": "language_social",
+      "secondarySkills": [
+        "receptive_language",
+        "social_reasoning"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "listen_tap",
+      "archetype": "sound_language",
+      "learningGoal": "Recunoașterea rimelor",
+      "mechanic": "Alege cuvântul care rimează cu modelul.",
+      "difficultyAxes": [
+        "choiceCount",
+        "phonologicalDistance",
+        "wordLength",
+        "audioSupport"
+      ],
+      "progression": "Treci de la contraste sonore mari la rime/sunete apropiate și cuvinte mai lungi.",
+      "guardrails": [
+        "Conținut românesc verificat de vorbitor nativ.",
+        "Nu folosi recunoaștere vocală sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Inventați rime amuzante, inclusiv pseudo-cuvinte.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "emotion-match",
+      "title": {
+        "ro": "Cum se simte?",
+        "en": "How Does It Feel?"
+      },
+      "domain": "language_social",
+      "secondarySkills": [
+        "receptive_language",
+        "social_reasoning"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "social_scenario",
+      "learningGoal": "Recunoașterea emoțiilor de bază",
+      "mechanic": "Potrivește expresia cu emoția sau situația simplă.",
+      "difficultyAxes": [
+        "choiceCount",
+        "contextLength",
+        "perspectiveCount",
+        "ambiguity"
+      ],
+      "progression": "Pornește cu emoții evidente și două răspunsuri; adaugă context, perspectivă și ambiguitate moderată.",
+      "guardrails": [
+        "Nu prezenta o singură emoție drept obligatorie în situații ambigue.",
+        "Fără rușinare sau etichetare a copilului."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Imitați fețe vesele, triste, surprinse și furioase.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "what-helps",
+      "title": {
+        "ro": "Ce ar ajuta?",
+        "en": "What Could Help?"
+      },
+      "domain": "language_social",
+      "secondarySkills": [
+        "receptive_language",
+        "social_reasoning"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "tap",
+      "archetype": "social_scenario",
+      "learningGoal": "Empatie și rezolvare socială",
+      "mechanic": "Alege o acțiune de ajutor într-o situație clară.",
+      "difficultyAxes": [
+        "choiceCount",
+        "contextLength",
+        "perspectiveCount",
+        "ambiguity"
+      ],
+      "progression": "Pornește cu emoții evidente și două răspunsuri; adaugă context, perspectivă și ambiguitate moderată.",
+      "guardrails": [
+        "Nu prezenta o singură emoție drept obligatorie în situații ambigue.",
+        "Fără rușinare sau etichetare a copilului."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Discutați ce poate ajuta când cineva e trist.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "story-comprehension",
+      "title": {
+        "ro": "Întrebări din poveste",
+        "en": "Story Questions"
+      },
+      "domain": "language_social",
+      "secondarySkills": [
+        "receptive_language",
+        "social_reasoning"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "listen_tap",
+      "archetype": "listen_choice",
+      "learningGoal": "Înțelegere narativă și inferență simplă",
+      "mechanic": "Ascultă o poveste foarte scurtă și răspunde la întrebări.",
+      "difficultyAxes": [
+        "choiceCount",
+        "utteranceLength",
+        "attributeCount",
+        "repeatAvailability"
+      ],
+      "progression": "Mărește numărul de opțiuni, lungimea instrucțiunii și numărul de atribute; permite repetarea.",
+      "guardrails": [
+        "Instrucțiuni scurte, voce calmă, repetabile.",
+        "Nu depinde exclusiv de audio; oferă indiciu vizual."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Citiți o poveste și puneți două întrebări deschise.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "trace-road",
+      "title": {
+        "ro": "Urmează drumul",
+        "en": "Trace the Road"
+      },
+      "domain": "fine_motor_creativity",
+      "secondarySkills": [
+        "visual_motor",
+        "creative_expression"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "trace",
+      "archetype": "trace",
+      "learningGoal": "Control vizuo-motor și urmărire",
+      "mechanic": "Urmează un traseu foarte lat cu degetul.",
+      "difficultyAxes": [
+        "pathLength",
+        "pathWidth",
+        "turnCount",
+        "guideStrength"
+      ],
+      "progression": "Îngustează traseul și adaugă curbe/opriri; păstrează mod de asistență și fără penalizare la ieșirea din traseu.",
+      "guardrails": [
+        "Fără scor bazat pe precizie milimetrică.",
+        "Oferă reducerea sensibilității și trasee late."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Desenați drumuri late pe hârtie și urmăriți-le.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "drag-and-fit",
+      "title": {
+        "ro": "Mută și potrivește",
+        "en": "Drag and Fit"
+      },
+      "domain": "fine_motor_creativity",
+      "secondarySkills": [
+        "visual_motor",
+        "creative_expression"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "spatial_fit",
+      "learningGoal": "Coordonare ochi–mână și potrivire",
+      "mechanic": "Mută obiecte mari în ținte generoase.",
+      "difficultyAxes": [
+        "pieceCount",
+        "rotationEnabled",
+        "outlineSupport",
+        "similarity"
+      ],
+      "progression": "Adaugă piese, rotație, contururi mai puțin explicite și forme mai asemănătoare.",
+      "guardrails": [
+        "Ținte de atingere mari și snap generos.",
+        "Nu penaliza motricitatea fină atunci când obiectivul este spațial."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Puneți capace mari în recipiente potrivite.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "connect-dots",
+      "title": {
+        "ro": "Unește punctele",
+        "en": "Connect the Dots"
+      },
+      "domain": "fine_motor_creativity",
+      "secondarySkills": [
+        "visual_motor",
+        "creative_expression"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "digital",
+      "interaction": "trace",
+      "archetype": "trace",
+      "learningGoal": "Planificarea traseului și pre-scriere",
+      "mechanic": "Unește 3–10 puncte în ordine, cu ghid vizual.",
+      "difficultyAxes": [
+        "pathLength",
+        "pathWidth",
+        "turnCount",
+        "guideStrength"
+      ],
+      "progression": "Îngustează traseul și adaugă curbe/opriri; păstrează mod de asistență și fără penalizare la ieșirea din traseu.",
+      "guardrails": [
+        "Fără scor bazat pe precizie milimetrică.",
+        "Oferă reducerea sensibilității și trasee late."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Uniți puncte mari pe hârtie.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "bead-pattern",
+      "title": {
+        "ro": "Mărgele în model",
+        "en": "Bead Pattern"
+      },
+      "domain": "fine_motor_creativity",
+      "secondarySkills": [
+        "visual_motor",
+        "creative_expression"
+      ],
+      "minAgeMonths": 36,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P1",
+      "mode": "digital",
+      "interaction": "drag_drop",
+      "archetype": "pattern",
+      "learningGoal": "Secvențe și coordonare fină",
+      "mechanic": "Așază mărgele virtuale după un model.",
+      "difficultyAxes": [
+        "patternLength",
+        "patternFamily",
+        "missingPositions",
+        "modalityCount"
+      ],
+      "progression": "Evoluează de la AB la AAB/ABB/ABC, apoi la mai multe poziții lipsă și ritmuri.",
+      "guardrails": [
+        "Evită modele care pot avea mai multe răspunsuri valide.",
+        "Explică prin animație scurtă, nu prin instrucțiuni lungi."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Înșirați paste mari sau alternați cuburi.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "sample_implemented"
+    },
+    {
+      "id": "mirror-draw",
+      "title": {
+        "ro": "Desenează în oglindă",
+        "en": "Mirror Draw"
+      },
+      "domain": "fine_motor_creativity",
+      "secondarySkills": [
+        "visual_motor",
+        "creative_expression"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "digital",
+      "interaction": "trace",
+      "archetype": "trace",
+      "learningGoal": "Simetrie și control vizuo-motor",
+      "mechanic": "Completează o linie sau formă simetrică, cu asistență.",
+      "difficultyAxes": [
+        "pathLength",
+        "pathWidth",
+        "turnCount",
+        "guideStrength"
+      ],
+      "progression": "Îngustează traseul și adaugă curbe/opriri; păstrează mod de asistență și fără penalizare la ieșirea din traseu.",
+      "guardrails": [
+        "Fără scor bazat pe precizie milimetrică.",
+        "Oferă reducerea sensibilității și trasee late."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Desenați jumătate de fluture și completați împreună.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "shape-creature",
+      "title": {
+        "ro": "Creatura din forme",
+        "en": "Shape Creature"
+      },
+      "domain": "fine_motor_creativity",
+      "secondarySkills": [
+        "visual_motor",
+        "creative_expression"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "open_ended",
+      "interaction": "open_ended",
+      "archetype": "open_ended",
+      "learningGoal": "Creativitate combinatorie și vocabular",
+      "mechanic": "Construiește liber personaje din forme; fără scor.",
+      "difficultyAxes": [
+        "partCount",
+        "constraintCount",
+        "promptSpecificity",
+        "modelAvailability"
+      ],
+      "progression": "Mărește numărul de piese și constrângeri opționale; nu evalua creativitatea ca răspuns corect/greșit.",
+      "guardrails": [
+        "Fără clasament sau evaluare estetică.",
+        "Salvarea creațiilor rămâne locală și opțională."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Construiți un animal imaginar din forme de hârtie.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": false,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "story-builder",
+      "title": {
+        "ro": "Construiește o poveste",
+        "en": "Build a Story"
+      },
+      "domain": "fine_motor_creativity",
+      "secondarySkills": [
+        "visual_motor",
+        "creative_expression"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "open_ended",
+      "interaction": "open_ended",
+      "archetype": "open_ended",
+      "learningGoal": "Narațiune, ordine și imaginație",
+      "mechanic": "Alege personaje, locuri și acțiuni pentru o poveste.",
+      "difficultyAxes": [
+        "partCount",
+        "constraintCount",
+        "promptSpecificity",
+        "modelAvailability"
+      ],
+      "progression": "Mărește numărul de piese și constrângeri opționale; nu evalua creativitatea ca răspuns corect/greșit.",
+      "guardrails": [
+        "Fără clasament sau evaluare estetică.",
+        "Salvarea creațiilor rămâne locală și opțională."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Inventați împreună o poveste cu trei obiecte.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": false,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "rhythm-maker",
+      "title": {
+        "ro": "Atelierul de ritm",
+        "en": "Rhythm Maker"
+      },
+      "domain": "fine_motor_creativity",
+      "secondarySkills": [
+        "visual_motor",
+        "creative_expression"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "open_ended",
+      "interaction": "open_ended",
+      "archetype": "open_ended",
+      "learningGoal": "Explorare ritmică și planificare",
+      "mechanic": "Creează și redă un ritm; poate fi copiat de adult.",
+      "difficultyAxes": [
+        "partCount",
+        "constraintCount",
+        "promptSpecificity",
+        "modelAvailability"
+      ],
+      "progression": "Mărește numărul de piese și constrângeri opționale; nu evalua creativitatea ca răspuns corect/greșit.",
+      "guardrails": [
+        "Fără clasament sau evaluare estetică.",
+        "Salvarea creațiilor rămâne locală și opțională."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Creați un ritm cu palmele și obiecte sigure.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": false,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "real-color-hunt",
+      "title": {
+        "ro": "Vânătoarea de culori",
+        "en": "Real-World Color Hunt"
+      },
+      "domain": "hybrid_transfer",
+      "secondarySkills": [
+        "real_world_transfer",
+        "co_play"
+      ],
+      "minAgeMonths": 30,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P0",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "hybrid_task",
+      "learningGoal": "Transferul clasificării în mediul real",
+      "mechanic": "Aplicația oferă o misiune scurtă; adultul și copilul găsesc obiecte în cameră.",
+      "difficultyAxes": [
+        "stepCount",
+        "ruleCount",
+        "memoryDelaySec",
+        "parentPromptSupport"
+      ],
+      "progression": "Mărește numărul de pași și timpul de reținere; sarcina rămâne făcută împreună cu adultul, în lumea reală.",
+      "guardrails": [
+        "Nu cere copilului să plece singur din apropierea adultului.",
+        "Adultul confirmă finalizarea; fără cameră sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Găsiți împreună trei obiecte de aceeași culoare.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "memory-treasure",
+      "title": {
+        "ro": "Comoara din memorie",
+        "en": "Memory Treasure"
+      },
+      "domain": "hybrid_transfer",
+      "secondarySkills": [
+        "real_world_transfer",
+        "co_play"
+      ],
+      "minAgeMonths": 32,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "hybrid_task",
+      "learningGoal": "Memorie spațială în mediul real",
+      "mechanic": "Adultul ascunde un obiect în apropiere după o demonstrație.",
+      "difficultyAxes": [
+        "stepCount",
+        "ruleCount",
+        "memoryDelaySec",
+        "parentPromptSupport"
+      ],
+      "progression": "Mărește numărul de pași și timpul de reținere; sarcina rămâne făcută împreună cu adultul, în lumea reală.",
+      "guardrails": [
+        "Nu cere copilului să plece singur din apropierea adultului.",
+        "Adultul confirmă finalizarea; fără cameră sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Ascundeți o jucărie într-un loc sigur și reamintiți traseul.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "real-simon-says",
+      "title": {
+        "ro": "Simon spune, pe bune",
+        "en": "Real Simon Says"
+      },
+      "domain": "hybrid_transfer",
+      "secondarySkills": [
+        "real_world_transfer",
+        "co_play"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "hybrid_task",
+      "learningGoal": "Inhibiție, memorie verbală și mișcare",
+      "mechanic": "Aplicația propune comenzi, adultul conduce jocul fără ecran.",
+      "difficultyAxes": [
+        "stepCount",
+        "ruleCount",
+        "memoryDelaySec",
+        "parentPromptSupport"
+      ],
+      "progression": "Mărește numărul de pași și timpul de reținere; sarcina rămâne făcută împreună cu adultul, în lumea reală.",
+      "guardrails": [
+        "Nu cere copilului să plece singur din apropierea adultului.",
+        "Adultul confirmă finalizarea; fără cameră sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Jucați «Simon spune» cu una-două comenzi.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "home-sort",
+      "title": {
+        "ro": "Sortăm prin casă",
+        "en": "Sort Around the Home"
+      },
+      "domain": "hybrid_transfer",
+      "secondarySkills": [
+        "real_world_transfer",
+        "co_play"
+      ],
+      "minAgeMonths": 34,
+      "maxAgeMonths": 72,
+      "entryBand": "A30_36",
+      "implementationPriority": "P1",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "hybrid_task",
+      "learningGoal": "Clasificare funcțională și autonomie",
+      "mechanic": "Alegeți o sarcină sigură: șosete, cuburi sau tacâmuri neascuțite.",
+      "difficultyAxes": [
+        "stepCount",
+        "ruleCount",
+        "memoryDelaySec",
+        "parentPromptSupport"
+      ],
+      "progression": "Mărește numărul de pași și timpul de reținere; sarcina rămâne făcută împreună cu adultul, în lumea reală.",
+      "guardrails": [
+        "Nu cere copilului să plece singur din apropierea adultului.",
+        "Adultul confirmă finalizarea; fără cameră sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Sortați șosete după perechi sau culori.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "build-from-model-real",
+      "title": {
+        "ro": "Construiește după model",
+        "en": "Build From a Real Model"
+      },
+      "domain": "hybrid_transfer",
+      "secondarySkills": [
+        "real_world_transfer",
+        "co_play"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "hybrid_task",
+      "learningGoal": "Memorie vizuală și construcție",
+      "mechanic": "Privește un model simplu pe ecran, apoi recreează-l din cuburi.",
+      "difficultyAxes": [
+        "stepCount",
+        "ruleCount",
+        "memoryDelaySec",
+        "parentPromptSupport"
+      ],
+      "progression": "Mărește numărul de pași și timpul de reținere; sarcina rămâne făcută împreună cu adultul, în lumea reală.",
+      "guardrails": [
+        "Nu cere copilului să plece singur din apropierea adultului.",
+        "Adultul confirmă finalizarea; fără cameră sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Construiți un turn de 3–6 cuburi după model.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "movement-sequence",
+      "title": {
+        "ro": "Secvența de mișcări",
+        "en": "Movement Sequence"
+      },
+      "domain": "hybrid_transfer",
+      "secondarySkills": [
+        "real_world_transfer",
+        "co_play"
+      ],
+      "minAgeMonths": 42,
+      "maxAgeMonths": 72,
+      "entryBand": "B36_48",
+      "implementationPriority": "P2",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "hybrid_task",
+      "learningGoal": "Memorie secvențială și coordonare grosieră",
+      "mechanic": "Aplicația arată 2–5 mișcări, apoi ecranul se stinge pentru reproducere.",
+      "difficultyAxes": [
+        "stepCount",
+        "ruleCount",
+        "memoryDelaySec",
+        "parentPromptSupport"
+      ],
+      "progression": "Mărește numărul de pași și timpul de reținere; sarcina rămâne făcută împreună cu adultul, în lumea reală.",
+      "guardrails": [
+        "Nu cere copilului să plece singur din apropierea adultului.",
+        "Adultul confirmă finalizarea; fără cameră sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Săriți, bateți din palme, întoarceți-vă în ordinea arătată.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "describe-and-guess-real",
+      "title": {
+        "ro": "Descrie și ghicește",
+        "en": "Describe and Guess"
+      },
+      "domain": "hybrid_transfer",
+      "secondarySkills": [
+        "real_world_transfer",
+        "co_play"
+      ],
+      "minAgeMonths": 48,
+      "maxAgeMonths": 72,
+      "entryBand": "C48_60",
+      "implementationPriority": "P2",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "hybrid_task",
+      "learningGoal": "Limbaj descriptiv și perspectivă",
+      "mechanic": "Adultul descrie sau ghicește un obiect ales de copil.",
+      "difficultyAxes": [
+        "stepCount",
+        "ruleCount",
+        "memoryDelaySec",
+        "parentPromptSupport"
+      ],
+      "progression": "Mărește numărul de pași și timpul de reținere; sarcina rămâne făcută împreună cu adultul, în lumea reală.",
+      "guardrails": [
+        "Nu cere copilului să plece singur din apropierea adultului.",
+        "Adultul confirmă finalizarea; fără cameră sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Jucați pe rând fără a spune numele obiectului.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    },
+    {
+      "id": "treasure-map-real",
+      "title": {
+        "ro": "Harta comorii",
+        "en": "Treasure Map"
+      },
+      "domain": "hybrid_transfer",
+      "secondarySkills": [
+        "real_world_transfer",
+        "co_play"
+      ],
+      "minAgeMonths": 60,
+      "maxAgeMonths": 72,
+      "entryBand": "D60_72",
+      "implementationPriority": "P3",
+      "mode": "hybrid",
+      "interaction": "parent_guided",
+      "archetype": "hybrid_task",
+      "learningGoal": "Planificare, orientare și secvențe",
+      "mechanic": "Creați o hartă simplă a unei camere și urmați 3–6 pași.",
+      "difficultyAxes": [
+        "stepCount",
+        "ruleCount",
+        "memoryDelaySec",
+        "parentPromptSupport"
+      ],
+      "progression": "Mărește numărul de pași și timpul de reținere; sarcina rămâne făcută împreună cu adultul, în lumea reală.",
+      "guardrails": [
+        "Nu cere copilului să plece singur din apropierea adultului.",
+        "Adultul confirmă finalizarea; fără cameră sau microfon."
+      ],
+      "coPlayPrompt": "Întreabă: «Cum ai știut?» sau «Mai există o altă variantă?»; evită să dai imediat răspunsul.",
+      "offlineTransfer": "Desenați împreună o hartă cu repere sigure.",
+      "requiresReading": false,
+      "requiresMicrophone": false,
+      "requiresCamera": false,
+      "requiresNetwork": false,
+      "scored": true,
+      "generatorStatus": "specified"
+    }
+  ]
+}

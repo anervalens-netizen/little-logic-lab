@@ -1,0 +1,23 @@
+{
+  "id": "quantity-match-A-001",
+  "gameId": "quantity-match",
+  "seed": "quantity-A-001",
+  "difficulty": {
+    "maxQuantity": 3,
+    "choiceCount": 2,
+    "symbolSupport": "none",
+    "perceptualControl": "basic"
+  },
+  "contentPack": "sample-items",
+  "successRule": {
+    "kind": "single_choice"
+  },
+  "hintPolicy": {
+    "afterErrors": 1,
+    "maxHints": 2
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 2,
+    "endOnDistress": true
+  }
+}

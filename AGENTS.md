@@ -1,0 +1,86 @@
+# Instructions for coding agents
+
+This repository is specification-first. Treat the documents and machine-readable catalog as product requirements, not suggestions.
+
+## Mission
+
+Build a calm, offline-first, privacy-preserving mobile learning game for ages roughly 30–72 months. Optimize for specific skill practice, co-play and real-world transfer. Never claim to raise IQ or diagnose development.
+
+## Non-negotiable constraints
+
+1. Do not add accounts, cloud sync, ads, attribution, third-party analytics, push notifications, social features, external links in child mode, camera, microphone, contacts, photos or location.
+2. Do not transmit child progress or device identifiers.
+3. Do not add Firebase, Sentry, Amplitude, Mixpanel, AppsFlyer, Adjust, AdMob or similar SDKs.
+4. Do not create streaks, infinite feeds, loot, lives, leaderboards, scarcity, autoplay loops or variable-ratio rewards.
+5. Child gameplay must work fully in airplane mode with all assets bundled.
+6. Parent settings and outbound links require a parental gate.
+7. Never require reading in the child flow. Pair concise Romanian audio with visual demonstrations.
+8. Open-ended and hybrid games are not scored.
+9. Difficulty changes one major axis at a time.
+10. Distress or a session limit ends play without penalty.
+
+## Source of truth
+
+- `content/game-catalog.json`: game families and guardrails.
+- `content/archetype-presets.json`: initial age-band ranges.
+- `content/level-ladders.json`: generated one-axis progression anchors; regenerate, do not hand-edit.
+- `schemas/`: content and local-data contracts.
+- `docs/04-level-and-adaptation.md`: mastery and scheduler behavior.
+- `docs/05-architecture.md`: module boundaries.
+- `docs/06-child-ux-design-system.md`: child UX and motion.
+- `docs/08-safety-privacy-compliance.md`: privacy and store constraints.
+- `tasks/`: bounded implementation assignments and acceptance gates.
+
+When documents conflict, safety/privacy wins, then `AGENTS.md`, then schemas/catalog, then implementation notes.
+
+## Recommended implementation stack
+
+At implementation time use the current stable Expo SDK compatible with the current stable React Native New Architecture. Use TypeScript strict mode. Recommended components:
+
+- React Native views for semantic/accessibility structure.
+- React Native Skia only for game canvases and animation-heavy scenes.
+- Reanimated for controlled motion.
+- Expo SQLite for local persistence.
+- Expo Audio and Haptics, both user-controllable.
+- JSON Schema or Zod at content boundaries.
+- No backend in v1.
+
+Do not pin old framework versions merely to match this document. Record final version choices in an ADR.
+
+## Architecture rules
+
+- `@little-logic-lab/core` stays pure TypeScript and platform-independent.
+- Game logic is deterministic from `seed + difficulty + contentPack`.
+- Renderers never decide correctness or mastery.
+- Persistence adapters never contain pedagogical decisions.
+- Each game plugin implements generate, initialize, reduce, evaluate and getHint. Reuse the pure reference runtimes in `packages/core/src/runtime/` before inventing new behavior.
+- Every generated level must be replayable from its seed.
+- Each major game mechanic needs unit tests and a solvability/property test.
+
+## First vertical slice
+
+Implement `same-picture` end-to-end before adding more games:
+
+- parent creates a local profile or chooses anonymous default;
+- child sees a visual/audio demonstration;
+- level is generated from a seed;
+- 2–3 large choices;
+- specific feedback and one hint;
+- local attempt event;
+- mastery update;
+- short real-world transfer prompt;
+- session ends cleanly at the configured limit.
+
+Acceptance criteria are in `tasks/01-same-picture-vertical-slice.md` and `docs/11-codex-build-plan.md`.
+
+## Quality gate
+
+Before any release candidate:
+
+```bash
+npm test
+```
+
+Then verify on small and large iOS/Android screens, VoiceOver/TalkBack, Reduce Motion, audio off, airplane mode and after local-data deletion.
+
+Do not silently weaken requirements to make implementation easier. Document tradeoffs in `docs/decisions/`.

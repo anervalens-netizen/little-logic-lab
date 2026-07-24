@@ -1,0 +1,23 @@
+{
+  "id": "tap-dont-tap-B-001",
+  "gameId": "tap-dont-tap",
+  "seed": "gng-B-001",
+  "difficulty": {
+    "trialCount": 6,
+    "goNoGoRatio": 0.7,
+    "signalDelayMs": 500,
+    "ruleComplexity": 1
+  },
+  "contentPack": "sample-items",
+  "successRule": {
+    "kind": "ordered_sequence"
+  },
+  "hintPolicy": {
+    "afterErrors": 1,
+    "maxHints": 2
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 2,
+    "endOnDistress": true
+  }
+}

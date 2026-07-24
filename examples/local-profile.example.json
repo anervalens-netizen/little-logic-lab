@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "profileId": "local-example-profile",
+  "ageMonthsAtSetup": 31,
+  "ageBand": "A30_36",
+  "createdAtLocal": "2026-07-24T12:00:00+03:00",
+  "settings": {
+    "sessionMinutes": 5,
+    "audioEnabled": true,
+    "musicEnabled": false,
+    "hapticsEnabled": false,
+    "reducedMotion": true,
+    "highContrast": false,
+    "targetSize": "extra_large",
+    "demonstrationSpeed": "slow",
+    "coPlayPrompts": true
+  },
+  "mastery": {}
+}

@@ -1,0 +1,240 @@
+{
+  "generatedAt": "deterministic-preview",
+  "levels": [
+    {
+      "id": "same-picture:preview:visual",
+      "gameId": "same-picture",
+      "seed": "preview:visual",
+      "difficulty": {
+        "choiceCount": 3,
+        "distractorSimilarity": 1
+      },
+      "payload": {
+        "targetId": "sun-yellow",
+        "choiceIds": [
+          "leaf-green",
+          "sun-yellow",
+          "elephant"
+        ],
+        "correctChoiceId": "sun-yellow"
+      }
+    },
+    {
+      "id": "sort-by-color:preview:sort",
+      "gameId": "sort-by-color",
+      "seed": "preview:sort",
+      "difficulty": {
+        "itemCount": 6,
+        "binCount": 2,
+        "ruleCount": 1
+      },
+      "payload": {
+        "attribute": "color",
+        "bins": [
+          "gray",
+          "green"
+        ],
+        "itemIds": [
+          "boat-green",
+          "leaf-green",
+          "pillow-green",
+          "pear-green",
+          "elephant",
+          "kite-green"
+        ],
+        "correctBinByItemId": {
+          "boat-green": "green",
+          "leaf-green": "green",
+          "pillow-green": "green",
+          "pear-green": "green",
+          "elephant": "gray",
+          "kite-green": "green"
+        }
+      }
+    },
+    {
+      "id": "sequence-lights:preview:sequence",
+      "gameId": "sequence-lights",
+      "seed": "preview:sequence",
+      "difficulty": {
+        "sequenceLength": 3,
+        "modalityCount": 1
+      },
+      "payload": {
+        "sequence": [
+          "fish",
+          "dog",
+          "duck"
+        ]
+      }
+    },
+    {
+      "id": "tap-dont-tap:preview:gng",
+      "gameId": "tap-dont-tap",
+      "seed": "preview:gng",
+      "difficulty": {
+        "trialCount": 8,
+        "goNoGoRatio": 0.65
+      },
+      "payload": {
+        "trials": [
+          {
+            "index": 0,
+            "stimulusId": "cloud-blue",
+            "expectedAction": "wait"
+          },
+          {
+            "index": 1,
+            "stimulusId": "sun-yellow",
+            "expectedAction": "tap"
+          },
+          {
+            "index": 2,
+            "stimulusId": "sun-yellow",
+            "expectedAction": "tap"
+          },
+          {
+            "index": 3,
+            "stimulusId": "sun-yellow",
+            "expectedAction": "tap"
+          },
+          {
+            "index": 4,
+            "stimulusId": "sun-yellow",
+            "expectedAction": "tap"
+          },
+          {
+            "index": 5,
+            "stimulusId": "cloud-blue",
+            "expectedAction": "wait"
+          },
+          {
+            "index": 6,
+            "stimulusId": "cloud-blue",
+            "expectedAction": "wait"
+          },
+          {
+            "index": 7,
+            "stimulusId": "sun-yellow",
+            "expectedAction": "tap"
+          }
+        ]
+      }
+    },
+    {
+      "id": "repeat-pattern-ab:preview:pattern",
+      "gameId": "repeat-pattern-ab",
+      "seed": "preview:pattern",
+      "difficulty": {
+        "patternLength": 7,
+        "patternFamily": "AAB",
+        "missingPositions": 1
+      },
+      "payload": {
+        "visibleSequence": [
+          "duck",
+          "duck",
+          "fish",
+          "duck",
+          "duck",
+          "fish",
+          null
+        ],
+        "answer": "duck",
+        "missingIndex": 6,
+        "family": "AAB"
+      }
+    },
+    {
+      "id": "quantity-match:preview:number",
+      "gameId": "quantity-match",
+      "seed": "preview:number",
+      "difficulty": {
+        "maxQuantity": 5,
+        "choiceCount": 3
+      },
+      "payload": {
+        "targetQuantity": 1,
+        "options": [
+          2,
+          5,
+          1
+        ],
+        "correctChoice": 1
+      }
+    },
+    {
+      "id": "daily-order:preview:order",
+      "gameId": "daily-order",
+      "seed": "preview:order",
+      "difficulty": {
+        "stepCount": 3,
+        "distractorCount": 0
+      },
+      "payload": {
+        "presentedIds": [
+          "wash-hands",
+          "sit-at-table",
+          "eat"
+        ],
+        "correctOrderIds": [
+          "wash-hands",
+          "sit-at-table",
+          "eat"
+        ],
+        "distractorIds": []
+      }
+    },
+    {
+      "id": "simple-maze:preview:maze",
+      "gameId": "simple-maze",
+      "seed": "preview:maze",
+      "difficulty": {
+        "gridSize": 4,
+        "branchCount": 2,
+        "movingHazards": 0
+      },
+      "payload": {
+        "gridSize": 4,
+        "start": {
+          "row": 0,
+          "column": 0
+        },
+        "goal": {
+          "row": 3,
+          "column": 3
+        },
+        "safePath": [
+          {
+            "row": 0,
+            "column": 0
+          },
+          {
+            "row": 0,
+            "column": 1
+          },
+          {
+            "row": 0,
+            "column": 2
+          },
+          {
+            "row": 1,
+            "column": 2
+          },
+          {
+            "row": 1,
+            "column": 3
+          },
+          {
+            "row": 2,
+            "column": 3
+          },
+          {
+            "row": 3,
+            "column": 3
+          }
+        ]
+      }
+    }
+  ]
+}

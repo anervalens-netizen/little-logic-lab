@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://little-logic-lab.local/schemas/session-event.schema.json",
+  "title": "LocalSessionEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "occurredAtLocal",
+    "sessionId",
+    "gameId",
+    "levelSeed",
+    "eventType"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "eventId": {
+      "type": "string"
+    },
+    "occurredAtLocal": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sessionId": {
+      "type": "string"
+    },
+    "gameId": {
+      "type": "string"
+    },
+    "levelSeed": {
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "eventType": {
+      "enum": [
+        "level_started",
+        "attempt",
+        "hint_shown",
+        "level_completed",
+        "level_simplified",
+        "level_abandoned",
+        "session_ended"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "description": "No free text, media, identifiers or precise timestamps beyond the local event time."
+    }
+  }
+}

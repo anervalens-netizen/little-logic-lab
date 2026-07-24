@@ -1,0 +1,1013 @@
+{
+  "version": "1.0.0",
+  "principles": [
+    "Age selects only the initial safe range; demonstrated mastery controls progression.",
+    "Change one major difficulty axis at a time.",
+    "Prefer accuracy, strategy and explanation over speed.",
+    "After two consecutive errors, add a cue; after three, simplify or switch to a success task.",
+    "Open-ended and hybrid activities are never scored."
+  ],
+  "bands": {
+    "A30_36": {
+      "choiceCount": [
+        2,
+        3
+      ],
+      "distractorSimilarity": [
+        0,
+        1
+      ],
+      "targetCueDuration": [
+        -1,
+        2500
+      ],
+      "sceneClutter": [
+        0,
+        1
+      ],
+      "itemCount": [
+        2,
+        3,
+        4
+      ],
+      "binCount": [
+        2
+      ],
+      "ruleCount": [
+        1
+      ],
+      "ruleCueVisibility": [
+        "always"
+      ],
+      "delayMs": [
+        0,
+        500
+      ],
+      "locationCount": [
+        2,
+        3
+      ],
+      "transformation": [
+        "none"
+      ],
+      "sequenceLength": [
+        1,
+        2
+      ],
+      "presentationSpeedMs": [
+        1400,
+        1100
+      ],
+      "modalityCount": [
+        1
+      ],
+      "recallMode": [
+        "recognition",
+        "direct_replay"
+      ],
+      "trialCount": [
+        4,
+        6
+      ],
+      "goNoGoRatio": [
+        0.75
+      ],
+      "signalDelayMs": [
+        0,
+        500
+      ],
+      "ruleComplexity": [
+        1
+      ],
+      "switchFrequency": [
+        0
+      ],
+      "conflictLevel": [
+        0
+      ],
+      "stepCount": [
+        2,
+        3
+      ],
+      "distractorCount": [
+        0
+      ],
+      "causalDistance": [
+        0
+      ],
+      "verbalSupport": [
+        "full"
+      ],
+      "patternLength": [
+        2,
+        4
+      ],
+      "patternFamily": [
+        "AB"
+      ],
+      "missingPositions": [
+        1
+      ],
+      "pieceCount": [
+        2,
+        3,
+        4
+      ],
+      "rotationEnabled": [
+        false
+      ],
+      "outlineSupport": [
+        "full"
+      ],
+      "similarity": [
+        0,
+        1
+      ],
+      "gridSize": [
+        2,
+        3
+      ],
+      "branchCount": [
+        0,
+        1
+      ],
+      "lookaheadSteps": [
+        1
+      ],
+      "movingHazards": [
+        0
+      ],
+      "modelVisibility": [
+        "always"
+      ],
+      "symmetry": [
+        false
+      ],
+      "maxQuantity": [
+        1,
+        2,
+        3
+      ],
+      "symbolSupport": [
+        "none"
+      ],
+      "perceptualControl": [
+        "basic"
+      ],
+      "maxResult": [
+        3
+      ],
+      "operationSteps": [
+        1
+      ],
+      "manipulativeSupport": [
+        "full"
+      ],
+      "storyComplexity": [
+        1
+      ],
+      "utteranceLength": [
+        1,
+        2
+      ],
+      "attributeCount": [
+        1
+      ],
+      "repeatAvailability": [
+        "always"
+      ],
+      "phonologicalDistance": [
+        "high"
+      ],
+      "wordLength": [
+        "short"
+      ],
+      "audioSupport": [
+        "full"
+      ],
+      "contextLength": [
+        1
+      ],
+      "perspectiveCount": [
+        1
+      ],
+      "ambiguity": [
+        0
+      ],
+      "pathLength": [
+        1,
+        2
+      ],
+      "pathWidth": [
+        "very_wide",
+        "wide"
+      ],
+      "turnCount": [
+        0,
+        2
+      ],
+      "guideStrength": [
+        "full"
+      ],
+      "partCount": [
+        2,
+        4
+      ],
+      "constraintCount": [
+        0
+      ],
+      "promptSpecificity": [
+        "open"
+      ],
+      "modelAvailability": [
+        "optional"
+      ],
+      "memoryDelaySec": [
+        0,
+        3
+      ],
+      "parentPromptSupport": [
+        "full"
+      ]
+    },
+    "B36_48": {
+      "choiceCount": [
+        3,
+        4
+      ],
+      "distractorSimilarity": [
+        1,
+        2
+      ],
+      "targetCueDuration": [
+        1500,
+        800
+      ],
+      "sceneClutter": [
+        1,
+        2
+      ],
+      "itemCount": [
+        4,
+        6,
+        8
+      ],
+      "binCount": [
+        2,
+        3
+      ],
+      "ruleCount": [
+        1
+      ],
+      "ruleCueVisibility": [
+        "always",
+        "on_request"
+      ],
+      "delayMs": [
+        500,
+        1000,
+        1500
+      ],
+      "locationCount": [
+        3,
+        4
+      ],
+      "transformation": [
+        "none",
+        "one_swap"
+      ],
+      "sequenceLength": [
+        2,
+        3
+      ],
+      "presentationSpeedMs": [
+        1100,
+        900
+      ],
+      "modalityCount": [
+        1
+      ],
+      "recallMode": [
+        "direct_replay",
+        "ordered_choice"
+      ],
+      "trialCount": [
+        6,
+        8
+      ],
+      "goNoGoRatio": [
+        0.7,
+        0.6
+      ],
+      "signalDelayMs": [
+        500,
+        900
+      ],
+      "ruleComplexity": [
+        1
+      ],
+      "switchFrequency": [
+        0,
+        0.2
+      ],
+      "conflictLevel": [
+        0,
+        1
+      ],
+      "stepCount": [
+        2,
+        3,
+        4
+      ],
+      "distractorCount": [
+        0,
+        1
+      ],
+      "causalDistance": [
+        0,
+        1
+      ],
+      "verbalSupport": [
+        "full",
+        "brief"
+      ],
+      "patternLength": [
+        4,
+        6
+      ],
+      "patternFamily": [
+        "AB",
+        "AAB",
+        "ABB"
+      ],
+      "missingPositions": [
+        1
+      ],
+      "pieceCount": [
+        3,
+        4,
+        5
+      ],
+      "rotationEnabled": [
+        false,
+        true
+      ],
+      "outlineSupport": [
+        "full",
+        "partial"
+      ],
+      "similarity": [
+        1,
+        2
+      ],
+      "gridSize": [
+        3,
+        4
+      ],
+      "branchCount": [
+        1,
+        2
+      ],
+      "lookaheadSteps": [
+        1,
+        2
+      ],
+      "movingHazards": [
+        0
+      ],
+      "modelVisibility": [
+        "always",
+        "preview"
+      ],
+      "symmetry": [
+        false
+      ],
+      "maxQuantity": [
+        3,
+        4,
+        5
+      ],
+      "symbolSupport": [
+        "none",
+        "paired"
+      ],
+      "perceptualControl": [
+        "controlled"
+      ],
+      "maxResult": [
+        5
+      ],
+      "operationSteps": [
+        1
+      ],
+      "manipulativeSupport": [
+        "full"
+      ],
+      "storyComplexity": [
+        1,
+        2
+      ],
+      "utteranceLength": [
+        2,
+        4
+      ],
+      "attributeCount": [
+        1,
+        2
+      ],
+      "repeatAvailability": [
+        "always"
+      ],
+      "phonologicalDistance": [
+        "high",
+        "medium"
+      ],
+      "wordLength": [
+        "short",
+        "medium"
+      ],
+      "audioSupport": [
+        "full"
+      ],
+      "contextLength": [
+        1,
+        2
+      ],
+      "perspectiveCount": [
+        1
+      ],
+      "ambiguity": [
+        0
+      ],
+      "pathLength": [
+        2,
+        4
+      ],
+      "pathWidth": [
+        "wide",
+        "medium"
+      ],
+      "turnCount": [
+        2,
+        4
+      ],
+      "guideStrength": [
+        "full",
+        "partial"
+      ],
+      "partCount": [
+        3,
+        6
+      ],
+      "constraintCount": [
+        0,
+        1
+      ],
+      "promptSpecificity": [
+        "open",
+        "theme"
+      ],
+      "modelAvailability": [
+        "optional",
+        "visible"
+      ],
+      "memoryDelaySec": [
+        3,
+        8
+      ],
+      "parentPromptSupport": [
+        "full"
+      ]
+    },
+    "C48_60": {
+      "choiceCount": [
+        4,
+        5,
+        6
+      ],
+      "distractorSimilarity": [
+        2,
+        3
+      ],
+      "targetCueDuration": [
+        800,
+        0
+      ],
+      "sceneClutter": [
+        2,
+        3
+      ],
+      "itemCount": [
+        6,
+        8,
+        10
+      ],
+      "binCount": [
+        2,
+        3,
+        4
+      ],
+      "ruleCount": [
+        1,
+        2
+      ],
+      "ruleCueVisibility": [
+        "on_request",
+        "at_switch"
+      ],
+      "delayMs": [
+        1000,
+        2000,
+        3000
+      ],
+      "locationCount": [
+        4,
+        6
+      ],
+      "transformation": [
+        "one_swap",
+        "two_swaps",
+        "remove_one"
+      ],
+      "sequenceLength": [
+        3,
+        4
+      ],
+      "presentationSpeedMs": [
+        900,
+        700
+      ],
+      "modalityCount": [
+        1,
+        2
+      ],
+      "recallMode": [
+        "ordered_choice",
+        "free_replay"
+      ],
+      "trialCount": [
+        8,
+        12
+      ],
+      "goNoGoRatio": [
+        0.6,
+        0.5
+      ],
+      "signalDelayMs": [
+        800,
+        1400
+      ],
+      "ruleComplexity": [
+        1,
+        2
+      ],
+      "switchFrequency": [
+        0.2,
+        0.35
+      ],
+      "conflictLevel": [
+        1,
+        2
+      ],
+      "stepCount": [
+        3,
+        4,
+        5
+      ],
+      "distractorCount": [
+        1,
+        2
+      ],
+      "causalDistance": [
+        1,
+        2
+      ],
+      "verbalSupport": [
+        "brief",
+        "on_request"
+      ],
+      "patternLength": [
+        5,
+        8
+      ],
+      "patternFamily": [
+        "AAB",
+        "ABB",
+        "ABC",
+        "AABB"
+      ],
+      "missingPositions": [
+        1,
+        2
+      ],
+      "pieceCount": [
+        5,
+        7,
+        8
+      ],
+      "rotationEnabled": [
+        true
+      ],
+      "outlineSupport": [
+        "partial",
+        "none"
+      ],
+      "similarity": [
+        2,
+        3
+      ],
+      "gridSize": [
+        4,
+        5
+      ],
+      "branchCount": [
+        2,
+        4
+      ],
+      "lookaheadSteps": [
+        2,
+        3
+      ],
+      "movingHazards": [
+        0
+      ],
+      "modelVisibility": [
+        "preview",
+        "toggle"
+      ],
+      "symmetry": [
+        false,
+        true
+      ],
+      "maxQuantity": [
+        5,
+        8,
+        10
+      ],
+      "symbolSupport": [
+        "paired",
+        "symbol"
+      ],
+      "perceptualControl": [
+        "controlled",
+        "strict"
+      ],
+      "maxResult": [
+        8,
+        10
+      ],
+      "operationSteps": [
+        1,
+        2
+      ],
+      "manipulativeSupport": [
+        "full",
+        "partial"
+      ],
+      "storyComplexity": [
+        2,
+        3
+      ],
+      "utteranceLength": [
+        4,
+        6
+      ],
+      "attributeCount": [
+        2,
+        3
+      ],
+      "repeatAvailability": [
+        "always",
+        "limited"
+      ],
+      "phonologicalDistance": [
+        "medium"
+      ],
+      "wordLength": [
+        "medium"
+      ],
+      "audioSupport": [
+        "full",
+        "reduced"
+      ],
+      "contextLength": [
+        2,
+        3
+      ],
+      "perspectiveCount": [
+        1,
+        2
+      ],
+      "ambiguity": [
+        0,
+        1
+      ],
+      "pathLength": [
+        4,
+        6
+      ],
+      "pathWidth": [
+        "medium",
+        "narrow"
+      ],
+      "turnCount": [
+        4,
+        7
+      ],
+      "guideStrength": [
+        "partial",
+        "faint"
+      ],
+      "partCount": [
+        5,
+        10
+      ],
+      "constraintCount": [
+        1,
+        2
+      ],
+      "promptSpecificity": [
+        "theme",
+        "goal"
+      ],
+      "modelAvailability": [
+        "visible",
+        "optional"
+      ],
+      "memoryDelaySec": [
+        8,
+        20
+      ],
+      "parentPromptSupport": [
+        "brief"
+      ]
+    },
+    "D60_72": {
+      "choiceCount": [
+        5,
+        6,
+        8
+      ],
+      "distractorSimilarity": [
+        3,
+        4
+      ],
+      "targetCueDuration": [
+        0
+      ],
+      "sceneClutter": [
+        3,
+        4
+      ],
+      "itemCount": [
+        8,
+        10,
+        12
+      ],
+      "binCount": [
+        3,
+        4
+      ],
+      "ruleCount": [
+        2
+      ],
+      "ruleCueVisibility": [
+        "at_switch",
+        "on_request"
+      ],
+      "delayMs": [
+        2000,
+        4000,
+        6000
+      ],
+      "locationCount": [
+        6,
+        9
+      ],
+      "transformation": [
+        "two_swaps",
+        "remove_one",
+        "rotate_layout"
+      ],
+      "sequenceLength": [
+        4,
+        5,
+        6
+      ],
+      "presentationSpeedMs": [
+        800,
+        650
+      ],
+      "modalityCount": [
+        1,
+        2
+      ],
+      "recallMode": [
+        "ordered_choice",
+        "free_replay"
+      ],
+      "trialCount": [
+        10,
+        14,
+        16
+      ],
+      "goNoGoRatio": [
+        0.55,
+        0.5
+      ],
+      "signalDelayMs": [
+        1000,
+        1800
+      ],
+      "ruleComplexity": [
+        2,
+        3
+      ],
+      "switchFrequency": [
+        0.3,
+        0.5
+      ],
+      "conflictLevel": [
+        2,
+        3
+      ],
+      "stepCount": [
+        4,
+        5,
+        6
+      ],
+      "distractorCount": [
+        1,
+        2,
+        3
+      ],
+      "causalDistance": [
+        1,
+        2,
+        3
+      ],
+      "verbalSupport": [
+        "on_request",
+        "minimal"
+      ],
+      "patternLength": [
+        6,
+        10
+      ],
+      "patternFamily": [
+        "ABC",
+        "AABB",
+        "ABAC",
+        "growing"
+      ],
+      "missingPositions": [
+        1,
+        2,
+        3
+      ],
+      "pieceCount": [
+        6,
+        8,
+        10
+      ],
+      "rotationEnabled": [
+        true
+      ],
+      "outlineSupport": [
+        "partial",
+        "none"
+      ],
+      "similarity": [
+        3,
+        4
+      ],
+      "gridSize": [
+        5,
+        6
+      ],
+      "branchCount": [
+        3,
+        5
+      ],
+      "lookaheadSteps": [
+        3,
+        5
+      ],
+      "movingHazards": [
+        0,
+        1
+      ],
+      "modelVisibility": [
+        "toggle",
+        "preview_only"
+      ],
+      "symmetry": [
+        true
+      ],
+      "maxQuantity": [
+        10,
+        15,
+        20
+      ],
+      "symbolSupport": [
+        "symbol",
+        "mixed"
+      ],
+      "perceptualControl": [
+        "strict"
+      ],
+      "maxResult": [
+        10,
+        12,
+        20
+      ],
+      "operationSteps": [
+        1,
+        2
+      ],
+      "manipulativeSupport": [
+        "partial",
+        "optional"
+      ],
+      "storyComplexity": [
+        2,
+        4
+      ],
+      "utteranceLength": [
+        5,
+        8
+      ],
+      "attributeCount": [
+        2,
+        3,
+        4
+      ],
+      "repeatAvailability": [
+        "limited",
+        "on_request"
+      ],
+      "phonologicalDistance": [
+        "medium",
+        "low"
+      ],
+      "wordLength": [
+        "medium",
+        "long"
+      ],
+      "audioSupport": [
+        "reduced",
+        "on_request"
+      ],
+      "contextLength": [
+        3,
+        4
+      ],
+      "perspectiveCount": [
+        2
+      ],
+      "ambiguity": [
+        1
+      ],
+      "pathLength": [
+        5,
+        8
+      ],
+      "pathWidth": [
+        "medium",
+        "narrow"
+      ],
+      "turnCount": [
+        5,
+        10
+      ],
+      "guideStrength": [
+        "faint",
+        "on_request"
+      ],
+      "partCount": [
+        6,
+        14
+      ],
+      "constraintCount": [
+        1,
+        3
+      ],
+      "promptSpecificity": [
+        "goal",
+        "challenge"
+      ],
+      "modelAvailability": [
+        "optional",
+        "preview_only"
+      ],
+      "memoryDelaySec": [
+        15,
+        40
+      ],
+      "parentPromptSupport": [
+        "brief",
+        "optional"
+      ]
+    }
+  }
+}

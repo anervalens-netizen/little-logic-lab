@@ -1,0 +1,94 @@
+{
+  "lastReviewed": "2026-07-24",
+  "scope": "Product and learning-design evidence; not medical advice or a developmental screening protocol.",
+  "sources": [
+    {
+      "id": "who-under-5-2019",
+      "authority": "World Health Organization",
+      "title": "Guidelines on physical activity, sedentary behaviour and sleep for children under 5 years of age",
+      "year": 2019,
+      "url": "https://www.who.int/publications/i/item/9789241550536",
+      "usedFor": ["screen-use boundary", "protect movement and sleep"]
+    },
+    {
+      "id": "aap-media-young-minds-2016",
+      "authority": "American Academy of Pediatrics",
+      "title": "Media and Young Minds",
+      "year": 2016,
+      "url": "https://publications.aap.org/pediatrics/article/138/5/e20162591/60503",
+      "usedFor": ["high-quality media", "co-use", "avoid displacement"]
+    },
+    {
+      "id": "aap-co-viewing-2026",
+      "authority": "American Academy of Pediatrics / HealthyChildren",
+      "title": "Why Co-Viewing Is Important",
+      "year": 2026,
+      "url": "https://www.healthychildren.org/English/family-life/Media/Pages/why-co-viewing-is-important-tips-to-share-screen-time-with-your-kids.aspx",
+      "usedFor": ["adult co-play prompts", "real-world conversation"]
+    },
+    {
+      "id": "cdc-milestones-2026",
+      "authority": "US Centers for Disease Control and Prevention",
+      "title": "Developmental Milestones",
+      "year": 2026,
+      "url": "https://www.cdc.gov/act-early/milestones/",
+      "usedFor": ["conservative starting ranges", "non-diagnostic boundary"]
+    },
+    {
+      "id": "harvard-ef-activities",
+      "authority": "Center on the Developing Child at Harvard University",
+      "title": "Enhancing and Practicing Executive Function Skills with Children from Infancy to Adolescence",
+      "year": 2014,
+      "url": "https://developingchild.harvard.edu/resources/handouts-tools/activities-guide-enhancing-and-practicing-executive-function-skills/",
+      "usedFor": ["working memory", "inhibition", "cognitive flexibility", "age progression"]
+    },
+    {
+      "id": "hirsh-pasek-educational-apps-2015",
+      "authority": "Hirsh-Pasek et al.",
+      "title": "Putting Education in Educational Apps",
+      "year": 2015,
+      "url": "https://pubmed.ncbi.nlm.nih.gov/25985468/",
+      "usedFor": ["active", "engaged", "meaningful", "socially interactive learning"]
+    },
+    {
+      "id": "melby-lervag-wm-transfer-2016",
+      "authority": "Melby-Lervåg, Redick and Hulme",
+      "title": "Working Memory Training Does Not Improve Performance on Measures of Intelligence or Other Measures of Far Transfer",
+      "year": 2016,
+      "url": "https://doi.org/10.1177/1745691616635612",
+      "usedFor": ["claim restraint", "near versus far transfer"]
+    },
+    {
+      "id": "skene-guided-play-2022",
+      "authority": "Skene et al.",
+      "title": "Can guidance during play enhance children's learning and development?",
+      "year": 2022,
+      "url": "https://doi.org/10.1111/cdev.13730",
+      "usedFor": ["guided play", "math and shape activities", "adult scaffolding"]
+    },
+    {
+      "id": "apple-kids-category-current",
+      "authority": "Apple",
+      "title": "App Review Guidelines — Kids Category",
+      "year": 2026,
+      "url": "https://developer.apple.com/app-store/review/guidelines/",
+      "usedFor": ["parental gate", "data minimization", "no third-party advertising"]
+    },
+    {
+      "id": "google-families-current",
+      "authority": "Google Play",
+      "title": "Families Policy Requirements",
+      "year": 2026,
+      "url": "https://support.google.com/googleplay/android-developer/answer/9893335",
+      "usedFor": ["child-directed app policy", "identifier and location restrictions"]
+    },
+    {
+      "id": "eu-child-data-safeguards",
+      "authority": "European Commission",
+      "title": "Specific safeguards for children's data",
+      "year": 2026,
+      "url": "https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/legal-grounds-processing-data/are-there-any-specific-safeguards-data-about-children_en",
+      "usedFor": ["clear parent information", "data minimization", "consent boundary"]
+    }
+  ]
+}

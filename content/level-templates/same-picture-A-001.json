@@ -1,0 +1,23 @@
+{
+  "id": "same-picture-A-001",
+  "gameId": "same-picture",
+  "seed": "same-picture-A-001",
+  "difficulty": {
+    "choiceCount": 2,
+    "distractorSimilarity": 0,
+    "targetCueDuration": -1,
+    "sceneClutter": 0
+  },
+  "contentPack": "sample-items",
+  "successRule": {
+    "kind": "single_choice"
+  },
+  "hintPolicy": {
+    "afterErrors": 1,
+    "maxHints": 2
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 2,
+    "endOnDistress": true
+  }
+}

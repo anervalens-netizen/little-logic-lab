@@ -1,0 +1,45 @@
+name: Game proposal
+about: Propose a new game family or a material change to an existing one
+labels: [content, game-design]
+body:
+  - type: input
+    id: goal
+    attributes:
+      label: Primary learning goal
+      description: One specific skill, not a broad intelligence claim.
+    validations:
+      required: true
+  - type: input
+    id: age
+    attributes:
+      label: Earliest safe age band
+      placeholder: A30_36, B36_48, C48_60 or D60_72
+    validations:
+      required: true
+  - type: textarea
+    id: mechanic
+    attributes:
+      label: Core mechanic
+      description: Describe the child action and how correctness is determined.
+    validations:
+      required: true
+  - type: textarea
+    id: axes
+    attributes:
+      label: Difficulty axes
+      description: At least two independent axes; only one may change per step.
+    validations:
+      required: true
+  - type: textarea
+    id: safeguards
+    attributes:
+      label: Guardrails and failure cases
+      description: Include accessibility, frustration, privacy and solvability concerns.
+    validations:
+      required: true
+  - type: textarea
+    id: transfer
+    attributes:
+      label: Co-play and offline transfer
+    validations:
+      required: true

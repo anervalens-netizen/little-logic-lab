@@ -1,0 +1,13 @@
+{
+  "app.name": "Little Logic Lab",
+  "common.listen": "Listen",
+  "common.tryAgain": "Try again",
+  "common.showMe": "Show me",
+  "common.greatThinking": "That was good thinking",
+  "common.almost": "Almost. Look once more.",
+  "common.break": "All done for now. We can continue another time.",
+  "parent.gate": "Grown-ups area",
+  "parent.deleteData": "Delete local progress",
+  "parent.exportData": "Export local progress",
+  "session.finished": "Today's games are finished."
+}

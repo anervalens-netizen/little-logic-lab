@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://little-logic-lab.local/schemas/game-definition.schema.json",
+  "title": "GameDefinition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "domain",
+    "secondarySkills",
+    "minAgeMonths",
+    "maxAgeMonths",
+    "entryBand",
+    "implementationPriority",
+    "mode",
+    "interaction",
+    "archetype",
+    "learningGoal",
+    "mechanic",
+    "difficultyAxes",
+    "progression",
+    "guardrails",
+    "coPlayPrompt",
+    "offlineTransfer",
+    "requiresReading",
+    "requiresMicrophone",
+    "requiresCamera",
+    "requiresNetwork",
+    "scored",
+    "generatorStatus"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "title": {
+      "type": "object",
+      "required": [
+        "ro",
+        "en"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ro": {
+          "type": "string",
+          "minLength": 2
+        },
+        "en": {
+          "type": "string",
+          "minLength": 2
+        }
+      }
+    },
+    "domain": {
+      "enum": [
+        "visual_attention",
+        "classification",
+        "working_memory",
+        "inhibition_flexibility",
+        "sequencing_patterns",
+        "spatial_planning",
+        "numeracy",
+        "language_social",
+        "fine_motor_creativity",
+        "hybrid_transfer"
+      ]
+    },
+    "secondarySkills": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "minAgeMonths": {
+      "type": "integer",
+      "minimum": 24,
+      "maximum": 72
+    },
+    "maxAgeMonths": {
+      "type": "integer",
+      "minimum": 30,
+      "maximum": 84
+    },
+    "entryBand": {
+      "enum": [
+        "A30_36",
+        "B36_48",
+        "C48_60",
+        "D60_72"
+      ]
+    },
+    "implementationPriority": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "digital",
+        "hybrid",
+        "open_ended"
+      ]
+    },
+    "interaction": {
+      "type": "string"
+    },
+    "archetype": {
+      "type": "string"
+    },
+    "learningGoal": {
+      "type": "string",
+      "minLength": 8
+    },
+    "mechanic": {
+      "type": "string",
+      "minLength": 8
+    },
+    "difficultyAxes": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "progression": {
+      "type": "string",
+      "minLength": 20
+    },
+    "guardrails": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 10
+      }
+    },
+    "coPlayPrompt": {
+      "type": "string",
+      "minLength": 10
+    },
+    "offlineTransfer": {
+      "type": "string",
+      "minLength": 10
+    },
+    "requiresReading": {
+      "const": false
+    },
+    "requiresMicrophone": {
+      "const": false
+    },
+    "requiresCamera": {
+      "const": false
+    },
+    "requiresNetwork": {
+      "const": false
+    },
+    "scored": {
+      "type": "boolean"
+    },
+    "generatorStatus": {
+      "enum": [
+        "sample_implemented",
+        "specified"
+      ]
+    }
+  }
+}

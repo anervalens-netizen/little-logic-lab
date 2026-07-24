@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://little-logic-lab.local/schemas/level-template.schema.json",
+  "title": "LevelTemplate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "gameId",
+    "seed",
+    "difficulty",
+    "contentPack",
+    "successRule",
+    "hintPolicy",
+    "frustrationPolicy"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "gameId": {
+      "type": "string"
+    },
+    "seed": {
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "difficulty": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "integer",
+          "number",
+          "string",
+          "boolean"
+        ]
+      }
+    },
+    "contentPack": {
+      "type": "string"
+    },
+    "successRule": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "single_choice",
+            "all_sorted",
+            "ordered_sequence",
+            "path_complete",
+            "open_ended",
+            "parent_confirmed"
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "hintPolicy": {
+      "type": "object",
+      "required": [
+        "afterErrors"
+      ],
+      "properties": {
+        "afterErrors": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "maxHints": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        }
+      },
+      "additionalProperties": false
+    },
+    "frustrationPolicy": {
+      "type": "object",
+      "required": [
+        "simplifyAfterErrors",
+        "endOnDistress"
+      ],
+      "properties": {
+        "simplifyAfterErrors": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4
+        },
+        "endOnDistress": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

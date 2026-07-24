@@ -1,0 +1,23 @@
+{
+  "id": "sort-by-color-A-001",
+  "gameId": "sort-by-color",
+  "seed": "sort-color-A-001",
+  "difficulty": {
+    "itemCount": 4,
+    "binCount": 2,
+    "ruleCount": 1,
+    "ruleCueVisibility": "always"
+  },
+  "contentPack": "sample-items",
+  "successRule": {
+    "kind": "all_sorted"
+  },
+  "hintPolicy": {
+    "afterErrors": 1,
+    "maxHints": 3
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 3,
+    "endOnDistress": true
+  }
+}

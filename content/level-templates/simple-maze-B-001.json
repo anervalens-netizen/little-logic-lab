@@ -1,0 +1,23 @@
+{
+  "id": "simple-maze-B-001",
+  "gameId": "simple-maze",
+  "seed": "maze-B-001",
+  "difficulty": {
+    "gridSize": 3,
+    "branchCount": 1,
+    "lookaheadSteps": 1,
+    "movingHazards": 0
+  },
+  "contentPack": "sample-items",
+  "successRule": {
+    "kind": "path_complete"
+  },
+  "hintPolicy": {
+    "afterErrors": 2,
+    "maxHints": 3
+  },
+  "frustrationPolicy": {
+    "simplifyAfterErrors": 3,
+    "endOnDistress": true
+  }
+}
