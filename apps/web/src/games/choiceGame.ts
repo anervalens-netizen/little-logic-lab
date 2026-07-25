@@ -112,6 +112,7 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
         const hand = ctx.shell.querySelector<HTMLElement>(".demo-hand");
         if (hand) hand.style.opacity = "0";
       }
+      row.dataset.gameReady = "true";
 
       return await new Promise<PlayResult>((resolve) => {
         let settled = false;

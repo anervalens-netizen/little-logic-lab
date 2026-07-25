@@ -11,14 +11,13 @@ const root = (): HTMLElement => {
 };
 
 let current: HTMLElement | null = null;
-let navigating = false;
+let transition: Promise<void> = Promise.resolve();
 
-export async function showScreen(factory: ScreenFactory): Promise<void> {
-  if (navigating) return;
-  navigating = true;
-  try {
+export function showScreen(factory: ScreenFactory): Promise<void> {
+  const operation = transition.catch(() => undefined).then(async () => {
     const next = factory();
     next.classList.add("screen");
+    next.setAttribute("data-screen-ready", "false");
     const host = root();
     if (current) {
       current.classList.add("leaving");
@@ -30,7 +29,8 @@ export async function showScreen(factory: ScreenFactory): Promise<void> {
       host.append(next);
     }
     current = next;
-  } finally {
-    navigating = false;
-  }
+    next.setAttribute("data-screen-ready", "true");
+  });
+  transition = operation;
+  return operation;
 }

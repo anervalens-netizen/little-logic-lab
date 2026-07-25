@@ -15,13 +15,24 @@ import { sfxSessionEnd } from "../audio/sfx";
 import { drawLumi } from "../art/lumi";
 import { nightScene } from "../art/scenery";
 import { showHome } from "../screens/home";
+import { applyPendingUpdate } from "./update";
+import { isGameAgeEligible } from "./content";
+import { unlockedGameIds } from "./unlocks";
 
 const SESSION_SECONDS_WARN = 0; // nu afișăm cronometru copilului
 
 function buildCandidates(): GameCandidate[] {
   const profile = getProfile();
-  return allGames()
-    .filter((game) => game.scored)
+  const games = allGames();
+  const implementedIds = new Set(games.map((game) => game.id));
+  const unlocked = unlockedGameIds(profile, implementedIds);
+  return games
+    .filter(
+      (game) =>
+        game.scored &&
+        unlocked.has(game.id) &&
+        isGameAgeEligible(game.id, profile.ageMonths),
+    )
     .map((game) => {
       const progress = profile.progressByGame[game.id];
       const mean = masteryMeanFor(game.skillId);
@@ -64,7 +75,11 @@ async function showCoPlayCard(prompt: string): Promise<void> {
 }
 
 /** Ecranul de final de sesiune: Lumi doarme, calm, fără stimulente. */
-async function showSessionEnd(gamesPlayed: number): Promise<void> {
+async function showSessionEnd(
+  sessionId: string,
+  startedAtMs: number,
+  gamesPlayed: number,
+): Promise<void> {
   const screen = el("div", { className: "bg-night" });
   screen.style.cssText = "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:24px;";
 
@@ -95,7 +110,11 @@ async function showSessionEnd(gamesPlayed: number): Promise<void> {
   await showScreen(() => screen);
   sfxSessionEnd();
   speak("Gata pentru azi! Ai fost minunat. Lumi se odihnește acum.");
-  recordSession(getProfile().settings.sessionMinutes, gamesPlayed);
+  const elapsedMinutes = Math.max(
+    0.1,
+    Math.round(((Date.now() - startedAtMs) / 60_000) * 10) / 10,
+  );
+  recordSession(sessionId, elapsedMinutes, gamesPlayed);
   await done;
 }
 
@@ -107,6 +126,7 @@ export interface SessionOptions {
 export async function runSession(options: SessionOptions = {}): Promise<void> {
   resetCancelFlag();
   const profile = getProfile();
+  const sessionId = crypto.randomUUID();
   const limitMs = profile.settings.sessionMinutes * 60_000;
   const start = Date.now();
 
@@ -152,7 +172,13 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
       speak(game.instruction);
       await wait(1400);
 
-      const { result, cancelled } = await runGame(game, shell.mount, shell.screen, `${levelSalt}`);
+      const { result, cancelled } = await runGame(
+        game,
+        shell.mount,
+        shell.screen,
+        sessionId,
+        `${levelSalt}`,
+      );
       levelSalt += 1;
 
       if (cancelled || quit) {
@@ -185,6 +211,8 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
   }
 
   stopSpeaking();
-  await showSessionEnd(gamesPlayed);
-  await showHome();
+  await showSessionEnd(sessionId, start, gamesPlayed);
+  if (!(await applyPendingUpdate())) {
+    await showHome();
+  }
 }

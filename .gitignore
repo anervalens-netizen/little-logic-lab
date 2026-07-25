@@ -3,6 +3,8 @@ packages/core/dist/
 .expo/
 dist/
 coverage/
+playwright-report/
+test-results/
 *.log
 .DS_Store
 .env

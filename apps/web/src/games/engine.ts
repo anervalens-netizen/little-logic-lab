@@ -14,6 +14,7 @@ import { speak, stopSpeaking } from "../audio/speech";
 import { praise, isMotionReduced } from "../ui/feedback";
 import { demoTap, demoHand } from "../ui/feedback";
 import { wait } from "../ui/dom";
+import { CONTENT_VERSION, ladderStageFor } from "../app/content";
 
 export interface RunOutcome {
   readonly result: PlayResult;
@@ -57,6 +58,7 @@ export async function runGame(
   game: WebGame,
   mount: HTMLElement,
   shell: HTMLElement,
+  sessionId: string,
   seedSalt: string,
 ): Promise<RunOutcome> {
   const profile = getProfile();
@@ -75,7 +77,12 @@ export async function runGame(
   }
 
   if (game.scored) {
-    recordAttempt(game.id, game.skillId, result);
+    recordAttempt(game.id, game.skillId, result, {
+      sessionId,
+      levelSeed: seed,
+      ladderStageId: ladderStageFor(game.id, profile.ageMonths, difficulty),
+      contentVersion: CONTENT_VERSION,
+    });
 
     // Ajustare dificultate: o singură axă, pe baza ultimelor rezultate.
     const updated = getProfile().progressByGame[game.id];

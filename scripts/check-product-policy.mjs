@@ -63,13 +63,7 @@ const prohibitedSourcePatterns = [
 for (const file of sourceFiles) {
   const source = fs.readFileSync(file, "utf8");
   const relative = path.relative(root, file);
-  // Service worker-ul PWA este chiar mecanismul offline-first: folosește
-  // fetch() exclusiv same-origin (garantat în cod) pentru a umple cache-ul
-  // aplicației. Excepție îngustă, doar pentru regula „network fetch";
-  // toate celelalte reguli (URL-uri remote, WebSocket etc.) rămân active.
-  const isServiceWorker = /(^|\/)apps\/[^/]+\/public\/sw\.js$/.test(relative);
   for (const rule of prohibitedSourcePatterns) {
-    if (isServiceWorker && rule.label === "network fetch") continue;
     if (rule.pattern.test(source)) {
       errors.push(`${relative}: ${rule.label} violates offline-first v1`);
     }

@@ -16,6 +16,13 @@ import {
 
 let profile: StoredProfile = loadProfile();
 
+export interface AttemptMetadata {
+  readonly sessionId: string;
+  readonly levelSeed: string;
+  readonly ladderStageId: string;
+  readonly contentVersion: string;
+}
+
 export function getProfile(): StoredProfile {
   return profile;
 }
@@ -64,10 +71,12 @@ export function recordAttempt(
   gameId: string,
   skillId: string,
   outcome: AttemptOutcome,
+  metadata: AttemptMetadata,
 ): void {
   const atLocal = new Date().toISOString();
   const attempt: StoredAttempt = {
     atLocal,
+    ...metadata,
     gameId,
     skillId,
     completed: outcome.completed,
@@ -133,10 +142,17 @@ export function setGameDifficulty(
   persist();
 }
 
-export function recordSession(minutes: number, gamesPlayed: number): void {
+export function recordSession(
+  sessionId: string,
+  minutes: number,
+  gamesPlayed: number,
+): void {
   profile = {
     ...profile,
-    sessions: [...profile.sessions, { atLocal: new Date().toISOString(), minutes, gamesPlayed }].slice(-120),
+    sessions: [
+      ...profile.sessions,
+      { sessionId, atLocal: new Date().toISOString(), minutes, gamesPlayed },
+    ].slice(-120),
   };
   persist();
 }

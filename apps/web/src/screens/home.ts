@@ -13,6 +13,8 @@ import { runSession } from "../app/session";
 import { stopSpeaking } from "../audio/speech";
 import { getAudioContext } from "../audio/audio";
 import { sfxTap } from "../audio/sfx";
+import { getProfile } from "../app/appState";
+import { unlockedGameIds } from "../app/unlocks";
 
 const PARENT_ICON = `<svg viewBox="0 0 48 48"><circle cx="24" cy="16" r="8" fill="#4A3F35"/><path d="M 8 42 Q 8 28 24 28 Q 40 28 40 42 Z" fill="#4A3F35"/></svg>`;
 const PLAY_ICON = `<svg viewBox="0 0 48 48"><path d="M 16 10 L 40 24 L 16 38 Z" fill="#4A3F35"/></svg>`;
@@ -24,6 +26,7 @@ export async function showHome(): Promise<void> {
 
   await showScreen(() => {
     const screen = el("div", { className: "bg-meadow" });
+    screen.setAttribute("data-screen", "home");
 
     const sceneHolder = el("div", {});
     sceneHolder.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;";
@@ -85,9 +88,15 @@ export async function showHome(): Promise<void> {
     bubbles.style.cssText =
       "flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill, minmax(clamp(92px,17vmin,140px), 1fr));gap:clamp(10px,2vmin,18px);padding:6px 4px 10px;touch-action:pan-y;-webkit-overflow-scrolling:touch;";
 
-    for (const game of allGames()) {
+    const games = allGames();
+    const unlocked = unlockedGameIds(
+      getProfile(),
+      new Set(games.map((game) => game.id)),
+    );
+
+    for (const game of games.filter((candidate) => unlocked.has(candidate.id))) {
       const bubble = el("button", { className: "choice-card pop-in", "aria-label": game.title });
-      bubble.style.cssText = `aspect-ratio:1;background:${game.bubbleColor}26;border-color:${game.bubbleColor};animation-delay:${allGames().indexOf(game) * 40}ms;display:flex;flex-direction:column;gap:2px;padding:10px;`;
+      bubble.style.cssText = `aspect-ratio:1;background:${game.bubbleColor}26;border-color:${game.bubbleColor};animation-delay:${games.indexOf(game) * 40}ms;display:flex;flex-direction:column;gap:2px;padding:10px;`;
       const art = svgEl(game.icon());
       art.style.cssText = "width:78%;height:78%;flex:1;min-height:0;";
       const name = el("div", {});

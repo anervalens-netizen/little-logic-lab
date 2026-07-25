@@ -14,6 +14,7 @@
     "build": "tsc -p packages/core/tsconfig.json",
     "build:web": "npm run build --workspace @little-logic-lab/web",
     "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && npm run typecheck --workspace @little-logic-lab/web",
+    "test:web": "playwright test",
     "test": "npm run generate:curriculum && npm run generate:ladders && npm run validate && npm run policy:check && npm run build && node --test packages/core/test/*.test.mjs",
     "preview": "npm run build && node scripts/generate-level-preview.mjs",
     "generate:ladders": "node scripts/generate-level-ladders.mjs",
@@ -22,8 +23,10 @@
     "generate:curriculum": "node scripts/generate-curriculum-map.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.0",
     "typescript": "7.0.2",
-    "vite": "8.1.5"
+    "vite": "8.1.5",
+    "vite-plugin-pwa": "1.3.0"
   },
   "engines": {
     "node": ">=22"
