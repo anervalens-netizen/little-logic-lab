@@ -27,6 +27,8 @@ export interface ChoiceRound {
   readonly targetLabel: string;
   /** Text rostit când începe runda (poate diferi de instrucțiunea jocului). */
   readonly roundSpeech: string;
+  /** Acțiune accesibilă pe reperul central (de ex. repetarea promptului audio). */
+  readonly targetActionLabel?: string;
   readonly options: readonly { id: string; svg: string; label: string }[];
   readonly correctId: string;
 }
@@ -55,6 +57,9 @@ export interface ChoiceGameSpec {
   readonly similarityAttribute?: string;
   /** Axa care activează distractorii similari; implicit `distractorSimilarity`. */
   readonly similarityAxis?: string;
+  readonly similarityAttributeForDifficulty?: (
+    difficulty: DifficultyVector,
+  ) => string | undefined;
 }
 
 export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
@@ -76,15 +81,15 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
       const useSimilarity =
         Number(difficulty[spec.similarityAxis ?? "distractorSimilarity"] ?? 0) >=
         1;
+      const similarityAttribute =
+        spec.similarityAttributeForDifficulty?.(difficulty) ??
+        (useSimilarity ? spec.similarityAttribute : undefined);
 
       const level = generateVisualChoice(seed, {
         gameId: spec.id,
         items: spec.content,
         choiceCount: Math.max(2, Math.min(choiceCount, spec.content.length)),
-        similarityAttribute:
-          useSimilarity && spec.similarityAttribute !== undefined
-            ? spec.similarityAttribute
-            : undefined,
+        ...(similarityAttribute ? { similarityAttribute } : {}),
       });
 
       const round = spec.buildRound(level.payload, difficulty);
@@ -236,6 +241,7 @@ async function playPixiRound(
   let settled = false;
   let cancelWatch: number | null = null;
   let resolveResult: (result: PlayResult) => void = () => undefined;
+  let repeatsUsed = 0;
 
   const result = new Promise<PlayResult>((resolve) => {
     resolveResult = resolve;
@@ -247,12 +253,25 @@ async function playPixiRound(
     resolveResult(outcome);
   };
 
+  const repeatAvailability = String(
+    difficulty["repeatAvailability"] ?? "always",
+  );
   const scene = await createPixiChoiceScene(ctx.mount, {
     targetSvg: round.targetSvg,
     targetLabel: round.targetLabel,
     options: round.options,
     reducedMotion: ctx.reducedMotion,
     clutterLevel: Number(difficulty["sceneClutter"] ?? 0),
+    ...(round.targetActionLabel
+      ? {
+          targetActionLabel: round.targetActionLabel,
+          onTargetActivate: () => {
+            speak(round.roundSpeech);
+            repeatsUsed += 1;
+            return repeatAvailability !== "limited" || repeatsUsed < 1;
+          },
+        }
+      : {}),
     onSelect(optionId) {
       if (!inputReady || settled || state.completed) return;
       const before = state;

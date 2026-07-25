@@ -610,11 +610,15 @@ const P0_BEFORE_SHADOW = [
   "one-to-one-count",
 ] as const;
 
-const P0_BEFORE_EMOTION = [
+const P0_BEFORE_LISTEN = [
   ...P0_BEFORE_SHADOW,
   "shadow-match",
   "peek-and-find",
   "wait-for-go",
+] as const;
+
+const P0_BEFORE_EMOTION = [
+  ...P0_BEFORE_LISTEN,
   "listen-find",
   "trace-road",
 ] as const;
@@ -680,6 +684,114 @@ test("shadow matching keeps eight choices touch-sized on the oldest ladder stage
     expect(box.width).toBeGreaterThanOrEqual(96);
     expect(box.height).toBeGreaterThanOrEqual(96);
   }
+});
+
+test("listen and find keeps the answer hidden in the shared Pixi choice scene", async ({
+  page,
+}) => {
+  await seedCleanProgress(page, P0_BEFORE_LISTEN);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Ascultă și găsește" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  const replay = page.getByRole("button", { name: "Repetă cerința audio" });
+  await expect(replay).toBeVisible();
+  const replayBox = await replay.boundingBox();
+  expect(replayBox?.width).toBeGreaterThanOrEqual(96);
+  expect(replayBox?.height).toBeGreaterThanOrEqual(96);
+  await replay.evaluate((button: HTMLButtonElement) => button.click());
+  await expect(replay).toBeEnabled();
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        performance
+          .getEntriesByType("resource")
+          .some((entry) => /\/audio\/ro-RO-v1\/listen-.+-1\.mp3$/.test(entry.name)),
+      ),
+    )
+    .toBe(true);
+
+  const options = page.locator(".pixi-accessibility-choice");
+  await expect(options).toHaveCount(2);
+  await options.nth(0).evaluate((button: HTMLButtonElement) => button.click());
+  await page.waitForTimeout(50);
+  await options.nth(1).evaluate((button: HTMLButtonElement) => button.click());
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "listen-find",
+      );
+    })
+    .toBe(true);
+});
+
+test("listen replay respects the limited ladder stage", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic replay contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_LISTEN);
+  await seedGameDifficulty(page, "listen-find", 48, {
+    choiceCount: 3,
+    utteranceLength: 2,
+    attributeCount: 2,
+    repeatAvailability: "limited",
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Ascultă și găsește" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  const replay = page.getByRole("button", { name: "Repetă cerința audio" });
+  await replay.evaluate((button: HTMLButtonElement) => button.click());
+  await expect(replay).toBeDisabled();
+});
+
+test("listen and find renders the full eight-choice, eight-word stage", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage layout contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_LISTEN);
+  await seedGameDifficulty(page, "listen-find", 72, {
+    choiceCount: 8,
+    utteranceLength: 8,
+    attributeCount: 4,
+    repeatAvailability: "on_request",
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Ascultă și găsește" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  const options = page.locator(".pixi-accessibility-choice");
+  await expect(options).toHaveCount(8);
+  const boxes = await options.evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const box = button.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    }),
+  );
+  for (const box of boxes) {
+    expect(box.width).toBeGreaterThanOrEqual(96);
+    expect(box.height).toBeGreaterThanOrEqual(96);
+  }
+  await expect
+    .poll(async () =>
+      page.evaluate(() =>
+        performance
+          .getEntriesByType("resource")
+          .some((entry) => /\/audio\/ro-RO-v1\/listen-.+-8\.mp3$/.test(entry.name)),
+      ),
+    )
+    .toBe(true);
 });
 
 test("emotion matching uses the shared Pixi choice renderer", async ({
@@ -863,6 +975,11 @@ const GOLDEN_SCENES = [
     id: "emotion-match",
     name: "Cum se simte?",
     unlocks: P0_BEFORE_EMOTION,
+  },
+  {
+    id: "listen-find",
+    name: "Ascultă și găsește",
+    unlocks: P0_BEFORE_LISTEN,
   },
   {
     id: "sort-by-shape",

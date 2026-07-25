@@ -111,5 +111,56 @@
     { "id": "shape-diamond", "text": "romb" },
     { "id": "shape-pentagon", "text": "pentagon" },
     { "id": "shape-cross", "text": "cruce" }
+  ],
+  "families": [
+    {
+      "id": "listen",
+      "templates": [
+        { "id": "1", "text": "{LabelDef}." },
+        { "id": "2", "text": "Atinge {labelDef}!" },
+        { "id": "4", "text": "Atinge imaginea cu {labelDef}!" },
+        { "id": "5", "text": "Ascultă și atinge acum {labelDef}!" },
+        { "id": "6", "text": "Ascultă atent și atinge acum {labelDef}!" },
+        { "id": "8", "text": "Ascultă cu atenție și atinge imaginea cu {labelDef}!" }
+      ],
+      "items": [
+        { "id": "cat", "labelDef": "pisica" },
+        { "id": "dog", "labelDef": "câinele" },
+        { "id": "rabbit", "labelDef": "iepurele" },
+        { "id": "duck", "labelDef": "rața" },
+        { "id": "fish", "labelDef": "peștele" },
+        { "id": "elephant", "labelDef": "elefantul" },
+        { "id": "frog", "labelDef": "broasca" },
+        { "id": "bear", "labelDef": "ursul" },
+        { "id": "bird", "labelDef": "pasărea" },
+        { "id": "butterfly", "labelDef": "fluturele" },
+        { "id": "bee", "labelDef": "albina" },
+        { "id": "pig", "labelDef": "porcul" },
+        { "id": "cow", "labelDef": "vaca" },
+        { "id": "lion", "labelDef": "leul" },
+        { "id": "mouse", "labelDef": "șoricelul" },
+        { "id": "owl", "labelDef": "bufnița" },
+        { "id": "car", "labelDef": "mașina" },
+        { "id": "bus", "labelDef": "autobuzul" },
+        { "id": "train", "labelDef": "trenul" },
+        { "id": "boat", "labelDef": "barca" },
+        { "id": "plane", "labelDef": "avionul" },
+        { "id": "rocket", "labelDef": "racheta" },
+        { "id": "apple", "labelDef": "mărul" },
+        { "id": "banana", "labelDef": "banana" },
+        { "id": "cookie", "labelDef": "biscuitele" },
+        { "id": "strawberry", "labelDef": "căpșuna" },
+        { "id": "carrot", "labelDef": "morcovul" },
+        { "id": "cupcake", "labelDef": "brioșa" },
+        { "id": "ball", "labelDef": "mingea" },
+        { "id": "balloon", "labelDef": "balonul" },
+        { "id": "flower", "labelDef": "floarea" },
+        { "id": "tree", "labelDef": "copacul" },
+        { "id": "house", "labelDef": "casa" },
+        { "id": "sun", "labelDef": "soarele" },
+        { "id": "moon", "labelDef": "luna" },
+        { "id": "cloud", "labelDef": "norul" }
+      ]
+    }
   ]
 }

@@ -23,8 +23,10 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
   `choice`, iar `emotion-match` consumă același renderer cu opt emoții în două
   perspective vizuale. Familia `sort` folosește batch-uri responsive până la
-  12 obiecte/4 coșuri pentru culoare, formă și mărime. 108 clipuri RO locale,
-  Axe și 16 baseline-uri vizuale sunt integrate. Lipsesc măsurarea pe
+  12 obiecte/4 coșuri pentru culoare, formă și mărime. `listen-find` consumă
+  toate cele 16 stage-uri pe rendererul `choice`, cu indiciu audio și replay
+  semantic fără expunerea răspunsului. 324 clipuri RO locale, Axe și 18
+  baseline-uri vizuale sunt integrate. Lipsesc măsurarea pe
   dispozitiv, revizia umană a vocii și validarea observată.
 
 ## 1. Obiectiv
@@ -66,8 +68,8 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- 7 jocuri rămân pe rendererul DOM de prototip;
-- cele 108 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
+- 6 jocuri rămân pe rendererul DOM de prototip;
+- cele 324 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
 - porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
 ## 3. Stack țintă
@@ -347,8 +349,8 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. migrează cele șapte scene DOM rămase prin arhetipurile comune;
-2. revizuiește auditiv cele 108 clipuri RO și înlocuiește pronunțiile slabe;
+1. migrează cele șase scene DOM rămase prin arhetipurile comune;
+2. revizuiește auditiv cele 324 clipuri RO și înlocuiește pronunțiile slabe;
 3. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
 4. verifică manual VoiceOver și TalkBack;
 5. rulează observația cu copilul și rezolvă blocajele majore.

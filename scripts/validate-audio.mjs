@@ -1,5 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { expandAudioPrompts } from "./audio-manifest.mjs";
 
 const manifestUrl = new URL(
   "../apps/web/src/audio/ro-RO-v1.json",
@@ -13,8 +14,9 @@ const audioDirectory = new URL(
 const expectedFiles = new Set();
 const ids = new Set();
 const texts = new Set();
+const prompts = expandAudioPrompts(manifest);
 
-for (const prompt of manifest.prompts) {
+for (const prompt of prompts) {
   if (!prompt.id || !prompt.text) throw new Error("Audio prompt incomplet");
   if (ids.has(prompt.id)) throw new Error(`Audio id duplicat: ${prompt.id}`);
   if (texts.has(prompt.text)) throw new Error(`Text audio duplicat: ${prompt.text}`);
@@ -40,5 +42,5 @@ if (missing.length > 0 || extra.length > 0) {
 }
 
 console.log(
-  `Audio valid: ${manifest.prompts.length} clipuri, ${manifest.version}, ${fileURLToPath(audioDirectory)}`,
+  `Audio valid: ${prompts.length} clipuri, ${manifest.version}, ${fileURLToPath(audioDirectory)}`,
 );

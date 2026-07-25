@@ -410,6 +410,25 @@ button {
   box-shadow: none;
 }
 
+.pixi-accessibility .pixi-target-action {
+  position: absolute;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  margin: 0;
+  padding: 0;
+  opacity: 0.001;
+  pointer-events: auto;
+  touch-action: manipulation;
+  border: 0;
+  border-radius: 50%;
+}
+
+.pixi-accessibility .pixi-target-action:focus-visible {
+  opacity: 0.16;
+  outline: 7px solid var(--blue-deep);
+  outline-offset: 4px;
+}
+
 .pixi-accessibility .pixi-accessibility-choice:focus-visible {
   opacity: 0.18;
   outline: 7px solid var(--blue-deep);

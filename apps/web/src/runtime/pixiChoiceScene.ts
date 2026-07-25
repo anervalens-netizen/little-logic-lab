@@ -25,6 +25,9 @@ export interface PixiChoiceSceneOptions {
   readonly reducedMotion: boolean;
   readonly clutterLevel?: number;
   readonly onSelect: (id: string) => void;
+  readonly targetActionLabel?: string;
+  /** `false` dezactivează acțiunea după activarea curentă. */
+  readonly onTargetActivate?: () => boolean | void;
 }
 
 export interface PixiChoiceScene {
@@ -104,6 +107,17 @@ export async function createPixiChoiceScene(
   targetDescription.className = "sr-only";
   targetDescription.textContent = `Model: ${options.targetLabel}`;
   accessibility.append(targetDescription);
+  const targetActionLabel = options.targetActionLabel;
+  const targetAction =
+    options.onTargetActivate && targetActionLabel
+      ? document.createElement("button")
+      : null;
+  if (targetAction && targetActionLabel) {
+    targetAction.className = "pixi-target-action";
+    targetAction.type = "button";
+    targetAction.setAttribute("aria-label", targetActionLabel);
+    accessibility.append(targetAction);
+  }
 
   const releases: Array<() => void> = [];
   const tickerCallbacks = new Set<(ticker: Ticker) => void>();
@@ -125,6 +139,22 @@ export async function createPixiChoiceScene(
   targetSprite.anchor.set(0.5);
   target.addChild(targetHalo, targetSprite);
   app.stage.addChild(backgroundDetails, target);
+  if (targetAction && options.onTargetActivate) {
+    const activateTarget = () => {
+      if (!enabled || targetAction.disabled) return;
+      markInputForDiagnostics();
+      const keepEnabled = options.onTargetActivate?.();
+      if (keepEnabled === false) {
+        targetAction.disabled = true;
+        target.cursor = "default";
+      }
+    };
+    target.eventMode = "static";
+    target.cursor = "pointer";
+    target.on("pointertap", activateTarget);
+    targetAction.addEventListener("pointerdown", markInputForDiagnostics);
+    targetAction.addEventListener("click", activateTarget);
+  }
 
   const cards: CardVisual[] = [];
   for (const option of options.options) {
@@ -217,6 +247,13 @@ export async function createPixiChoiceScene(
       .circle(0, 0, targetSize * 0.58)
       .fill({ color: 0xffffff, alpha: 0.7 })
       .stroke({ color: 0xffd35c, alpha: 0.6, width: 9 });
+    if (targetAction) {
+      const actionSize = Math.max(96, targetSize * 1.24);
+      targetAction.style.left = `${target.x - actionSize / 2}px`;
+      targetAction.style.top = `${target.y - actionSize / 2}px`;
+      targetAction.style.width = `${actionSize}px`;
+      targetAction.style.height = `${actionSize}px`;
+    }
 
     const gap = Math.max(18, Math.min(40, width * 0.035));
     const columns = grid
