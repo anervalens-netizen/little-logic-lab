@@ -23,8 +23,15 @@ export const samePictureGame = createChoiceGame({
   axes: [
     { name: "choiceCount", values: [2, 3] },
     { name: "distractorSimilarity", values: [0, 1] },
+    { name: "targetCueDuration", values: [-1, 2500] },
+    { name: "sceneClutter", values: [0, 1] },
   ],
-  initialDifficulty: { choiceCount: 2, distractorSimilarity: 0 },
+  initialDifficulty: {
+    choiceCount: 2,
+    distractorSimilarity: 0,
+    targetCueDuration: -1,
+    sceneClutter: 0,
+  },
   renderer: "pixi",
   content: CONTENT,
   similarityAttribute: "category",

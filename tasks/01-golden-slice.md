@@ -37,7 +37,8 @@ Nu se migrează alte jocuri înainte de acest exit.
 - overlay semantic pentru toate obiectele acționabile;
 - IndexedDB cu migrare v1/v2 și fallback;
 - manifest P0 compact generat din catalog/ladders;
+- Parent Mode React și progresie limitată strict la stage-urile eligibile;
 - primul pass pentru toate cele trei jocuri și E2E Chromium/WebKit.
 
-Rămân deschise audio RO, visual regression versionat, toate ancorele A30_36,
-device performance și observația cu copilul.
+Rămân deschise audio RO, visual regression versionat, device performance și
+observația cu copilul.

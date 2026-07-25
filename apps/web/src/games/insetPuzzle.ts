@@ -27,9 +27,16 @@ export const insetPuzzleGame: WebGame = {
   bubbleColor: "#FF9EC6",
   axes: [
     { name: "pieceCount", values: [2, 3, 4] },
+    { name: "rotationEnabled", values: [false, true] },
+    { name: "outlineSupport", values: ["full", "partial", "none"] },
     { name: "similarity", values: [0, 1] },
   ],
-  initialDifficulty: { pieceCount: 2, similarity: 0 },
+  initialDifficulty: {
+    pieceCount: 2,
+    rotationEnabled: false,
+    outlineSupport: "full",
+    similarity: 0,
+  },
   scored: true,
 
   async play(ctx: GameContext, difficulty: DifficultyVector, seed: string): Promise<PlayResult> {

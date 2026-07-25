@@ -27,8 +27,15 @@ export const sortByColorGame = createSortGame({
   axes: [
     { name: "itemCount", values: [2, 3, 4] },
     { name: "binCount", values: [2, 3] },
+    { name: "ruleCount", values: [1, 2] },
+    { name: "ruleCueVisibility", values: ["always", "on_request", "at_switch"] },
   ],
-  initialDifficulty: { itemCount: 2, binCount: 2 },
+  initialDifficulty: {
+    itemCount: 2,
+    binCount: 2,
+    ruleCount: 1,
+    ruleCueVisibility: "always",
+  },
   renderer: "pixi",
   content: CONTENT,
   attribute: "color",

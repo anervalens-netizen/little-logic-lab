@@ -19,6 +19,7 @@ export interface PixiChoiceSceneOptions {
   readonly targetLabel: string;
   readonly options: readonly PixiChoiceOption[];
   readonly reducedMotion: boolean;
+  readonly clutterLevel?: number;
   readonly onSelect: (id: string) => void;
 }
 
@@ -28,6 +29,7 @@ export interface PixiChoiceScene {
   readonly markIncorrect: (id: string) => void;
   readonly emphasize: (id: string) => void;
   readonly dimExcept: (id: string) => void;
+  readonly setTargetVisible: (visible: boolean) => void;
   readonly destroy: () => void;
 }
 
@@ -110,11 +112,12 @@ export async function createPixiChoiceScene(
   }
 
   const target = new Container();
+  const backgroundDetails = new Graphics();
   const targetHalo = new Graphics();
   const targetSprite = new Sprite(targetTexture.texture);
   targetSprite.anchor.set(0.5);
   target.addChild(targetHalo, targetSprite);
-  app.stage.addChild(target);
+  app.stage.addChild(backgroundDetails, target);
 
   const cards: CardVisual[] = [];
   for (const option of options.options) {
@@ -177,6 +180,21 @@ export async function createPixiChoiceScene(
     if (destroyed) return;
     const width = app.screen.width;
     const height = app.screen.height;
+    backgroundDetails.clear();
+    if ((options.clutterLevel ?? 0) > 0) {
+      const detailCount = Math.min(12, 4 + (options.clutterLevel ?? 0) * 3);
+      for (let index = 0; index < detailCount; index += 1) {
+        const x = ((index * 83 + 37) % 100) / 100 * width;
+        const y = ((index * 47 + 19) % 100) / 100 * height;
+        const radius = 7 + (index % 3) * 4;
+        backgroundDetails
+          .circle(x, y, radius)
+          .fill({
+            color: [0x7fc86b, 0xffd35c, 0x4fa8e8][index % 3],
+            alpha: 0.13,
+          });
+      }
+    }
     const compact = height < 430;
     const targetSize = Math.min(width * 0.24, height * (compact ? 0.3 : 0.28), 190);
     target.position.set(width / 2, height * (compact ? 0.24 : 0.27));
@@ -323,6 +341,13 @@ export async function createPixiChoiceScene(
           card.container.alpha = 0.3;
           card.button.disabled = true;
         }
+      });
+    },
+    setTargetVisible(visible) {
+      const from = target.alpha;
+      const to = visible ? 1 : 0;
+      tween(260, (progress) => {
+        target.alpha = from + (to - from) * progress;
       });
     },
     destroy() {

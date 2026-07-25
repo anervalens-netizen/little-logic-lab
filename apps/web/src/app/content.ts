@@ -50,18 +50,89 @@ export function ladderStageFor(
   if (!ladder) return `${gameId}:unmapped`;
 
   const ageBand = ageBandForMonths(ageMonths);
-  const difficultyEntries = Object.entries(difficulty);
   const eligible = ladder.stages.filter(
-    (stage) =>
-      bandRank(stage.recommendedBand) <= bandRank(ageBand) &&
-      difficultyEntries.every(([axis, value]) => stage.difficulty[axis] === value),
+    (stage) => bandRank(stage.recommendedBand) <= bandRank(ageBand),
   );
+  const exact = eligible.find((stage) =>
+    sameDifficulty(stage.difficulty, difficulty),
+  );
+  const compatible = eligible.find((stage) =>
+    Object.entries(difficulty).every(
+      ([axis, value]) => stage.difficulty[axis] === value,
+    ),
+  );
+  return exact?.id ?? compatible?.id ?? eligible[0]?.id ?? `${gameId}:unmapped`;
+}
 
+/** Completează vectorii vechi/parțiali cu stage-ul conservator eligibil. */
+export function normalizeLadderDifficulty(
+  gameId: string,
+  ageMonths: number,
+  difficulty: DifficultyVector,
+): DifficultyVector | null {
+  const stages = eligibleLadderStages(gameId, ageMonths);
+  if (stages.length === 0) return null;
+  const exact = stages.find((stage) =>
+    sameDifficulty(stage.difficulty, difficulty),
+  );
+  if (exact) return { ...exact.difficulty };
+  const compatible = stages.find((stage) =>
+    Object.entries(difficulty).every(
+      ([axis, value]) => stage.difficulty[axis] === value,
+    ),
+  );
+  return { ...(compatible ?? stages[0])!.difficulty };
+}
+
+/**
+ * Avansează/reduce strict cu un stage eligibil. Ladder-ul generat garantează
+ * schimbarea unei singure axe între două stage-uri consecutive.
+ */
+export function stepLadderDifficulty(
+  gameId: string,
+  ageMonths: number,
+  difficulty: DifficultyVector,
+  direction: -1 | 1,
+): { readonly vector: DifficultyVector; readonly changed: boolean } | null {
+  const stages = eligibleLadderStages(gameId, ageMonths);
+  if (stages.length === 0) return null;
+  const normalized =
+    normalizeLadderDifficulty(gameId, ageMonths, difficulty) ??
+    stages[0]!.difficulty;
+  const currentIndex = Math.max(
+    0,
+    stages.findIndex((stage) =>
+      sameDifficulty(stage.difficulty, normalized),
+    ),
+  );
+  const nextIndex = Math.max(
+    0,
+    Math.min(stages.length - 1, currentIndex + direction),
+  );
+  return {
+    vector: { ...stages[nextIndex]!.difficulty },
+    changed: nextIndex !== currentIndex,
+  };
+}
+
+function eligibleLadderStages(gameId: string, ageMonths: number) {
+  const ladder = laddersByGameId.get(gameId);
+  if (!ladder) return [];
+  const ageBand = ageBandForMonths(ageMonths);
+  return ladder.stages.filter(
+    (stage) => bandRank(stage.recommendedBand) <= bandRank(ageBand),
+  );
+}
+
+function sameDifficulty(
+  left: DifficultyVector,
+  right: DifficultyVector,
+): boolean {
+  const leftEntries = Object.entries(left);
+  const rightEntries = Object.entries(right);
   return (
-    eligible.at(-1)?.id ??
-    ladder.stages.find((stage) => stage.recommendedBand === ageBand)?.id ??
-    ladder.stages[0]?.id ??
-    `${gameId}:unmapped`
+    leftEntries.length === rightEntries.length &&
+    leftEntries.every(([axis, value]) => right[axis] === value)
   );
 }
 

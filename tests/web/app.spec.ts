@@ -107,6 +107,41 @@ test("child home is local-only and progressively unlocked", async ({ page }) => 
   expect(externalRequests).toEqual([]);
 });
 
+test("parent mode is React-owned and persists semantic settings", async ({
+  page,
+}) => {
+  await enterHome(page);
+  await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+  const hold = page.getByRole("button", { name: "Ține apăsat 3 secunde" });
+  await hold.dispatchEvent("pointerdown");
+  await expect(
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 5_000 });
+  await expect(
+    page.getByRole("heading", { name: "Zonă pentru adulți" }),
+  ).toBeVisible();
+
+  const reducedMotion = page.getByRole("switch", {
+    name: "Mișcare redusă (fără animații)",
+  });
+  await expect(reducedMotion).toHaveAttribute("aria-checked", "true");
+  await reducedMotion.click();
+  await expect(reducedMotion).toHaveAttribute("aria-checked", "false");
+  await expect
+    .poll(async () => {
+      const stored = await readStoredProfile(page);
+      return (stored?.settings as { reducedMotion?: boolean } | undefined)
+        ?.reducedMotion;
+    })
+    .toBe(false);
+
+  await page.getByRole("button", { name: "Înapoi" }).click();
+  await expect(
+    page.locator('[data-screen="home"][data-screen-ready="true"]'),
+  ).toBeVisible();
+  await expect(page.locator(".parent-panel")).toHaveCount(0);
+});
+
 test("completed attempt stores deterministic replay metadata", async ({ page }) => {
   await enterHome(page);
   await page.getByRole("button", { name: "Găsește perechea" }).click();
@@ -143,6 +178,21 @@ test("completed attempt stores deterministic replay metadata", async ({ page }) 
     /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
   );
   expect(attempt?.levelSeed).toMatch(/^same-picture:/);
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (
+        profile?.progressByGame as
+          | Record<string, { difficulty?: Record<string, unknown> }>
+          | undefined
+      )?.["same-picture"]?.difficulty;
+    })
+    .toEqual({
+      choiceCount: 2,
+      distractorSimilarity: 0,
+      targetCueDuration: -1,
+      sceneClutter: 0,
+    });
 });
 
 test("Pixi scene is destroyed and recreated without residual canvas", async ({

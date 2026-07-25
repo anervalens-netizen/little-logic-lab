@@ -14,7 +14,12 @@ import { speak, stopSpeaking } from "../audio/speech";
 import { praise, isMotionReduced } from "../ui/feedback";
 import { demoTap, demoHand } from "../ui/feedback";
 import { wait } from "../ui/dom";
-import { CONTENT_VERSION, ladderStageFor } from "../app/content";
+import {
+  CONTENT_VERSION,
+  ladderStageFor,
+  normalizeLadderDifficulty,
+  stepLadderDifficulty,
+} from "../app/content";
 
 export interface RunOutcome {
   readonly result: PlayResult;
@@ -68,10 +73,13 @@ export async function runGame(
 ): Promise<RunOutcome> {
   const profile = getProfile();
   const stored = profile.progressByGame[game.id];
-  const difficulty: DifficultyVector =
+  const storedOrInitial: DifficultyVector =
     stored && Object.keys(stored.difficulty).length > 0
       ? { ...stored.difficulty }
       : { ...game.initialDifficulty };
+  const difficulty =
+    normalizeLadderDifficulty(game.id, profile.ageMonths, storedOrInitial) ??
+    storedOrInitial;
 
   const seed = `${game.id}:${new Date().toISOString().slice(0, 10)}:${seedSalt}:${stored?.timesPlayed ?? 0}`;
   const cleanups: Array<() => void> = [];
@@ -102,12 +110,24 @@ export async function runGame(
       }));
       const direction = recommendDifficultyDirection(outcomes);
       if (direction !== 0) {
-        const step = stepDifficulty(difficulty, game.axes, direction);
-        if (step.changedAxis !== null) {
-          setGameDifficulty(game.id, step.vector);
+        const ladderStep = stepLadderDifficulty(
+          game.id,
+          profile.ageMonths,
+          difficulty,
+          direction,
+        );
+        if (ladderStep) {
+          if (ladderStep.changed) {
+            setGameDifficulty(game.id, { ...ladderStep.vector });
+          }
+        } else {
+          const step = stepDifficulty(difficulty, game.axes, direction);
+          if (step.changedAxis !== null) {
+            setGameDifficulty(game.id, step.vector);
+          }
         }
       } else if (!stored || Object.keys(stored.difficulty).length === 0) {
-        setGameDifficulty(game.id, difficulty);
+        setGameDifficulty(game.id, { ...difficulty });
       }
     }
 

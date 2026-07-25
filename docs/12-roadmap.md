@@ -13,11 +13,11 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
 
 - R0 engineering: complet; repository privat, TypeScript 7, PWA versionat,
   replay, age gating, migrare și E2E sunt verificate.
-- R0 release: live la `https://logic-lab.astancu.eu/`; build-ul `e090b98`
+- R0 release: live la `https://logic-lab.astancu.eu/`; build verificat din `main`
   este servit static prin Cloudflare Tunnel + Caddy, cu CSP strict.
-- R1: activ; React deține shell-ul, profilul este în IndexedDB, catalogul P0
-  este compilat într-un manifest compact, iar scenele Pixi au lifecycle și
-  overlay semantic.
+- R1: activ; React deține shell-ul și Parent Mode, profilul este în IndexedDB,
+  catalogul P0 este compilat într-un manifest compact, iar scenele Pixi au
+  lifecycle și overlay semantic.
 - R2: primul pass funcțional există pentru `same-picture`, `sort-by-color` și
   `inset-puzzle`; lipsesc încă audio RO înregistrat, regresia vizuală
   versionată, măsurarea pe dispozitiv și validarea observată.
@@ -61,9 +61,6 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- parent mode trebuie migrat complet în React;
-- cele trei scene golden-slice trebuie conectate la toate ancorele relevante,
-  nu numai la intrarea conservatoare;
 - 11 jocuri rămân pe rendererul DOM de prototip, iar `drag-and-fit` lipsește;
 - Web Speech trebuie înlocuit cu audio românesc local, revizuit;
 - porțile reale de FPS, input latency, VoiceOver/TalkBack și device QA nu sunt
@@ -339,13 +336,11 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. migrează parent mode complet în React;
-2. consumă toate ancorele A30_36 pentru cele trei jocuri;
-3. înlocuiește Web Speech cu audio RO local și manifest versionat;
-4. adaugă Axe și regresie vizuală pentru golden slice;
-5. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
-6. rulează observația cu copilul și rezolvă blocajele majore;
-7. evaluează exit-ul golden slice înainte de orice joc nou.
+1. înlocuiește Web Speech cu audio RO local și manifest versionat;
+2. adaugă Axe și regresie vizuală pentru golden slice;
+3. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
+4. rulează observația cu copilul și rezolvă blocajele majore;
+5. evaluează exit-ul golden slice înainte de orice joc nou.
 
 ## Definition of done
 

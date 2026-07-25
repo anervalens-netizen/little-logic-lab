@@ -86,7 +86,11 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
       const round = spec.buildRound(level.payload, difficulty);
 
       if (spec.renderer === "pixi" && round.targetSvg !== null) {
-        return playPixiRound(ctx, { ...round, targetSvg: round.targetSvg });
+        return playPixiRound(
+          ctx,
+          { ...round, targetSvg: round.targetSvg },
+          difficulty,
+        );
       }
 
       let state = initializeChoice(level.payload.correctChoiceId, level.payload.choiceIds);
@@ -215,6 +219,7 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
 async function playPixiRound(
   ctx: GameContext,
   round: ChoiceRound & { readonly targetSvg: string },
+  difficulty: DifficultyVector,
 ): Promise<PlayResult> {
   clear(ctx.mount);
   const { createPixiChoiceScene } = await import("../runtime/pixiChoiceScene");
@@ -243,6 +248,7 @@ async function playPixiRound(
     targetLabel: round.targetLabel,
     options: round.options,
     reducedMotion: ctx.reducedMotion,
+    clutterLevel: Number(difficulty["sceneClutter"] ?? 0),
     onSelect(optionId) {
       if (!inputReady || settled || state.completed) return;
       const before = state;
@@ -303,6 +309,14 @@ async function playPixiRound(
   if (ctx.isCancelled()) return aborted();
   inputReady = true;
   scene.readyElement.dataset.gameReady = "true";
+  const targetCueDuration = Number(difficulty["targetCueDuration"] ?? -1);
+  if (targetCueDuration > 0) {
+    const hideTargetTimer = window.setTimeout(
+      () => scene.setTargetVisible(false),
+      targetCueDuration,
+    );
+    ctx.onCleanup(() => window.clearTimeout(hideTargetTimer));
+  }
 
   cancelWatch = window.setInterval(() => {
     if (ctx.isCancelled()) {

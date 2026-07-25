@@ -12,6 +12,14 @@ const root = (): HTMLElement => {
 
 let current: HTMLElement | null = null;
 let transition: Promise<void> = Promise.resolve();
+const cleanupByScreen = new WeakMap<HTMLElement, () => void>();
+
+export function registerScreenCleanup(
+  screen: HTMLElement,
+  cleanup: () => void,
+): void {
+  cleanupByScreen.set(screen, cleanup);
+}
 
 export function showScreen(factory: ScreenFactory): Promise<void> {
   const operation = transition.catch(() => undefined).then(async () => {
@@ -24,6 +32,8 @@ export function showScreen(factory: ScreenFactory): Promise<void> {
       const old = current;
       host.append(next);
       await wait(240);
+      cleanupByScreen.get(old)?.();
+      cleanupByScreen.delete(old);
       old.remove();
     } else {
       host.append(next);
