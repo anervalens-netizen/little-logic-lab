@@ -11,7 +11,9 @@ export type ShapeId =
   | "heart"
   | "diamond"
   | "hexagon"
-  | "oval";
+  | "oval"
+  | "pentagon"
+  | "cross";
 
 export const SHAPE_LABELS: Record<ShapeId, string> = {
   circle: "cerc",
@@ -22,6 +24,8 @@ export const SHAPE_LABELS: Record<ShapeId, string> = {
   diamond: "romb",
   hexagon: "hexagon",
   oval: "oval",
+  pentagon: "pentagon",
+  cross: "cruce",
 };
 
 export const ALL_SHAPES: readonly ShapeId[] = [
@@ -33,6 +37,8 @@ export const ALL_SHAPES: readonly ShapeId[] = [
   "diamond",
   "hexagon",
   "oval",
+  "pentagon",
+  "cross",
 ];
 
 /** Silueta formei (folosită și la umbre și la puzzle). */
@@ -54,6 +60,10 @@ export function shapePath(id: ShapeId): string {
       return `<path d="M60 12 L101 36 L101 84 L60 108 L19 84 L19 36 Z"/>`;
     case "oval":
       return `<ellipse cx="60" cy="60" rx="32" ry="44"/>`;
+    case "pentagon":
+      return `<path d="M60 12 L104 46 L87 102 L33 102 L16 46 Z"/>`;
+    case "cross":
+      return `<path d="M43 14 H77 V43 H106 V77 H77 V106 H43 V77 H14 V43 H43 Z"/>`;
   }
 }
 

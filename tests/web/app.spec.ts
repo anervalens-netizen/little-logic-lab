@@ -227,6 +227,10 @@ test("Pixi exposes frame diagnostics and meets the input budget", async ({
   page,
 }, testInfo) => {
   test.skip(
+    process.env["LOGIC_LAB_PERF"] !== "1",
+    "Benchmark serial: npm run test:web:performance",
+  );
+  test.skip(
     testInfo.project.name !== "chromium-touch",
     "Chromium is the repeatable synthetic performance gate; device QA is separate.",
   );
@@ -409,7 +413,7 @@ test("inset puzzle consumes shared drag/snap runtime", async ({ page }) => {
     expect(shape).not.toBeNull();
     await item.evaluate((button: HTMLButtonElement) => button.click());
     await page
-      .locator(`button.pixi-drop-target[aria-label="gaura ${shape}"]`)
+      .locator(`button.pixi-drop-target[aria-label="locul pentru ${shape}"]`)
       .evaluate((button: HTMLButtonElement) => button.click());
   }
 
@@ -418,6 +422,128 @@ test("inset puzzle consumes shared drag/snap runtime", async ({ page }) => {
       const profile = await readStoredProfile(page);
       return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
         (attempt) => attempt.gameId === "inset-puzzle",
+      );
+    })
+    .toBe(true);
+});
+
+test("spatial-fit batches the full ten-piece ladder stage", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(60_000);
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage contract.",
+  );
+  await seedCleanProgress(page, ["same-picture", "sort-by-color"]);
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("minte-in-joaca");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+    const transaction = db.transaction("profiles", "readwrite");
+    const store = transaction.objectStore("profiles");
+    const profile = await new Promise<Record<string, any>>((resolve, reject) => {
+      const request = store.get("current");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+    profile.ageMonths = 72;
+    profile.progressByGame["inset-puzzle"] = {
+      difficulty: {
+        pieceCount: 10,
+        rotationEnabled: true,
+        outlineSupport: "none",
+        similarity: 4,
+      },
+      recentOutcomes: [],
+      timesPlayed: 0,
+    };
+    store.put(profile, "current");
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  });
+
+  await enterHome(page);
+  await page.getByRole("button", { name: "Pune forma la loc" }).click();
+  for (const batchSize of [4, 4, 2]) {
+    await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+      timeout: 8_000,
+    });
+    await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+    const items = page.locator("button.pixi-drag-item");
+    await expect(items).toHaveCount(batchSize);
+    for (let index = 0; index < batchSize; index += 1) {
+      const item = items.nth(index);
+      const label = await item.getAttribute("aria-label");
+      expect(label).not.toBeNull();
+      await item.evaluate((button: HTMLButtonElement) => button.click());
+      await page
+        .locator(`button.pixi-drop-target[aria-label="locul pentru ${label}"]`)
+        .evaluate((button: HTMLButtonElement) => button.click());
+    }
+    await page.waitForTimeout(900);
+  }
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (
+        profile?.attempts as
+          | Array<{ gameId: string; ladderStageId: string }>
+          | undefined
+      )?.find((attempt) => attempt.gameId === "inset-puzzle")?.ladderStageId;
+    })
+    .toBe("inset-puzzle:L015");
+});
+
+const P0_BEFORE_DRAG_AND_FIT = [
+  "same-picture",
+  "sort-by-color",
+  "inset-puzzle",
+  "daily-order",
+  "one-to-one-count",
+  "shadow-match",
+  "peek-and-find",
+  "wait-for-go",
+  "listen-find",
+  "trace-road",
+  "emotion-match",
+  "sort-by-shape",
+  "sort-by-size",
+] as const;
+
+test("drag-and-fit completes through the shared spatial-fit archetype", async ({
+  page,
+}) => {
+  await seedCleanProgress(page, P0_BEFORE_DRAG_AND_FIT);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Mută și potrivește" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+
+  const items = page.locator("button.pixi-drag-item");
+  await expect(items).toHaveCount(2);
+  for (let index = 0; index < 2; index += 1) {
+    const item = items.nth(index);
+    const label = await item.getAttribute("aria-label");
+    expect(label).not.toBeNull();
+    await item.evaluate((button: HTMLButtonElement) => button.click());
+    await page
+      .locator(`button.pixi-drop-target[aria-label="locul pentru ${label}"]`)
+      .evaluate((button: HTMLButtonElement) => button.click());
+  }
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "drag-and-fit",
       );
     })
     .toBe(true);
@@ -438,6 +564,11 @@ const GOLDEN_SCENES = [
     id: "inset-puzzle",
     name: "Pune forma la loc",
     unlocks: ["same-picture", "sort-by-color"],
+  },
+  {
+    id: "drag-and-fit",
+    name: "Mută și potrivește",
+    unlocks: P0_BEFORE_DRAG_AND_FIT,
   },
 ] as const;
 

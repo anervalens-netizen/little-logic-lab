@@ -18,10 +18,11 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
 - R1: activ; React deține shell-ul și Parent Mode, profilul este în IndexedDB,
   catalogul P0 este compilat într-un manifest compact, iar scenele Pixi au
   lifecycle și overlay semantic.
-- R2: primul pass funcțional există pentru `same-picture`, `sort-by-color` și
-  `inset-puzzle`; 66 clipuri RO locale, Axe și regresia vizuală versionată sunt
-  integrate. Lipsesc măsurarea pe dispozitiv, revizia umană a vocii și
-  validarea observată.
+- R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
+  rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
+  batch-uri fără canvas rezidual. 69 clipuri RO locale, Axe și opt baseline-uri
+  vizuale sunt integrate. Lipsesc măsurarea pe dispozitiv, revizia umană a
+  vocii și validarea observată.
 
 ## 1. Obiectiv
 
@@ -48,7 +49,7 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 - 1.030 ancore parametrice de dificultate cu schimbare pe o singură axă;
 - generatoare, runtime-uri, mastery, suport și planificatorul sesiunii;
 - schemele JSON, politica offline/privacy și cele 22 teste core;
-- prototipul web ca referință funcțională pentru 14 jocuri.
+- toate cele 15 familii P0 au implementare funcțională;
 
 ### De înlocuit controlat
 
@@ -62,8 +63,8 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- 11 jocuri rămân pe rendererul DOM de prototip, iar `drag-and-fit` lipsește;
-- cele 66 de clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
+- 11 jocuri rămân pe rendererul DOM de prototip;
+- cele 69 de clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
 - porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
 ## 3. Stack țintă
@@ -191,7 +192,7 @@ Nu se migrează alte jocuri înainte de acest exit.
 
 - implementează toate cele 15 familii P0;
 - construiește arhetipurile comune înaintea skin-urilor;
-- adaugă `drag-and-fit`, lipsă din prototip;
+- consolidează `spatial-fit` pentru `inset-puzzle` și `drag-and-fit`;
 - conectează progresia reală, deblocarea graduală și scheduler-ul;
 - finalizează audio RO, parent dashboard și transfer prompts;
 - testează ecrane mici/mari, audio off, Reduce Motion și offline.
@@ -341,7 +342,7 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. revizuiește auditiv cele 66 de clipuri RO și înlocuiește pronunțiile slabe;
+1. revizuiește auditiv cele 69 de clipuri RO și înlocuiește pronunțiile slabe;
 2. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
 3. verifică manual VoiceOver și TalkBack;
 4. rulează observația cu copilul și rezolvă blocajele majore;

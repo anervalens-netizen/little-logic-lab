@@ -1,5 +1,7 @@
 # Task 02 — Starter release P0
 
+Status: activ
+
 ## Goal
 
 Livrează toate familiile cu `implementationPriority: P0` prin arhetipuri
@@ -7,11 +9,12 @@ reutilizabile, după golden slice.
 
 ## Required work
 
-1. 15/15 familii P0, inclusiv `drag-and-fit`.
+1. Ridică toate cele 15 familii P0 la contractul Pixi comun; `drag-and-fit`
+   există deja funcțional pe arhetipul `spatial-fit`.
 2. Fără registru sau număr hard-coded; catalogul este sursa.
 3. Plugin contract complet: generate, initialize, reduce, evaluate, getHint.
 4. Ladders, unlock policy și scheduler conectate.
-5. Romanian recorded-audio manifest.
+5. Manifest audio RO local, versionat și revizuit auditiv.
 6. Replay/debug viewer numai în developer builds.
 7. Property tests și verificări împotriva shortcut-urilor perceptuale.
 8. Transfer prompt pentru fiecare joc.
@@ -23,3 +26,12 @@ reutilizabile, după golden slice.
 - o sesiune amestecă domenii fără repetiție;
 - parent dashboard rămâne calitativ;
 - release-ul funcționează complet offline.
+
+## Implementat
+
+- 15/15 familii P0 sunt funcționale;
+- `spatial-fit` este comun pentru `inset-puzzle` și `drag-and-fit`;
+- stage-urile cu până la 10 piese sunt împărțite în batch-uri de maximum 4;
+- rotația, outline support și similarity au efect vizual/content;
+- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și opt
+  baseline-uri vizuale pentru cele patru scene Pixi.

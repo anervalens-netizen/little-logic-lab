@@ -17,6 +17,7 @@ export interface PixiDragItem {
   readonly id: string;
   readonly svg: string;
   readonly label: string;
+  readonly rotation?: number;
 }
 
 export interface PixiDropTarget {
@@ -24,6 +25,7 @@ export interface PixiDropTarget {
   readonly label: string;
   readonly color?: string;
   readonly svg?: string;
+  readonly ghostAlpha?: number;
 }
 
 export type DropVerdict = "correct" | "incorrect" | "ignore";
@@ -170,6 +172,7 @@ export async function createPixiDragScene(
       releases.push(loaded.release);
       sprite = new Sprite(loaded.texture);
       sprite.anchor.set(0.5);
+      sprite.alpha = definition.ghostAlpha ?? 1;
       container.addChild(plate, sprite);
     } else {
       container.addChild(plate);
@@ -213,6 +216,7 @@ export async function createPixiDragScene(
     const halo = new Graphics();
     const sprite = new Sprite(loaded.texture);
     sprite.anchor.set(0.5);
+    sprite.rotation = definition.rotation ?? 0;
     container.addChild(halo, sprite);
 
     const button = document.createElement("button");
@@ -428,6 +432,7 @@ export async function createPixiDragScene(
       const finalScale = options.presentation === "bins" ? 0.48 : 0.72;
       item.container.scale.set(1 + (finalScale - 1) * eased);
       item.container.rotation = Math.sin(progress * Math.PI) * 0.08;
+      item.sprite.rotation = (item.sprite.rotation ?? 0) * (1 - progress);
     });
     item.container.rotation = 0;
     item.container.zIndex = options.presentation === "bins" ? 0 : 3;

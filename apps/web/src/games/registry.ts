@@ -15,6 +15,7 @@ import { oneToOneCountGame } from "./oneToOneCount";
 import { insetPuzzleGame } from "./insetPuzzle";
 import { traceRoadGame } from "./traceRoad";
 import { colorHuntGame } from "./colorHunt";
+import { dragAndFitGame } from "./dragAndFit";
 
 const GAMES: readonly WebGame[] = [
   samePictureGame,
@@ -30,6 +31,7 @@ const GAMES: readonly WebGame[] = [
   emotionMatchGame,
   sortByShapeGame,
   sortBySizeGame,
+  dragAndFitGame,
   colorHuntGame,
 ];
 

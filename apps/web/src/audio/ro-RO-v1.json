@@ -62,12 +62,15 @@
     { "id": "inset-instruction", "text": "Pune fiecare formă în gaura ei!" },
     { "id": "inset-hint", "text": "Uite, aici se potrivește!" },
     { "id": "inset-help", "text": "Hai să le punem împreună!" },
+    { "id": "drag-fit-instruction", "text": "Mută fiecare obiect peste locul lui!" },
     { "id": "shape-circle", "text": "cerc" },
     { "id": "shape-square", "text": "pătrat" },
     { "id": "shape-triangle", "text": "triunghi" },
     { "id": "shape-star", "text": "stea" },
     { "id": "shape-heart", "text": "inimă" },
     { "id": "shape-oval", "text": "oval" },
-    { "id": "shape-diamond", "text": "romb" }
+    { "id": "shape-diamond", "text": "romb" },
+    { "id": "shape-pentagon", "text": "pentagon" },
+    { "id": "shape-cross", "text": "cruce" }
   ]
 }
