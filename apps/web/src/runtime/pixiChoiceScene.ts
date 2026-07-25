@@ -25,6 +25,8 @@ export interface PixiChoiceSceneOptions {
   readonly reducedMotion: boolean;
   readonly clutterLevel?: number;
   readonly onSelect: (id: string) => void;
+  /** Ascunde și descrierea semantică atunci când modelul vizual dispare. */
+  readonly targetDescriptionFollowsVisibility?: boolean;
   readonly targetActionLabel?: string;
   /** `false` dezactivează acțiunea după activarea curentă. */
   readonly onTargetActivate?: () => boolean | void;
@@ -402,6 +404,9 @@ export async function createPixiChoiceScene(
       });
     },
     setTargetVisible(visible) {
+      if (options.targetDescriptionFollowsVisibility) {
+        targetDescription.hidden = !visible;
+      }
       const from = target.alpha;
       const to = visible ? 1 : 0;
       tween(260, (progress) => {

@@ -28,8 +28,9 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   semantic fără expunerea răspunsului. `one-to-one-count` folosește drag/snap
   Pixi cu plasare unică pentru fiecare prieten, iar `daily-order` folosește
   secvențiere Pixi și aplică inclusiv axa de distractori. `real-color-hunt`
-  este un prompt Pixi deschis, fără punctarea copilului. 324 clipuri RO locale,
-  Axe și 24 baseline-uri vizuale sunt integrate. Lipsesc măsurarea pe
+  este un prompt Pixi deschis, fără punctarea copilului, iar `peek-and-find`
+  ascunde răspunsul vizual și semantic înainte de alegere. 324 clipuri RO
+  locale, Axe și 26 baseline-uri vizuale sunt integrate. Lipsesc măsurarea pe
   dispozitiv, revizia umană a vocii și validarea observată.
 
 ## 1. Obiectiv
@@ -71,7 +72,7 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- 3 jocuri rămân pe rendererul DOM de prototip;
+- 2 jocuri rămân pe rendererul DOM de prototip;
 - cele 324 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
 - porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
@@ -352,7 +353,7 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. migrează cele trei scene DOM rămase prin arhetipurile comune;
+1. migrează cele două scene DOM rămase prin arhetipurile comune;
 2. revizuiește auditiv cele 324 clipuri RO și înlocuiește pronunțiile slabe;
 3. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
 4. verifică manual VoiceOver și TalkBack;

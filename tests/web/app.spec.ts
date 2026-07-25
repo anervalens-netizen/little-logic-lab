@@ -801,6 +801,7 @@ const P0_BEFORE_SHADOW = [
   "daily-order",
   "one-to-one-count",
 ] as const;
+const P0_BEFORE_PEEK = [...P0_BEFORE_SHADOW, "shadow-match"] as const;
 
 const P0_BEFORE_LISTEN = [
   ...P0_BEFORE_SHADOW,
@@ -817,6 +818,67 @@ const P0_BEFORE_EMOTION = [
 
 const P0_BEFORE_SHAPE = [...P0_BEFORE_EMOTION, "emotion-match"] as const;
 const P0_BEFORE_SIZE = [...P0_BEFORE_SHAPE, "sort-by-shape"] as const;
+
+test("peek and find hides both the visual and semantic answer in Pixi", async ({
+  page,
+}) => {
+  await seedCleanProgress(page, P0_BEFORE_PEEK);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Privește și găsește" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  await expect(page.locator(".pixi-accessibility .sr-only")).toHaveAttribute(
+    "hidden",
+    "",
+  );
+  const cups = page.locator("button.pixi-accessibility-choice");
+  await expect(cups).toHaveCount(2);
+  await cups.nth(0).evaluate((button: HTMLButtonElement) => button.click());
+  await page.waitForTimeout(60);
+  await cups.nth(1).evaluate((button: HTMLButtonElement) => button.click());
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "peek-and-find",
+      );
+    })
+    .toBe(true);
+});
+
+test("peek and find renders the full three-cup delayed stage", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage layout contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_PEEK);
+  await seedGameDifficulty(page, "peek-and-find", 72, {
+    locationCount: 3,
+    delayMs: 500,
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Privește și găsește" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  const cups = page.locator("button.pixi-accessibility-choice");
+  await expect(cups).toHaveCount(3);
+  const boxes = await cups.evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const box = button.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    }),
+  );
+  for (const box of boxes) {
+    expect(box.width).toBeGreaterThanOrEqual(96);
+    expect(box.height).toBeGreaterThanOrEqual(96);
+  }
+});
 
 test("shadow matching uses the shared Pixi choice renderer", async ({
   page,
@@ -1177,6 +1239,11 @@ const GOLDEN_SCENES = [
     id: "shadow-match",
     name: "Potrivește umbra",
     unlocks: P0_BEFORE_SHADOW,
+  },
+  {
+    id: "peek-and-find",
+    name: "Privește și găsește",
+    unlocks: P0_BEFORE_PEEK,
   },
   {
     id: "emotion-match",
