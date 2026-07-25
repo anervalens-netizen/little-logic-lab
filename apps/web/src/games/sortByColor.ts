@@ -25,8 +25,8 @@ export const sortByColorGame = createSortGame({
   icon: () => drawItem("ball", "#F25C4C"),
   bubbleColor: "#F25C4C",
   axes: [
-    { name: "itemCount", values: [2, 3, 4] },
-    { name: "binCount", values: [2, 3] },
+    { name: "itemCount", values: [2, 3, 4, 6, 8, 10, 12] },
+    { name: "binCount", values: [2, 3, 4] },
     { name: "ruleCount", values: [1, 2] },
     { name: "ruleCueVisibility", values: ["always", "on_request", "at_switch"] },
   ],

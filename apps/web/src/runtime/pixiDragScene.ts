@@ -282,20 +282,31 @@ export async function createPixiDragScene(
     app.stage.hitArea = new Rectangle(0, 0, width, height);
 
     const targetGap = Math.max(16, Math.min(40, width * 0.04));
+    const targetGrid = targets.length > 3 && width < 600;
+    const targetColumns = targetGrid ? 2 : targets.length;
+    const targetRows = Math.ceil(targets.length / targetColumns);
+    const targetRatio = options.presentation === "bins" ? 0.82 : 1;
+    const targetAreaHeight = height * (targetGrid ? 0.54 : 0.34);
     const targetWidth = Math.min(
       options.presentation === "bins" ? 230 : 205,
-      (width - targetGap * (targets.length + 1)) / targets.length,
-      height * 0.34,
+      (width - targetGap * (targetColumns + 1)) / targetColumns,
+      (targetAreaHeight - targetGap * (targetRows - 1)) /
+        targetRows /
+        targetRatio,
     );
-    const targetHeight =
-      targetWidth * (options.presentation === "bins" ? 0.82 : 1);
+    const targetHeight = Math.max(96, targetWidth * targetRatio);
     const targetTotal =
-      targetWidth * targets.length + targetGap * (targets.length - 1);
+      targetWidth * targetColumns + targetGap * (targetColumns - 1);
     const targetStart = (width - targetTotal) / 2 + targetWidth / 2;
-    const targetY = height * 0.3;
     targets.forEach((target, index) => {
-      target.x = targetStart + index * (targetWidth + targetGap);
-      target.y = targetY;
+      const row = Math.floor(index / targetColumns);
+      const column = index % targetColumns;
+      target.x = targetStart + column * (targetWidth + targetGap);
+      target.y = targetGrid
+        ? height * 0.05 +
+          row * (targetHeight + targetGap) +
+          targetHeight / 2
+        : height * 0.3;
       target.width = targetWidth;
       target.height = targetHeight;
       target.container.position.set(target.x, target.y);
@@ -325,7 +336,7 @@ export async function createPixiDragScene(
     );
     const itemTotal = itemSize * items.length + itemGap * (items.length - 1);
     const itemStart = (width - itemTotal) / 2 + itemSize / 2;
-    const itemY = height * 0.75;
+    const itemY = height * (targetGrid ? 0.82 : 0.75);
     items.forEach((item, index) => {
       item.size = itemSize;
       if (!item.placed) {

@@ -118,6 +118,23 @@ async function seedGameDifficulty(
   );
 }
 
+async function placeVisiblePixiSortItems(
+  page: Page,
+  targetName: (itemLabel: string) => string,
+): Promise<void> {
+  const items = page.locator("button.pixi-drag-item");
+  const count = await items.count();
+  for (let index = 0; index < count; index += 1) {
+    const item = items.nth(index);
+    const label = await item.getAttribute("aria-label");
+    expect(label).not.toBeNull();
+    await item.evaluate((button: HTMLButtonElement) => button.click());
+    await page
+      .getByRole("button", { name: targetName(label!), exact: true })
+      .evaluate((button: HTMLButtonElement) => button.click());
+  }
+}
+
 async function enterHome(page: Page, path = "/"): Promise<void> {
   await page.goto(path);
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
@@ -436,6 +453,60 @@ test("color sorting completes through the accessible Pixi input bridge", async (
     .toBe(true);
 });
 
+test("sorting batches the full twelve-item, four-bin ladder stage", async ({
+  page,
+}, testInfo) => {
+  test.setTimeout(120_000);
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One mobile engine is sufficient for the deterministic batch/grid contract.",
+  );
+  await seedCleanProgress(page, ["same-picture"]);
+  await seedGameDifficulty(page, "sort-by-color", 72, {
+    itemCount: 12,
+    binCount: 4,
+    ruleCount: 2,
+    ruleCueVisibility: "at_switch",
+  });
+
+  await enterHome(page);
+  await page.getByRole("button", { name: "Coșurile de culori" }).click();
+  for (let batch = 0; batch < 4; batch += 1) {
+    await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+      timeout: 8_000,
+    });
+    await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+    await expect(page.locator("button.pixi-drag-item")).toHaveCount(3);
+    const targets = page.locator("button.pixi-drop-target");
+    await expect(targets).toHaveCount(4);
+    if (batch === 0) {
+      const boxes = await targets.evaluateAll((buttons) =>
+        buttons.map((button) => {
+          const box = button.getBoundingClientRect();
+          return { width: box.width, height: box.height };
+        }),
+      );
+      for (const box of boxes) {
+        expect(box.width).toBeGreaterThanOrEqual(96);
+        expect(box.height).toBeGreaterThanOrEqual(96);
+      }
+    }
+    await placeVisiblePixiSortItems(page, (label) => `coșul ${label}`);
+    await page.waitForTimeout(900);
+  }
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (
+        profile?.attempts as
+          | Array<{ gameId: string; ladderStageId: string }>
+          | undefined
+      )?.find((attempt) => attempt.gameId === "sort-by-color")?.ladderStageId;
+    })
+    .toBe("sort-by-color:L012");
+});
+
 test("inset puzzle consumes shared drag/snap runtime", async ({ page }) => {
   await seedCleanProgress(page, ["same-picture", "sort-by-color"]);
   await enterHome(page);
@@ -547,6 +618,9 @@ const P0_BEFORE_EMOTION = [
   "listen-find",
   "trace-road",
 ] as const;
+
+const P0_BEFORE_SHAPE = [...P0_BEFORE_EMOTION, "emotion-match"] as const;
+const P0_BEFORE_SIZE = [...P0_BEFORE_SHAPE, "sort-by-shape"] as const;
 
 test("shadow matching uses the shared Pixi choice renderer", async ({
   page,
@@ -668,6 +742,65 @@ test("emotion matching renders all eight oldest-stage perspectives", async ({
   }
 });
 
+test("shape sorting uses the shared Pixi batch renderer", async ({ page }) => {
+  await seedCleanProgress(page, P0_BEFORE_SHAPE);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Casa formelor" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  await expect(page.locator("button.pixi-drag-item")).toHaveCount(2);
+  await placeVisiblePixiSortItems(page, (label) => `casa ${label}`);
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "sort-by-shape",
+      );
+    })
+    .toBe(true);
+});
+
+test("size sorting uses four meaningful size categories in Pixi", async ({
+  page,
+}) => {
+  await seedCleanProgress(page, P0_BEFORE_SIZE);
+  await seedGameDifficulty(page, "sort-by-size", 32, {
+    itemCount: 2,
+    binCount: 2,
+    ruleCount: 1,
+    ruleCueVisibility: "always",
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Mic, mijlociu, mare" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  await expect(page.locator("button.pixi-drag-item")).toHaveCount(2);
+  const plurals: Readonly<Record<string, string>> = {
+    mic: "mici",
+    mijlociu: "mijlocii",
+    mare: "mari",
+    "foarte mare": "foarte mari",
+  };
+  await placeVisiblePixiSortItems(
+    page,
+    (label) => `coșul pentru cele ${plurals[label] ?? label}`,
+  );
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "sort-by-size",
+      );
+    })
+    .toBe(true);
+});
+
 test("drag-and-fit completes through the shared spatial-fit archetype", async ({
   page,
 }) => {
@@ -731,6 +864,16 @@ const GOLDEN_SCENES = [
     name: "Cum se simte?",
     unlocks: P0_BEFORE_EMOTION,
   },
+  {
+    id: "sort-by-shape",
+    name: "Casa formelor",
+    unlocks: P0_BEFORE_SHAPE,
+  },
+  {
+    id: "sort-by-size",
+    name: "Mic, mijlociu, mare",
+    unlocks: P0_BEFORE_SIZE,
+  },
 ] as const;
 
 for (const scene of GOLDEN_SCENES) {
@@ -738,6 +881,14 @@ for (const scene of GOLDEN_SCENES) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     if (scene.unlocks.length > 0) {
       await seedCleanProgress(page, scene.unlocks);
+    }
+    if (scene.id === "sort-by-size") {
+      await seedGameDifficulty(page, "sort-by-size", 32, {
+        itemCount: 2,
+        binCount: 2,
+        ruleCount: 1,
+        ruleCueVisibility: "always",
+      });
     }
     await enterHome(page);
     await page.getByRole("button", { name: scene.name }).click();

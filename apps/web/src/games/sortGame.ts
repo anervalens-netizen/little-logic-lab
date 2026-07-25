@@ -20,6 +20,7 @@ import { sfxPick, sfxPlace } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { makeDraggable } from "../ui/dragdrop";
 import { speak } from "../audio/speech";
+import type { PixiDragScene } from "../runtime/pixiDragScene";
 
 export interface SortItemVisual {
   readonly id: string;
@@ -310,12 +311,23 @@ async function playPixiSortRound(
   let cancelWatch: number | null = null;
   let resolveResult: (result: PlayResult) => void = () => undefined;
   let simplifying = false;
+  let activeScene: PixiDragScene | null = null;
+  let activeBatchIndex = 0;
+  let sceneToken = 0;
+  const batchSize = window.innerWidth < 600 ? 3 : 4;
+  const batches: readonly (readonly string[])[] = Array.from(
+    { length: Math.ceil(level.itemIds.length / batchSize) },
+    (_, index) =>
+      level.itemIds.slice(index * batchSize, (index + 1) * batchSize),
+  );
   const result = new Promise<PlayResult>((resolve) => {
     resolveResult = resolve;
   });
   const finish = (outcome: PlayResult) => {
     if (settled) return;
     settled = true;
+    inputReady = false;
+    sceneToken += 1;
     if (cancelWatch !== null) window.clearInterval(cancelWatch);
     resolveResult(outcome);
   };
@@ -327,86 +339,136 @@ async function playPixiSortRound(
     }),
   );
 
-  const scene = await createPixiDragScene(ctx.mount, {
-    items: level.itemIds.map((itemId) => {
-      const visual = itemVisuals.get(itemId);
-      return {
-        id: itemId,
-        svg: visual?.svg ?? spec.icon(),
-        label: visual?.speakOnPlace ?? itemId,
-      };
-    }),
-    targets: level.bins.map((binId, index) => {
-      const visual = spec.binVisual(binId, index);
-      return {
-        id: binId,
-        label: visual.label,
-        color: visual.hex,
-        ...(visual.badge ? { svg: visual.badge } : {}),
-      };
-    }),
-    presentation: "bins",
-    reducedMotion: ctx.reducedMotion,
-    onDrop(itemId, binId) {
-      if (!inputReady || settled || simplifying) return "ignore";
-      const before = state;
-      state = reduceSort(state, { type: "place", itemId, binId });
-      if (state === before) return "ignore";
-
-      if (state.lastIncorrectItemId === itemId) {
-        const verdict = support.registerError();
-        if (verdict === "hint") {
-          const correctBin = level.correctBinByItemId[itemId];
-          if (correctBin) {
-            window.setTimeout(() => scene.emphasizeTarget(correctBin), 180);
-          }
-          speak("Uite, aici e locul lui!");
-        } else if (verdict === "simplify") {
-          simplifying = true;
-          inputReady = false;
-          void autoCompleteRemaining();
-        }
-        return "incorrect";
-      }
-
-      support.registerSuccess();
-      sfxPlace();
-      playItemVoice(itemId);
-      const speakText = itemVisuals.get(itemId)?.speakOnPlace;
-      if (speakText) speak(speakText, { rate: 1 });
-      if (state.completed) {
-        window.setTimeout(
-          () =>
-            finish({
-              completed: true,
-              correctFirstTry: support.wasFirstTryClean,
-              correctEventually: true,
-              hintsUsed: support.hintsUsed,
-              wrongAttempts: support.wrongAttempts,
-            }),
-          ctx.reducedMotion ? 380 : 720,
-        );
-      }
-      return "correct";
-    },
+  const targets = level.bins.map((binId, index) => {
+    const visual = spec.binVisual(binId, index);
+    return {
+      id: binId,
+      label: visual.label,
+      color: visual.hex,
+      ...(visual.badge ? { svg: visual.badge } : {}),
+    };
   });
-  ctx.onCleanup(scene.destroy);
 
-  async function autoCompleteRemaining(): Promise<void> {
+  async function showBatch(
+    batchIndex: number,
+    interactive: boolean,
+  ): Promise<PixiDragScene | null> {
+    const batch = batches[batchIndex];
+    if (!batch || settled || ctx.isCancelled()) return null;
+    inputReady = false;
+    activeScene?.destroy();
+    activeScene = null;
+    const token = ++sceneToken;
+    let scene!: PixiDragScene;
+    scene = await createPixiDragScene(ctx.mount, {
+      items: batch.map((itemId) => {
+        const visual = itemVisuals.get(itemId);
+        return {
+          id: itemId,
+          svg: visual?.svg ?? spec.icon(),
+          label: visual?.speakOnPlace ?? itemId,
+        };
+      }),
+      targets,
+      presentation: "bins",
+      reducedMotion: ctx.reducedMotion,
+      onDrop(itemId, binId) {
+        if (!inputReady || settled || simplifying) return "ignore";
+        const before = state;
+        state = reduceSort(state, { type: "place", itemId, binId });
+        if (state === before) return "ignore";
+
+        if (state.lastIncorrectItemId === itemId) {
+          const verdict = support.registerError();
+          if (verdict === "hint") {
+            const correctBin = level.correctBinByItemId[itemId];
+            if (correctBin) {
+              window.setTimeout(() => scene.emphasizeTarget(correctBin), 180);
+            }
+            speak("Uite, aici e locul lui!");
+          } else if (verdict === "simplify") {
+            simplifying = true;
+            inputReady = false;
+            window.setTimeout(
+              () => void autoCompleteRemaining(batchIndex),
+              ctx.reducedMotion ? 120 : 460,
+            );
+          }
+          return "incorrect";
+        }
+
+        support.registerSuccess();
+        sfxPlace();
+        playItemVoice(itemId);
+        const speakText = itemVisuals.get(itemId)?.speakOnPlace;
+        if (speakText) speak(speakText, { rate: 1 });
+        const batchCompleted = batch.every(
+          (id) => state.placedBinByItemId[id] !== undefined,
+        );
+        if (batchCompleted) {
+          inputReady = false;
+          window.setTimeout(
+            () => {
+              if (batchIndex + 1 < batches.length) {
+                void showBatch(batchIndex + 1, true);
+              } else {
+                finish({
+                  completed: true,
+                  correctFirstTry: support.wasFirstTryClean,
+                  correctEventually: true,
+                  hintsUsed: support.hintsUsed,
+                  wrongAttempts: support.wrongAttempts,
+                });
+              }
+            },
+            ctx.reducedMotion ? 380 : 720,
+          );
+        }
+        return "correct";
+      },
+    });
+    if (token !== sceneToken || settled || ctx.isCancelled()) {
+      scene.destroy();
+      return null;
+    }
+    activeScene = scene;
+    activeBatchIndex = batchIndex;
+    inputReady = interactive && !simplifying;
+    if (interactive) scene.readyElement.dataset.gameReady = "true";
+    return scene;
+  }
+
+  async function autoCompleteRemaining(startBatchIndex: number): Promise<void> {
     speak("Hai să le punem împreună! Uite așa!");
-    for (const itemId of level.itemIds) {
-      if (ctx.isCancelled()) return;
-      if (state.placedBinByItemId[itemId] !== undefined) continue;
-      const correctBin = level.correctBinByItemId[itemId];
-      if (!correctBin) continue;
-      scene.emphasizeTarget(correctBin);
-      state = reduceSort(state, {
-        type: "place",
-        itemId,
-        binId: correctBin,
-      });
-      await scene.autoPlace(itemId, correctBin);
-      await wait(ctx.reducedMotion ? 100 : 280);
+    for (
+      let batchIndex = startBatchIndex;
+      batchIndex < batches.length;
+      batchIndex += 1
+    ) {
+      if (settled || ctx.isCancelled()) return;
+      const scene =
+        batchIndex === activeBatchIndex
+          ? activeScene
+          : await showBatch(batchIndex, false);
+      const batch = batches[batchIndex];
+      if (!scene || !batch) return;
+      for (const itemId of batch) {
+        if (settled || ctx.isCancelled()) return;
+        if (state.placedBinByItemId[itemId] !== undefined) continue;
+        const correctBin = level.correctBinByItemId[itemId];
+        if (!correctBin) continue;
+        scene.emphasizeTarget(correctBin);
+        state = reduceSort(state, {
+          type: "place",
+          itemId,
+          binId: correctBin,
+        });
+        await scene.autoPlace(itemId, correctBin);
+        await wait(ctx.reducedMotion ? 100 : 280);
+      }
+      if (batchIndex + 1 < batches.length) {
+        await wait(ctx.reducedMotion ? 100 : 320);
+      }
     }
     finish({
       completed: true,
@@ -417,11 +479,17 @@ async function playPixiSortRound(
     });
   }
 
+  ctx.onCleanup(() => {
+    sceneToken += 1;
+    activeScene?.destroy();
+    activeScene = null;
+  });
+  const initialScene = await showBatch(0, false);
   speak(spec.instruction);
   await wait(900);
   if (ctx.isCancelled()) return abortedSort();
   inputReady = true;
-  scene.readyElement.dataset.gameReady = "true";
+  if (initialScene) initialScene.readyElement.dataset.gameReady = "true";
   cancelWatch = window.setInterval(() => {
     if (ctx.isCancelled()) {
       finish({

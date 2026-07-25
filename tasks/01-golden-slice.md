@@ -39,8 +39,8 @@ rămâne blocat până la validările umane și pe dispozitiv.
 - IndexedDB cu migrare v1/v2 și fallback;
 - manifest P0 compact generat din catalog/ladders;
 - Parent Mode React și progresie limitată strict la stage-urile eligibile;
-- 102 clipuri RO locale, fără Web Speech sau request-uri audio externe;
-- Axe automat și 12 baseline-uri vizuale Chromium/WebKit;
+- 108 clipuri RO locale, fără Web Speech sau request-uri audio externe;
+- Axe automat și 16 baseline-uri vizuale Chromium/WebKit;
 - telemetrie locală pentru frame p95, input latency și long tasks;
 - primul pass pentru toate cele trei jocuri și E2E Chromium/WebKit.
 
