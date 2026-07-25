@@ -1,5 +1,7 @@
 # Task 00 — Stabilizare și checkpoint
 
+Status: complet la `e090b98`
+
 ## Goal
 
 Transformă prototipul local într-un baseline reproductibil înainte de
@@ -14,7 +16,7 @@ rescrierea vizuală.
 5. Attempt events cu seed, ladder stage și content version.
 6. Age eligibility și deblocare graduală din catalog.
 7. Setări inițiale conservative, inclusiv Reduce Motion.
-8. Deploy Cloudflare Pages verificat pe domeniul public.
+8. Deploy static verificat prin Cloudflare la domeniul public.
 
 ## Acceptance
 

@@ -13,8 +13,8 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
 
 - R0 engineering: complet; repository privat, TypeScript 7, PWA versionat,
   replay, age gating, migrare și E2E sunt verificate.
-- R0 release: blocat numai de publicarea domeniului; producția răspunde încă
-  `404`.
+- R0 release: live la `https://logic-lab.astancu.eu/`; build-ul `e090b98`
+  este servit static prin Cloudflare Tunnel + Caddy, cu CSP strict.
 - R1: activ; React deține shell-ul, profilul este în IndexedDB, catalogul P0
   este compilat într-un manifest compact, iar scenele Pixi au lifecycle și
   overlay semantic.
@@ -61,7 +61,6 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- `logic-lab.astancu.eu` răspunde 404;
 - parent mode trebuie migrat complet în React;
 - cele trei scene golden-slice trebuie conectate la toate ancorele relevante,
   nu numai la intrarea conservatoare;
@@ -320,7 +319,7 @@ E2E verifică comportament observabil și rezultate, nu doar lipsa excepțiilor.
 
 ## 11. Livrare Cloudflare
 
-Producția este statică în Cloudflare Pages:
+Ținta de hosting administrat rămâne Cloudflare Pages:
 
 - build din commitul verificat;
 - output `apps/web/dist`;
@@ -333,16 +332,20 @@ Producția este statică în Cloudflare Pages:
 Nu folosim Vite preview ca serviciu de producție și nu rulăm produsul pe
 `dell-standby`.
 
+Deployment-ul public curent este tot static și respectă aceleași reguli, dar
+folosește infrastructura existentă Cloudflare Tunnel → Caddy →
+`/opt/websites/logic-lab/dist`. Migrarea la Pages nu blochează produsul și se
+face când autentificarea Wrangler/Pages este disponibilă.
+
 ## 12. Ordinea imediată de lucru
 
-1. finalizează R0;
-2. creează ADR 005 și toolchain TS7;
-3. introduce testele committed și repară contractele de date/PWA;
-4. construiește runtime-ul Pixi;
-5. livrează `same-picture`;
-6. livrează `sort-by-color`;
-7. livrează `inset-puzzle`;
-8. oprește și evaluează golden slice înainte de extindere.
+1. migrează parent mode complet în React;
+2. consumă toate ancorele A30_36 pentru cele trei jocuri;
+3. înlocuiește Web Speech cu audio RO local și manifest versionat;
+4. adaugă Axe și regresie vizuală pentru golden slice;
+5. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
+6. rulează observația cu copilul și rezolvă blocajele majore;
+7. evaluează exit-ul golden slice înainte de orice joc nou.
 
 ## Definition of done
 

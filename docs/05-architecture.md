@@ -8,6 +8,10 @@ through plugins. TypeScript 7 is the workspace compiler.
 
 The system is offline-first and has no runtime backend in v1.
 
+Topologia publică actuală este Cloudflare Tunnel → Caddy static →
+`/opt/websites/logic-lab/dist`; Cloudflare Pages rămâne ținta de hosting
+administrat, fără schimbări în artefactul PWA.
+
 ## Layering
 
 ```text
