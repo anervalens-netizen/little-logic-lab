@@ -33,5 +33,6 @@ reutilizabile, după golden slice.
 - `spatial-fit` este comun pentru `inset-puzzle` și `drag-and-fit`;
 - stage-urile cu până la 10 piese sunt împărțite în batch-uri de maximum 4;
 - rotația, outline support și similarity au efect vizual/content;
-- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și opt
-  baseline-uri vizuale pentru cele patru scene Pixi.
+- `shadow-match` reutilizează rendererul `choice` cu toate cele patru axe;
+- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și zece
+  baseline-uri vizuale pentru cele cinci scene Pixi.

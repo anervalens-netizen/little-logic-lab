@@ -20,9 +20,10 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   lifecycle și overlay semantic.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
   rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
-  batch-uri fără canvas rezidual. 69 clipuri RO locale, Axe și opt baseline-uri
-  vizuale sunt integrate. Lipsesc măsurarea pe dispozitiv, revizia umană a
-  vocii și validarea observată.
+  batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
+  `choice`. 70 clipuri RO locale, Axe și zece baseline-uri vizuale sunt
+  integrate. Lipsesc măsurarea pe dispozitiv, revizia umană a vocii și
+  validarea observată.
 
 ## 1. Obiectiv
 
@@ -63,8 +64,8 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- 11 jocuri rămân pe rendererul DOM de prototip;
-- cele 69 de clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
+- 10 jocuri rămân pe rendererul DOM de prototip;
+- cele 70 de clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
 - porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
 ## 3. Stack țintă
@@ -342,7 +343,7 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. revizuiește auditiv cele 69 de clipuri RO și înlocuiește pronunțiile slabe;
+1. revizuiește auditiv cele 70 de clipuri RO și înlocuiește pronunțiile slabe;
 2. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
 3. verifică manual VoiceOver și TalkBack;
 4. rulează observația cu copilul și rezolvă blocajele majore;

@@ -204,8 +204,12 @@ export async function createPixiChoiceScene(
       }
     }
     const compact = height < 430;
+    const grid = cards.length > 3;
     const targetSize = Math.min(width * 0.24, height * (compact ? 0.3 : 0.28), 190);
-    target.position.set(width / 2, height * (compact ? 0.24 : 0.27));
+    target.position.set(
+      width / 2,
+      height * (grid ? 0.15 : compact ? 0.24 : 0.27),
+    );
     targetSprite.width = targetSize;
     targetSprite.height = targetSize;
     targetHalo
@@ -215,21 +219,30 @@ export async function createPixiChoiceScene(
       .stroke({ color: 0xffd35c, alpha: 0.6, width: 9 });
 
     const gap = Math.max(18, Math.min(40, width * 0.035));
+    const columns = grid
+      ? Math.min(cards.length, width < 600 ? 3 : 4)
+      : cards.length;
+    const rows = Math.ceil(cards.length / columns);
+    const availableGridHeight = height * (grid ? 0.62 : compact ? 0.47 : 0.4);
     const cardWidth = Math.min(
       250,
-      (width - gap * (cards.length + 1)) / cards.length,
-      height * (compact ? 0.47 : 0.4),
+      (width - gap * (columns + 1)) / columns,
+      (availableGridHeight - gap * (rows - 1)) / rows,
     );
     const cardHeight = cardWidth;
-    const totalWidth = cardWidth * cards.length + gap * (cards.length - 1);
+    const totalWidth = cardWidth * columns + gap * (columns - 1);
     const startX = (width - totalWidth) / 2 + cardWidth / 2;
-    const cardY = height * (compact ? 0.69 : 0.7);
+    const gridTop = height * (grid ? 0.34 : compact ? 0.69 : 0.7);
 
     cards.forEach((card, index) => {
+      const row = Math.floor(index / columns);
+      const column = index % columns;
       card.width = cardWidth;
       card.height = cardHeight;
-      card.baseX = startX + index * (cardWidth + gap);
-      card.baseY = cardY;
+      card.baseX = startX + column * (cardWidth + gap);
+      card.baseY = grid
+        ? gridTop + row * (cardHeight + gap) + cardHeight / 2
+        : gridTop;
       card.container.position.set(card.baseX, card.baseY);
       card.container.hitArea = new Rectangle(
         -cardWidth / 2 - 10,

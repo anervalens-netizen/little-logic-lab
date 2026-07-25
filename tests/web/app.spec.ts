@@ -517,6 +517,99 @@ const P0_BEFORE_DRAG_AND_FIT = [
   "sort-by-size",
 ] as const;
 
+const P0_BEFORE_SHADOW = [
+  "same-picture",
+  "sort-by-color",
+  "inset-puzzle",
+  "daily-order",
+  "one-to-one-count",
+] as const;
+
+test("shadow matching uses the shared Pixi choice renderer", async ({
+  page,
+}) => {
+  await seedCleanProgress(page, P0_BEFORE_SHADOW);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Potrivește umbra" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  const options = page.locator(".pixi-accessibility-choice");
+  await expect(options).toHaveCount(2);
+  await options.nth(0).evaluate((button: HTMLButtonElement) => button.click());
+  await page.waitForTimeout(50);
+  await options.nth(1).evaluate((button: HTMLButtonElement) => button.click());
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "shadow-match",
+      );
+    })
+    .toBe(true);
+});
+
+test("shadow matching keeps eight choices touch-sized on the oldest ladder stage", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage layout contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_SHADOW);
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("minte-in-joaca");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+    const transaction = db.transaction("profiles", "readwrite");
+    const store = transaction.objectStore("profiles");
+    const profile = await new Promise<Record<string, any>>((resolve, reject) => {
+      const request = store.get("current");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+    profile.ageMonths = 72;
+    profile.progressByGame["shadow-match"] = {
+      difficulty: {
+        choiceCount: 8,
+        distractorSimilarity: 4,
+        targetCueDuration: 0,
+        sceneClutter: 4,
+      },
+      recentOutcomes: [],
+      timesPlayed: 0,
+    };
+    store.put(profile, "current");
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  });
+
+  await enterHome(page);
+  await page.getByRole("button", { name: "Potrivește umbra" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  const options = page.locator(".pixi-accessibility-choice");
+  await expect(options).toHaveCount(8);
+  const boxes = await options.evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const box = button.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    }),
+  );
+  for (const box of boxes) {
+    expect(box.width).toBeGreaterThanOrEqual(96);
+    expect(box.height).toBeGreaterThanOrEqual(96);
+  }
+});
+
 test("drag-and-fit completes through the shared spatial-fit archetype", async ({
   page,
 }) => {
@@ -569,6 +662,11 @@ const GOLDEN_SCENES = [
     id: "drag-and-fit",
     name: "Mută și potrivește",
     unlocks: P0_BEFORE_DRAG_AND_FIT,
+  },
+  {
+    id: "shadow-match",
+    name: "Potrivește umbra",
+    unlocks: P0_BEFORE_SHADOW,
   },
 ] as const;
 

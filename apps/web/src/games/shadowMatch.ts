@@ -25,10 +25,18 @@ export const shadowMatchGame = createChoiceGame({
   icon: () => shadowSvg("elephant"),
   bubbleColor: "#9B8CF2",
   axes: [
-    { name: "choiceCount", values: [2, 3] },
-    { name: "distractorSimilarity", values: [0, 1] },
+    { name: "choiceCount", values: [2, 3, 4, 5, 6, 8] },
+    { name: "distractorSimilarity", values: [0, 1, 2, 3, 4] },
+    { name: "targetCueDuration", values: [-1, 2500, 1500, 800, 0] },
+    { name: "sceneClutter", values: [0, 1, 2, 3, 4] },
   ],
-  initialDifficulty: { choiceCount: 2, distractorSimilarity: 0 },
+  initialDifficulty: {
+    choiceCount: 2,
+    distractorSimilarity: 0,
+    targetCueDuration: -1,
+    sceneClutter: 0,
+  },
+  renderer: "pixi",
   content: CONTENT,
   similarityAttribute: "category",
   buildRound: (level) => {
@@ -36,7 +44,7 @@ export const shadowMatchGame = createChoiceGame({
     return {
       targetSvg: drawItem(target.id),
       targetLabel: target.labelDef,
-      roundSpeech: `Aici e ${target.labelDef}. Găsește umbra lui!`,
+      roundSpeech: "Privește imaginea! Găsește umbra potrivită!",
       options: level.choiceIds.map((id) => {
         const item = getItem(id);
         return { id, svg: shadowSvg(id), label: `umbra ${item.label}` };

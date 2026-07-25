@@ -52,6 +52,7 @@
     { "id": "same-sun", "text": "Uită-te! Aici e soarele. Găsește una la fel!" },
     { "id": "same-moon", "text": "Uită-te! Aici e luna. Găsește una la fel!" },
     { "id": "same-cloud", "text": "Uită-te! Aici e norul. Găsește una la fel!" },
+    { "id": "shadow-instruction", "text": "Privește imaginea! Găsește umbra potrivită!" },
     { "id": "sort-instruction", "text": "Pune fiecare lucru în coșul de aceeași culoare!" },
     { "id": "sort-hint", "text": "Uite, aici e locul lui!" },
     { "id": "sort-help", "text": "Hai să le punem împreună! Uite așa!" },
