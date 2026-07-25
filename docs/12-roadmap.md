@@ -21,8 +21,9 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
   rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
   batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
-  `choice`. 70 clipuri RO locale, Axe și zece baseline-uri vizuale sunt
-  integrate. Lipsesc măsurarea pe dispozitiv, revizia umană a vocii și
+  `choice`, iar `emotion-match` consumă același renderer cu opt emoții în două
+  perspective vizuale. 102 clipuri RO locale, Axe și 12 baseline-uri vizuale
+  sunt integrate. Lipsesc măsurarea pe dispozitiv, revizia umană a vocii și
   validarea observată.
 
 ## 1. Obiectiv
@@ -64,8 +65,8 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- 10 jocuri rămân pe rendererul DOM de prototip;
-- cele 70 de clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
+- 9 jocuri rămân pe rendererul DOM de prototip;
+- cele 102 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
 - porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
 ## 3. Stack țintă
@@ -185,7 +186,9 @@ Exit:
 - Chromium și WebKit touch E2E;
 - test observat cu copilul, cu problemele majore rezolvate.
 
-Nu se migrează alte jocuri înainte de acest exit.
+Migrarea arhetipurilor poate continua după exit-ul automat și aprobarea
+explicită a ownerului. Pilotul privat rămâne blocat până la porțile pe
+dispozitiv și observația umană.
 
 ### R3 — Starter release P0
 
@@ -343,11 +346,11 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. revizuiește auditiv cele 70 de clipuri RO și înlocuiește pronunțiile slabe;
-2. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
-3. verifică manual VoiceOver și TalkBack;
-4. rulează observația cu copilul și rezolvă blocajele majore;
-5. evaluează exit-ul golden slice înainte de orice joc nou.
+1. migrează cele nouă scene DOM rămase prin arhetipurile comune;
+2. revizuiește auditiv cele 102 clipuri RO și înlocuiește pronunțiile slabe;
+3. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
+4. verifică manual VoiceOver și TalkBack;
+5. rulează observația cu copilul și rezolvă blocajele majore.
 
 ## Definition of done
 

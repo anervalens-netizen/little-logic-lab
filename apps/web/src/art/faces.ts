@@ -2,7 +2,15 @@
 
 import { svg, INK } from "./svg";
 
-export type EmotionId = "happy" | "sad" | "angry" | "scared" | "surprised" | "sleepy";
+export type EmotionId =
+  | "happy"
+  | "sad"
+  | "angry"
+  | "scared"
+  | "surprised"
+  | "sleepy"
+  | "calm"
+  | "shy";
 
 export const EMOTION_LABELS: Record<EmotionId, string> = {
   happy: "fericit",
@@ -11,6 +19,8 @@ export const EMOTION_LABELS: Record<EmotionId, string> = {
   scared: "speriat",
   surprised: "uimit",
   sleepy: "somnoros",
+  calm: "liniștit",
+  shy: "rușinat",
 };
 
 export const EMOTION_LABELS_F: Record<EmotionId, string> = {
@@ -20,6 +30,8 @@ export const EMOTION_LABELS_F: Record<EmotionId, string> = {
   scared: "speriată",
   surprised: "uimită",
   sleepy: "somnoroasă",
+  calm: "liniștită",
+  shy: "rușinată",
 };
 
 export const ALL_EMOTIONS: readonly EmotionId[] = [
@@ -29,6 +41,8 @@ export const ALL_EMOTIONS: readonly EmotionId[] = [
   "scared",
   "surprised",
   "sleepy",
+  "calm",
+  "shy",
 ];
 
 export function drawEmotion(id: EmotionId, skin = "#FFD35C"): string {
@@ -80,6 +94,24 @@ export function drawEmotion(id: EmotionId, skin = "#FFD35C"): string {
         <path d="M 38 52 Q 43 56 48 52 M 72 52 Q 77 56 82 52" stroke="${INK}" stroke-width="3.4" stroke-linecap="round" fill="none"/>
         <ellipse cx="60" cy="70" rx="7" ry="9" fill="${INK}"/>
         <ellipse cx="60" cy="73" rx="4" ry="5" fill="#FF9EC6"/>`;
+      break;
+    case "calm":
+      features = `
+        <path d="M 37 52 Q 44 58 51 52 M 69 52 Q 76 58 83 52" stroke="${INK}" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+        <path d="M 49 70 Q 60 77 71 70" stroke="${INK}" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+        <circle cx="35" cy="64" r="5" fill="#FFB6A3" opacity="0.65"/>
+        <circle cx="85" cy="64" r="5" fill="#FFB6A3" opacity="0.65"/>`;
+      break;
+    case "shy":
+      features = `
+        <path d="M 37 45 Q 44 41 51 45 M 69 45 Q 76 41 83 45" stroke="${INK}" stroke-width="3" stroke-linecap="round" fill="none"/>
+        <ellipse cx="45" cy="54" rx="6.5" ry="5.5" fill="#fff" stroke="${INK}" stroke-width="2.2"/>
+        <ellipse cx="75" cy="54" rx="6.5" ry="5.5" fill="#fff" stroke="${INK}" stroke-width="2.2"/>
+        <circle cx="42.5" cy="55" r="3" fill="${INK}"/>
+        <circle cx="72.5" cy="55" r="3" fill="${INK}"/>
+        <path d="M 51 72 Q 60 77 69 72" stroke="${INK}" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+        <circle cx="34" cy="64" r="7" fill="#FF8FA3" opacity="0.82"/>
+        <circle cx="86" cy="64" r="7" fill="#FF8FA3" opacity="0.82"/>`;
       break;
   }
 

@@ -34,5 +34,7 @@ reutilizabile, după golden slice.
 - stage-urile cu până la 10 piese sunt împărțite în batch-uri de maximum 4;
 - rotația, outline support și similarity au efect vizual/content;
 - `shadow-match` reutilizează rendererul `choice` cu toate cele patru axe;
-- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și zece
-  baseline-uri vizuale pentru cele cinci scene Pixi.
+- `emotion-match` consumă cele 11 stage-uri prin același renderer, inclusiv opt
+  emoții și perspective vizuale distincte;
+- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 12
+  baseline-uri vizuale pentru cele șase scene Pixi.

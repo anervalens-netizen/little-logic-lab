@@ -79,6 +79,45 @@ async function seedCleanProgress(
   }, gameIds);
 }
 
+async function seedGameDifficulty(
+  page: Page,
+  gameId: string,
+  ageMonths: number,
+  difficulty: Record<string, string | number | boolean>,
+): Promise<void> {
+  await page.evaluate(
+    async ({ id, age, vector }) => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open("minte-in-joaca");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+      const transaction = db.transaction("profiles", "readwrite");
+      const store = transaction.objectStore("profiles");
+      const profile = await new Promise<Record<string, any>>(
+        (resolve, reject) => {
+          const request = store.get("current");
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve(request.result);
+        },
+      );
+      profile.ageMonths = age;
+      profile.progressByGame[id] = {
+        difficulty: vector,
+        recentOutcomes: [],
+        timesPlayed: 0,
+      };
+      store.put(profile, "current");
+      await new Promise<void>((resolve, reject) => {
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+      db.close();
+    },
+    { id: gameId, age: ageMonths, vector: difficulty },
+  );
+}
+
 async function enterHome(page: Page, path = "/"): Promise<void> {
   await page.goto(path);
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
@@ -436,36 +475,11 @@ test("spatial-fit batches the full ten-piece ladder stage", async ({
     "One engine is sufficient for the deterministic high-stage contract.",
   );
   await seedCleanProgress(page, ["same-picture", "sort-by-color"]);
-  await page.evaluate(async () => {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("minte-in-joaca");
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-    });
-    const transaction = db.transaction("profiles", "readwrite");
-    const store = transaction.objectStore("profiles");
-    const profile = await new Promise<Record<string, any>>((resolve, reject) => {
-      const request = store.get("current");
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-    });
-    profile.ageMonths = 72;
-    profile.progressByGame["inset-puzzle"] = {
-      difficulty: {
-        pieceCount: 10,
-        rotationEnabled: true,
-        outlineSupport: "none",
-        similarity: 4,
-      },
-      recentOutcomes: [],
-      timesPlayed: 0,
-    };
-    store.put(profile, "current");
-    await new Promise<void>((resolve, reject) => {
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-    });
-    db.close();
+  await seedGameDifficulty(page, "inset-puzzle", 72, {
+    pieceCount: 10,
+    rotationEnabled: true,
+    outlineSupport: "none",
+    similarity: 4,
   });
 
   await enterHome(page);
@@ -525,6 +539,15 @@ const P0_BEFORE_SHADOW = [
   "one-to-one-count",
 ] as const;
 
+const P0_BEFORE_EMOTION = [
+  ...P0_BEFORE_SHADOW,
+  "shadow-match",
+  "peek-and-find",
+  "wait-for-go",
+  "listen-find",
+  "trace-road",
+] as const;
+
 test("shadow matching uses the shared Pixi choice renderer", async ({
   page,
 }) => {
@@ -559,40 +582,75 @@ test("shadow matching keeps eight choices touch-sized on the oldest ladder stage
     "One engine is sufficient for the deterministic high-stage layout contract.",
   );
   await seedCleanProgress(page, P0_BEFORE_SHADOW);
-  await page.evaluate(async () => {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open("minte-in-joaca");
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-    });
-    const transaction = db.transaction("profiles", "readwrite");
-    const store = transaction.objectStore("profiles");
-    const profile = await new Promise<Record<string, any>>((resolve, reject) => {
-      const request = store.get("current");
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-    });
-    profile.ageMonths = 72;
-    profile.progressByGame["shadow-match"] = {
-      difficulty: {
-        choiceCount: 8,
-        distractorSimilarity: 4,
-        targetCueDuration: 0,
-        sceneClutter: 4,
-      },
-      recentOutcomes: [],
-      timesPlayed: 0,
-    };
-    store.put(profile, "current");
-    await new Promise<void>((resolve, reject) => {
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-    });
-    db.close();
+  await seedGameDifficulty(page, "shadow-match", 72, {
+    choiceCount: 8,
+    distractorSimilarity: 4,
+    targetCueDuration: 0,
+    sceneClutter: 4,
   });
 
   await enterHome(page);
   await page.getByRole("button", { name: "Potrivește umbra" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  const options = page.locator(".pixi-accessibility-choice");
+  await expect(options).toHaveCount(8);
+  const boxes = await options.evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const box = button.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    }),
+  );
+  for (const box of boxes) {
+    expect(box.width).toBeGreaterThanOrEqual(96);
+    expect(box.height).toBeGreaterThanOrEqual(96);
+  }
+});
+
+test("emotion matching uses the shared Pixi choice renderer", async ({
+  page,
+}) => {
+  await seedCleanProgress(page, P0_BEFORE_EMOTION);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Cum se simte?" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  const options = page.locator(".pixi-accessibility-choice");
+  await expect(options).toHaveCount(2);
+  await options.nth(0).evaluate((button: HTMLButtonElement) => button.click());
+  await page.waitForTimeout(50);
+  await options.nth(1).evaluate((button: HTMLButtonElement) => button.click());
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "emotion-match",
+      );
+    })
+    .toBe(true);
+});
+
+test("emotion matching renders all eight oldest-stage perspectives", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage layout contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_EMOTION);
+  await seedGameDifficulty(page, "emotion-match", 72, {
+    choiceCount: 8,
+    contextLength: 4,
+    perspectiveCount: 2,
+    ambiguity: 1,
+  });
+
+  await enterHome(page);
+  await page.getByRole("button", { name: "Cum se simte?" }).click();
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
     timeout: 8_000,
   });
@@ -668,6 +726,11 @@ const GOLDEN_SCENES = [
     name: "Potrivește umbra",
     unlocks: P0_BEFORE_SHADOW,
   },
+  {
+    id: "emotion-match",
+    name: "Cum se simte?",
+    unlocks: P0_BEFORE_EMOTION,
+  },
 ] as const;
 
 for (const scene of GOLDEN_SCENES) {
@@ -680,6 +743,9 @@ for (const scene of GOLDEN_SCENES) {
     await page.getByRole("button", { name: scene.name }).click();
     await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
       timeout: 8_000,
+    });
+    await page.locator(".speech-bubble").evaluateAll((bubbles) => {
+      bubbles.forEach((bubble) => bubble.remove());
     });
     await page.addStyleTag({
       content:

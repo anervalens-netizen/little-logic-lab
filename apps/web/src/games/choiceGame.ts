@@ -53,6 +53,8 @@ export interface ChoiceGameSpec {
   ) => ChoiceRound;
   /** Atribut de similitudine pentru distractori (opțional). */
   readonly similarityAttribute?: string;
+  /** Axa care activează distractorii similari; implicit `distractorSimilarity`. */
+  readonly similarityAxis?: string;
 }
 
 export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
@@ -71,7 +73,9 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
 
     async play(ctx: GameContext, difficulty: DifficultyVector, seed: string): Promise<PlayResult> {
       const choiceCount = Number(difficulty["choiceCount"] ?? 2);
-      const useSimilarity = Number(difficulty["distractorSimilarity"] ?? 0) >= 1;
+      const useSimilarity =
+        Number(difficulty[spec.similarityAxis ?? "distractorSimilarity"] ?? 0) >=
+        1;
 
       const level = generateVisualChoice(seed, {
         gameId: spec.id,
