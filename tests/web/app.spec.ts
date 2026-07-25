@@ -586,6 +586,79 @@ test("spatial-fit batches the full ten-piece ladder stage", async ({
     .toBe("inset-puzzle:L015");
 });
 
+const P0_BEFORE_COUNT = [
+  "same-picture",
+  "sort-by-color",
+  "inset-puzzle",
+  "daily-order",
+] as const;
+
+test("one-to-one counting uses shared Pixi drag with one treat per friend", async ({
+  page,
+}) => {
+  await seedCleanProgress(page, P0_BEFORE_COUNT);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Dă câte unul" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  const items = page.locator("button.pixi-drag-item");
+  const targets = page.locator("button.pixi-drop-target");
+  await expect(items).toHaveCount(2);
+  await expect(targets).toHaveCount(2);
+
+  await items.nth(0).evaluate((button: HTMLButtonElement) => button.click());
+  await targets.nth(0).evaluate((button: HTMLButtonElement) => button.click());
+  await expect(items.nth(0)).toBeDisabled();
+
+  await items.nth(1).evaluate((button: HTMLButtonElement) => button.click());
+  await targets.nth(0).evaluate((button: HTMLButtonElement) => button.click());
+  await expect(items.nth(1)).toBeEnabled();
+  await targets.nth(1).evaluate((button: HTMLButtonElement) => button.click());
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "one-to-one-count",
+      );
+    })
+    .toBe(true);
+});
+
+test("one-to-one counting keeps the full three-friend stage touch-sized", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage layout contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_COUNT);
+  await seedGameDifficulty(page, "one-to-one-count", 72, {
+    maxQuantity: 3,
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Dă câte unul" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  const controls = page.locator(
+    "button.pixi-drag-item, button.pixi-drop-target",
+  );
+  await expect(controls).toHaveCount(6);
+  const boxes = await controls.evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const box = button.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    }),
+  );
+  for (const box of boxes) {
+    expect(box.width).toBeGreaterThanOrEqual(96);
+    expect(box.height).toBeGreaterThanOrEqual(96);
+  }
+});
+
 const P0_BEFORE_DRAG_AND_FIT = [
   "same-picture",
   "sort-by-color",
@@ -960,6 +1033,11 @@ const GOLDEN_SCENES = [
     id: "inset-puzzle",
     name: "Pune forma la loc",
     unlocks: ["same-picture", "sort-by-color"],
+  },
+  {
+    id: "one-to-one-count",
+    name: "Dă câte unul",
+    unlocks: P0_BEFORE_COUNT,
   },
   {
     id: "drag-and-fit",

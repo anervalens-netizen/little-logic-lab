@@ -38,9 +38,11 @@ reutilizabile, după golden slice.
   emoții și perspective vizuale distincte;
 - `listen-find` consumă toate cele 16 stage-uri prin rendererul `choice`, cu
   cerință audio locală, replay semantic și fără indiciu vizual al răspunsului;
+- `one-to-one-count` reutilizează drag/snap Pixi pentru corespondență unică,
+  inclusiv stage-ul complet cu trei prieteni;
 - `sort-by-shape` și `sort-by-size` rulează cu `sort-by-color` pe batch-uri de
   maximum trei obiecte pe telefon și patru pe tabletă;
 - stage-ul maxim de 12 obiecte/4 coșuri este E2E, cu grid tactil de minimum
   96 px și exact un canvas;
-- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 18
-  baseline-uri vizuale pentru cele nouă scene Pixi.
+- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 20
+  baseline-uri vizuale pentru cele zece scene Pixi.

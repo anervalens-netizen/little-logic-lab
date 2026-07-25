@@ -1,18 +1,23 @@
-/** „Dă câte unul" — corespondență unu-la-unu: fiecare personaj primește exact unul. */
+/** „Dă câte unul” — fiecare prieten primește exact o gustare. */
 
 import { createRng, chooseOne, type DifficultyVector } from "@core";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
-import { el, clear, svgEl, wait } from "../ui/dom";
-import { showHintGlow, jelly, particlesAt } from "../ui/feedback";
+import { clear, wait } from "../ui/dom";
 import { speak } from "../audio/speech";
 import { sfxPlace } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
-import { makeDraggable } from "../ui/dragdrop";
 import { drawItem } from "../art/items";
 
 const RECEIVERS = ["bear", "rabbit", "cat", "dog", "pig", "frog"] as const;
-const TREATS = ["cookie", "apple", "strawberry", "cupcake", "carrot", "banana"] as const;
+const TREATS = [
+  "cookie",
+  "apple",
+  "strawberry",
+  "cupcake",
+  "carrot",
+  "banana",
+] as const;
 const COUNT_WORDS = ["unu", "doi", "trei", "patru"];
 
 export const oneToOneCountGame: WebGame = {
@@ -21,175 +26,169 @@ export const oneToOneCountGame: WebGame = {
   skillId: "one_to_one_correspondence",
   domain: "numeracy",
   instruction: "Dă fiecărui prieten câte unul! Unul pentru fiecare!",
-  coPlayPrompt: "La masă: dă fiecăruia câte o linguriță sau câte un șervețel!",
+  coPlayPrompt:
+    "La masă: dă fiecăruia câte o linguriță sau câte un șervețel!",
   icon: () => drawItem("cookie"),
   bubbleColor: "#FFA94D",
   axes: [{ name: "maxQuantity", values: [1, 2, 3] }],
   initialDifficulty: { maxQuantity: 2 },
   scored: true,
 
-  async play(ctx: GameContext, difficulty: DifficultyVector, seed: string): Promise<PlayResult> {
-    const maxQuantity = Number(difficulty["maxQuantity"] ?? 2);
-    const count = Math.max(1, Math.min(4, maxQuantity));
+  async play(
+    ctx: GameContext,
+    difficulty: DifficultyVector,
+    seed: string,
+  ): Promise<PlayResult> {
+    const count = Math.max(
+      1,
+      Math.min(4, Number(difficulty["maxQuantity"] ?? 2)),
+    );
     const rng = createRng(seed);
     const receiver = chooseOne([...RECEIVERS], rng);
     const treat = chooseOne([...TREATS], rng);
-    const treatItem = drawItem(treat);
+    const friendIds = Array.from(
+      { length: count },
+      (_, index) => `friend-${index + 1}`,
+    );
+    const treatIds = Array.from(
+      { length: count },
+      (_, index) => `treat-${index + 1}`,
+    );
 
-    const support = new SupportTracker();
     clear(ctx.mount);
+    const { createPixiDragScene } = await import(
+      "../runtime/pixiDragScene"
+    );
+    const support = new SupportTracker();
+    const served = new Set<string>();
+    const placed = new Set<string>();
+    let spokenCount = 0;
+    let settled = false;
+    let inputReady = false;
+    let simplifying = false;
+    let cancelWatch: number | null = null;
+    let completionTimer: number | null = null;
+    let resolveResult: (result: PlayResult) => void = () => undefined;
+    const result = new Promise<PlayResult>((resolve) => {
+      resolveResult = resolve;
+    });
+    const finish = (outcome: PlayResult) => {
+      if (settled) return;
+      settled = true;
+      if (cancelWatch !== null) window.clearInterval(cancelWatch);
+      if (completionTimer !== null) window.clearTimeout(completionTimer);
+      resolveResult(outcome);
+    };
 
-    const layout = el("div", {});
-    layout.style.cssText =
-      "display:flex;flex-direction:column;align-items:center;justify-content:space-between;width:100%;height:100%;gap:8px;";
-
-    const receiversRow = el("div", {});
-    receiversRow.style.cssText =
-      "display:flex;gap:clamp(16px,4vw,40px);align-items:flex-end;justify-content:center;flex:1;";
-
-    const receivers: { node: HTMLElement; served: boolean }[] = [];
-    for (let i = 0; i < count; i += 1) {
-      const wrap = el("button", { className: "pop-in", "aria-label": `prietenul ${i + 1}` });
-      wrap.style.cssText =
-        "position:relative;width:clamp(120px,22vmin,200px);background:rgba(255,255,255,0.55);border-radius:32px;padding:12px;border:4px dashed rgba(74,63,53,0.12);transition:transform 160ms ease;";
-      wrap.style.animationDelay = `${i * 130}ms`;
-      wrap.append(svgEl(drawItem(receiver)));
-      receiversRow.append(wrap);
-      receivers.push({ node: wrap, served: false });
-    }
-
-    const tray = el("div", { className: "tray" });
-    const treatNodes: HTMLElement[] = [];
-    for (let i = 0; i < count; i += 1) {
-      const node = el("button", { className: "tray-item", "aria-label": `răsfăț ${i + 1}` });
-      node.style.animationDelay = `${i * 110}ms`;
-      node.append(svgEl(treatItem));
-      tray.append(node);
-      treatNodes.push(node);
-    }
-
-    layout.append(receiversRow, tray);
-    ctx.mount.append(layout);
-
-    speak(`Avem ${COUNT_WORDS[count - 1] ?? count} prieteni! Dă fiecăruia câte unul!`);
-    await wait(1200);
-
-    let selectedTreat: HTMLElement | null = null;
-    let servedCount = 0;
-    let countedAloud = 0;
-
-    return await new Promise<PlayResult>((resolve) => {
-      let settled = false;
-      const finish = (result: PlayResult) => {
-        if (settled) return;
-        settled = true;
-        resolve(result);
-      };
-
-      const cancelWatch = setInterval(() => {
-        if (ctx.isCancelled()) {
-          clearInterval(cancelWatch);
-          finish({ completed: false, correctFirstTry: false, correctEventually: false, hintsUsed: support.hintsUsed, wrongAttempts: support.wrongAttempts, abandoned: true });
+    const scene = await createPixiDragScene(ctx.mount, {
+      items: treatIds.map((id, index) => ({
+        id,
+        svg: drawItem(treat),
+        label: `gustarea ${index + 1}`,
+      })),
+      targets: friendIds.map((id, index) => ({
+        id,
+        svg: drawItem(receiver),
+        label: `prietenul ${index + 1}`,
+      })),
+      presentation: "holes",
+      reducedMotion: ctx.reducedMotion,
+      onDrop(itemId, targetId) {
+        if (!inputReady || settled || simplifying) return "ignore";
+        if (served.has(targetId)) {
+          const verdict = support.registerError();
+          speak("Acest prieten are deja unul!", { rate: 1 });
+          const nextTarget = friendIds.find((id) => !served.has(id));
+          if (nextTarget && verdict === "hint") {
+            window.setTimeout(() => scene.emphasizeTarget(nextTarget), 150);
+          }
+          if (verdict === "simplify") {
+            simplifying = true;
+            inputReady = false;
+            void autoCompleteRemaining();
+          }
+          return "incorrect";
         }
-      }, 250);
 
-      const deselect = () => {
-        selectedTreat = null;
-        for (const t of treatNodes) t.classList.remove("selected");
-        for (const r of receivers) r.node.style.transform = "";
-      };
-
-      const serve = async (receiverEntry: { node: HTMLElement; served: boolean }, treatNode: HTMLElement | null) => {
-        if (!treatNode) return;
+        support.registerSuccess();
+        served.add(targetId);
+        placed.add(itemId);
+        spokenCount += 1;
         sfxPlace();
         playItemVoice(treat);
-        countedAloud += 1;
-        speak(`${COUNT_WORDS[countedAloud - 1] ?? countedAloud}!`, { rate: 0.95 });
-        treatNode.classList.add("placed");
-        receiverEntry.served = true;
-        jelly(receiverEntry.node);
-        receiverEntry.node.classList.add("lll-hop");
-        setTimeout(() => receiverEntry.node.classList.remove("lll-hop"), 700);
-        const shellRect = ctx.shell.getBoundingClientRect();
-        const rRect = receiverEntry.node.getBoundingClientRect();
-        particlesAt(ctx.shell, rRect.left - shellRect.left + rRect.width / 2, rRect.top - shellRect.top + 20, { hearts: true, count: 5 });
-        const mini = el("div", {});
-        mini.style.cssText =
-          "position:absolute;bottom:-6px;right:-6px;width:44%;animation:pop-in 400ms backwards;";
-        mini.append(svgEl(treatItem));
-        receiverEntry.node.append(mini);
-        receiverEntry.node.style.border = "4px solid rgba(127,200,107,0.6)";
-        deselect();
-        servedCount += 1;
-        if (servedCount >= count) {
-          await wait(700);
-          speak("Fiecare are câte unul! Bravo!");
-          setTimeout(
-            () =>
-              finish({
-                completed: true,
-                correctFirstTry: support.wasFirstTryClean,
-                correctEventually: true,
-                hintsUsed: support.hintsUsed,
-                wrongAttempts: support.wrongAttempts,
-              }),
-            1200,
-          );
+        speak(`${COUNT_WORDS[spokenCount - 1] ?? spokenCount}!`, { rate: 0.95 });
+        if (placed.size >= count) {
+          completionTimer = window.setTimeout(() => {
+            speak("Fiecare are câte unul! Bravo!");
+            finish({
+              completed: true,
+              correctFirstTry: support.wasFirstTryClean,
+              correctEventually: true,
+              hintsUsed: support.hintsUsed,
+              wrongAttempts: support.wrongAttempts,
+            });
+          }, ctx.reducedMotion ? 380 : 720);
         }
-      };
-
-      const offerTo = (receiverEntry: { node: HTMLElement; served: boolean }, treatNode: HTMLElement): void => {
-        if (settled) return;
-        if (receiverEntry.served) {
-          const verdict = support.registerError(receiverEntry.node);
-          speak("Are deja unul! Dă altui prieten!", { rate: 1 });
-          if (verdict === "hint") {
-            const next = receivers.find((r) => !r.served);
-            if (next) showHintGlow(next.node);
-          } else if (verdict === "simplify") {
-            const next = receivers.find((r) => !r.served);
-            if (next) {
-              showHintGlow(next.node);
-              speak("Uite, lui îi dăm!");
-            }
-          }
-          return;
-        }
-        support.registerSuccess();
-        void serve(receiverEntry, treatNode);
-      };
-
-      for (const treatNode of treatNodes) {
-        treatNode.addEventListener("click", () => {
-          if (settled) return;
-          if (selectedTreat === treatNode) {
-            deselect();
-            return;
-          }
-          selectedTreat = treatNode;
-          for (const t of treatNodes) t.classList.toggle("selected", t === treatNode);
-          for (const r of receivers) {
-            r.node.style.transform = r.served ? "" : "scale(1.05)";
-          }
-        });
-
-        makeDraggable(treatNode, {
-          data: "treat",
-          canDrag: () => !settled && !treatNode.classList.contains("placed"),
-          targets: () => receivers.filter((r) => !r.served).map((r) => ({ node: r.node, data: "friend" })),
-          onDrop: (target) => {
-            const entry = receivers.find((r) => r.node === target.node);
-            if (entry) offerTo(entry, treatNode);
-          },
-        });
-      }
-
-      for (const receiverEntry of receivers) {
-        receiverEntry.node.addEventListener("click", () => {
-          if (settled || !selectedTreat) return;
-          offerTo(receiverEntry, selectedTreat);
-        });
-      }
+        return "correct";
+      },
     });
+    ctx.onCleanup(scene.destroy);
+
+    async function autoCompleteRemaining(): Promise<void> {
+      speak("Hai să dăm împreună câte unul fiecăruia!");
+      const remainingItems = treatIds.filter((id) => !placed.has(id));
+      const remainingTargets = friendIds.filter((id) => !served.has(id));
+      for (let index = 0; index < remainingItems.length; index += 1) {
+        if (ctx.isCancelled()) return;
+        const itemId = remainingItems[index];
+        const targetId = remainingTargets[index];
+        if (!itemId || !targetId) continue;
+        scene.emphasizeTarget(targetId);
+        placed.add(itemId);
+        served.add(targetId);
+        await scene.autoPlace(itemId, targetId);
+        await wait(ctx.reducedMotion ? 100 : 260);
+      }
+      finish({
+        completed: true,
+        correctFirstTry: false,
+        correctEventually: true,
+        hintsUsed: support.hintsUsed + 1,
+        wrongAttempts: support.wrongAttempts,
+      });
+    }
+
+    speak(
+      `Avem ${COUNT_WORDS[count - 1] ?? count} prieteni! Dă fiecăruia câte unul!`,
+    );
+    await wait(900);
+    if (ctx.isCancelled()) {
+      scene.destroy();
+      return {
+        completed: false,
+        correctFirstTry: false,
+        correctEventually: false,
+        hintsUsed: 0,
+        wrongAttempts: 0,
+        abandoned: true,
+      };
+    }
+    inputReady = true;
+    scene.readyElement.dataset.gameReady = "true";
+    cancelWatch = window.setInterval(() => {
+      if (!ctx.isCancelled()) return;
+      finish({
+        completed: false,
+        correctFirstTry: false,
+        correctEventually: false,
+        hintsUsed: support.hintsUsed,
+        wrongAttempts: support.wrongAttempts,
+        abandoned: true,
+      });
+    }, 200);
+
+    const outcome = await result;
+    scene.destroy();
+    return outcome;
   },
 };
