@@ -1,6 +1,9 @@
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+const CONTENT_SECURITY_POLICY =
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; media-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'";
+
 export default defineConfig({
   plugins: [
     VitePWA({
@@ -67,8 +70,14 @@ export default defineConfig({
   },
   server: {
     port: 4173,
+    headers: {
+      "Content-Security-Policy": CONTENT_SECURITY_POLICY,
+    },
   },
   preview: {
     port: 4173,
+    headers: {
+      "Content-Security-Policy": CONTENT_SECURITY_POLICY,
+    },
   },
 });

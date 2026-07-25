@@ -1,3 +1,4 @@
+import "pixi.js/unsafe-eval";
 import { Texture } from "pixi.js";
 
 /** Rasterizează arta SVG locală într-o textură GPU predictibilă. */
