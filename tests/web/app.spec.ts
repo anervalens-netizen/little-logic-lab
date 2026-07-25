@@ -802,6 +802,7 @@ const P0_BEFORE_SHADOW = [
   "one-to-one-count",
 ] as const;
 const P0_BEFORE_PEEK = [...P0_BEFORE_SHADOW, "shadow-match"] as const;
+const P0_BEFORE_WAIT = [...P0_BEFORE_PEEK, "peek-and-find"] as const;
 
 const P0_BEFORE_LISTEN = [
   ...P0_BEFORE_SHADOW,
@@ -878,6 +879,63 @@ test("peek and find renders the full three-cup delayed stage", async ({
     expect(box.width).toBeGreaterThanOrEqual(96);
     expect(box.height).toBeGreaterThanOrEqual(96);
   }
+});
+
+test("wait for go completes four Pixi signals without rewarding speed", async ({
+  page,
+}) => {
+  await seedCleanProgress(page, P0_BEFORE_WAIT);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Așteaptă semnalul" }).click();
+
+  for (let index = 0; index < 4; index += 1) {
+    const group = page.getByRole("group", {
+      name: `Semnalul ${index + 1} din 4`,
+    });
+    await expect(group).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+    const action = page.locator("button.pixi-target-action");
+    const label = await action.getAttribute("aria-label");
+    expect(label).toContain(`semnalul ${index + 1} din 4`);
+    if (label?.startsWith("Atinge soarele")) {
+      await action.evaluate((button: HTMLButtonElement) => button.click());
+    }
+  }
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "wait-for-go",
+      );
+    })
+    .toBe(true);
+});
+
+test("wait for go consumes the full sixteen-signal ladder stage", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_WAIT);
+  await seedGameDifficulty(page, "wait-for-go", 72, {
+    trialCount: 16,
+    goNoGoRatio: 0.55,
+    signalDelayMs: 1_000,
+    ruleComplexity: 3,
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Așteaptă semnalul" }).click();
+  await expect(
+    page.getByRole("group", { name: "Semnalul 1 din 16" }),
+  ).toBeVisible({ timeout: 8_000 });
+  const action = page.locator("button.pixi-target-action");
+  const box = await action.boundingBox();
+  expect(box?.width).toBeGreaterThanOrEqual(96);
+  expect(box?.height).toBeGreaterThanOrEqual(96);
+  await page.getByRole("button", { name: "Înapoi acasă" }).click();
 });
 
 test("shadow matching uses the shared Pixi choice renderer", async ({
@@ -1244,6 +1302,11 @@ const GOLDEN_SCENES = [
     id: "peek-and-find",
     name: "Privește și găsește",
     unlocks: P0_BEFORE_PEEK,
+  },
+  {
+    id: "wait-for-go",
+    name: "Așteaptă semnalul",
+    unlocks: P0_BEFORE_WAIT,
   },
   {
     id: "emotion-match",

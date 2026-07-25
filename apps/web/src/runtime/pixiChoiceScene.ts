@@ -21,6 +21,7 @@ export interface PixiChoiceOption {
 export interface PixiChoiceSceneOptions {
   readonly targetSvg: string;
   readonly targetLabel: string;
+  readonly groupLabel?: string;
   readonly options: readonly PixiChoiceOption[];
   readonly reducedMotion: boolean;
   readonly clutterLevel?: number;
@@ -102,7 +103,10 @@ export async function createPixiChoiceScene(
   const accessibility = document.createElement("div");
   accessibility.className = "choice-row pixi-accessibility";
   accessibility.setAttribute("role", "group");
-  accessibility.setAttribute("aria-label", `Găsește ${options.targetLabel}`);
+  accessibility.setAttribute(
+    "aria-label",
+    options.groupLabel ?? `Găsește ${options.targetLabel}`,
+  );
   host.append(accessibility);
 
   const targetDescription = document.createElement("span");
@@ -240,7 +244,8 @@ export async function createPixiChoiceScene(
     const targetSize = Math.min(width * 0.24, height * (compact ? 0.3 : 0.28), 190);
     target.position.set(
       width / 2,
-      height * (grid ? 0.15 : compact ? 0.24 : 0.27),
+      height *
+        (cards.length === 0 ? 0.48 : grid ? 0.15 : compact ? 0.24 : 0.27),
     );
     targetSprite.width = targetSize;
     targetSprite.height = targetSize;
@@ -260,7 +265,7 @@ export async function createPixiChoiceScene(
     const gap = Math.max(18, Math.min(40, width * 0.035));
     const columns = grid
       ? Math.min(cards.length, width < 600 ? 3 : 4)
-      : cards.length;
+      : Math.max(1, cards.length);
     const rows = Math.ceil(cards.length / columns);
     const availableGridHeight = height * (grid ? 0.62 : compact ? 0.47 : 0.4);
     const cardWidth = Math.min(

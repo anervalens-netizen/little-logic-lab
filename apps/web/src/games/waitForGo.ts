@@ -1,20 +1,26 @@
-/** „Așteaptă semnalul" — control inhibitor: atinge soarele, stai la lună. */
+/** „Așteaptă semnalul” — control inhibitor: soare = atinge, lună = așteaptă. */
 
-import { generateGoNoGo, initializeGoNoGo, reduceGoNoGo, type DifficultyVector } from "@core";
+import {
+  generateGoNoGo,
+  initializeGoNoGo,
+  reduceGoNoGo,
+  type DifficultyVector,
+} from "@core";
 import type { GameContext, PlayResult, WebGame } from "./types";
-import { el, clear, svgEl, wait } from "../ui/dom";
-import { sparklesAt, isMotionReduced, jelly } from "../ui/feedback";
+import { clear, wait } from "../ui/dom";
 import { speak } from "../audio/speech";
 import { sfxGo, sfxGentleNo } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { drawItem } from "../art/items";
 import { svg } from "../art/svg";
 
-const MOON_STARS = svg(`
-  <path d="M 78 14 Q 44 26 44 60 Q 44 94 78 106 Q 60 110 42 100 Q 16 86 16 60 Q 16 34 42 20 Q 60 10 78 14 Z" fill="#B9C3E8" stroke="#8B97CC" stroke-width="3.5"/>
-  <circle cx="48" cy="52" r="4" fill="#4A3F35"/>
-  <path d="M 44 66 Q 48 69 52 66" stroke="#4A3F35" stroke-width="2.8" stroke-linecap="round" fill="none"/>
-  <circle cx="86" cy="30" r="3" fill="#fff"/><circle cx="98" cy="48" r="2.4" fill="#fff"/>
+const GREEN_SIGNAL = svg(`
+  <circle cx="60" cy="60" r="44" fill="#7FC86B" stroke="#4E9A51" stroke-width="6"/>
+  <path d="M 39 61 L 53 75 L 83 43" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+`);
+const RED_SIGNAL = svg(`
+  <circle cx="60" cy="60" r="44" fill="#F25C4C" stroke="#C84439" stroke-width="6"/>
+  <rect x="32" y="53" width="56" height="14" rx="7" fill="#FFFFFF"/>
 `);
 
 export const waitForGoGame: WebGame = {
@@ -22,21 +28,46 @@ export const waitForGoGame: WebGame = {
   title: "Așteaptă semnalul",
   skillId: "inhibitory_control",
   domain: "inhibition_flexibility",
-  instruction: "Când apare SOARELE, atinge-l repede! Când apare LUNA, stai cuminte!",
+  instruction:
+    "Când apare SOARELE, atinge-l! Când apare LUNA, așteaptă!",
   coPlayPrompt: "Jucați „Pe verde mergem, pe roșu ne oprim” prin casă!",
   icon: () => drawItem("sun"),
   bubbleColor: "#FFD35C",
   axes: [
-    { name: "trialCount", values: [4, 6] },
-    { name: "goNoGoRatio", values: [0.75, 0.6] },
+    { name: "trialCount", values: [4, 6, 8, 10, 12, 14, 16] },
+    { name: "goNoGoRatio", values: [0.75, 0.7, 0.6, 0.55, 0.5] },
+    { name: "signalDelayMs", values: [0, 500, 800, 900, 1_000, 1_400, 1_800] },
+    { name: "ruleComplexity", values: [1, 2, 3] },
   ],
-  initialDifficulty: { trialCount: 4, goNoGoRatio: 0.75 },
+  initialDifficulty: {
+    trialCount: 4,
+    goNoGoRatio: 0.75,
+    signalDelayMs: 0,
+    ruleComplexity: 1,
+  },
   scored: true,
 
-  async play(ctx: GameContext, difficulty: DifficultyVector, seed: string): Promise<PlayResult> {
-    const trialCount = Number(difficulty["trialCount"] ?? 4);
-    const goRatio = Number(difficulty["goNoGoRatio"] ?? 0.75);
-
+  async play(
+    ctx: GameContext,
+    difficulty: DifficultyVector,
+    seed: string,
+  ): Promise<PlayResult> {
+    const trialCount = Math.max(
+      4,
+      Math.min(16, Number(difficulty["trialCount"] ?? 4)),
+    );
+    const goRatio = Math.max(
+      0.4,
+      Math.min(0.9, Number(difficulty["goNoGoRatio"] ?? 0.75)),
+    );
+    const signalDelayMs = Math.max(
+      0,
+      Math.min(1_800, Number(difficulty["signalDelayMs"] ?? 0)),
+    );
+    const ruleComplexity = Math.max(
+      1,
+      Math.min(3, Number(difficulty["ruleComplexity"] ?? 1)),
+    );
     const level = generateGoNoGo(seed, {
       gameId: "wait-for-go",
       trialCount,
@@ -44,104 +75,144 @@ export const waitForGoGame: WebGame = {
       goStimulusId: "sun",
       noGoStimulusId: "moon",
     });
-
+    const { createPixiChoiceScene } = await import(
+      "../runtime/pixiChoiceScene"
+    );
     let state = initializeGoNoGo(level.payload.trials);
-    let hintsUsed = 0;
 
-    clear(ctx.mount);
-    const sky = el("div", {});
-    sky.style.cssText =
-      "position:relative;width:min(520px,92vw);height:min(420px,60vh);border-radius:48px;display:flex;align-items:center;justify-content:center;transition:background 500ms ease;overflow:hidden;box-shadow:0 10px 0 rgba(74,63,53,0.10);";
-    sky.style.background = "#BFE3F2";
+    speak(
+      ruleComplexity === 2
+        ? "Atinge soarele sau verdele! La lună sau roșu, așteaptă!"
+        : "Atinge SOARELE! La LUNĂ, așteaptă!",
+    );
+    await wait(ctx.reducedMotion ? 500 : 1_000);
 
-    const stimulus = el("div", {});
-    stimulus.style.cssText = "width:min(240px,40vmin);transition:transform 300ms cubic-bezier(0.34,1.56,0.64,1);";
-    sky.append(stimulus);
-
-    const ruleStrip = el("div", {});
-    ruleStrip.style.cssText =
-      "position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:18px;background:rgba(255,255,255,0.75);border-radius:999px;padding:8px 18px;align-items:center;";
-    const sunMini = el("div", {});
-    sunMini.style.cssText = "width:44px;";
-    sunMini.append(svgEl(drawItem("sun")));
-    const tapText = el("span", { style: "font-weight:800;font-size:20px;" }, "= atinge!");
-    const moonMini = el("div", {});
-    moonMini.style.cssText = "width:40px;";
-    moonMini.append(svgEl(MOON_STARS));
-    const waitText = el("span", { style: "font-weight:800;font-size:20px;" }, "= stai");
-    ruleStrip.append(sunMini, tapText, moonMini, waitText);
-    sky.append(ruleStrip);
-
-    ctx.mount.append(sky);
-
-    speak("Atinge SOARELE! La LUNĂ, stai cuminte!");
-    await wait(1800);
-
-    for (const trial of level.payload.trials) {
+    for (
+      let index = 0;
+      index < level.payload.trials.length;
+      index += 1
+    ) {
       if (ctx.isCancelled()) break;
-
-      sky.style.background = "#BFE3F2";
-      stimulus.replaceChildren();
-      stimulus.style.transform = "scale(0)";
-      await wait(isMotionReduced() ? 300 : 750);
-      if (ctx.isCancelled()) break;
-
+      const trial = level.payload.trials[index];
+      if (!trial) continue;
+      clear(ctx.mount);
       const isGo = trial.expectedAction === "tap";
-      sky.style.background = isGo ? "#8FD4F7" : "#5B5B9E";
-      stimulus.append(svgEl(isGo ? drawItem("sun") : MOON_STARS));
-      stimulus.style.transform = "scale(1)";
-      jelly(stimulus);
+      const reversed =
+        ruleComplexity === 3 && index >= Math.floor(level.payload.trials.length / 2);
+      if (
+        ruleComplexity === 3 &&
+        index === Math.floor(level.payload.trials.length / 2)
+      ) {
+        speak("Schimbăm regula! Acum atinge luna și așteaptă la soare!");
+        await wait(ctx.reducedMotion ? 650 : 1_350);
+      }
+      if (signalDelayMs > 0) {
+        await wait(signalDelayMs);
+        if (ctx.isCancelled()) break;
+      }
+      const useColorCue = ruleComplexity === 2 && index % 2 === 1;
+      const stimulusKind = useColorCue
+        ? isGo
+          ? "green"
+          : "red"
+        : reversed
+          ? isGo
+            ? "moon"
+            : "sun"
+          : isGo
+            ? "sun"
+            : "moon";
+      const stimulusLabel = {
+        sun: "soarele",
+        moon: "luna",
+        green: "verdele",
+        red: "roșul",
+      }[stimulusKind];
+      const stimulusSvg = {
+        sun: drawItem("sun"),
+        moon: drawItem("moon"),
+        green: GREEN_SIGNAL,
+        red: RED_SIGNAL,
+      }[stimulusKind];
+      let settled = false;
+      let timeout: number | null = null;
+      let cancelWatch: number | null = null;
+      let resolveObserved: (value: "tap" | "wait") => void = () => undefined;
+      const observedResult = new Promise<"tap" | "wait">((resolve) => {
+        resolveObserved = resolve;
+      });
+      const finishTrial = (value: "tap" | "wait") => {
+        if (settled) return;
+        settled = true;
+        if (timeout !== null) window.clearTimeout(timeout);
+        if (cancelWatch !== null) window.clearInterval(cancelWatch);
+        resolveObserved(value);
+      };
+
+      const scene = await createPixiChoiceScene(ctx.mount, {
+        targetSvg: stimulusSvg,
+        targetLabel: stimulusLabel,
+        groupLabel: `Semnalul ${index + 1} din ${level.payload.trials.length}`,
+        options: [],
+        reducedMotion: ctx.reducedMotion,
+        targetActionLabel: `${
+          isGo
+            ? `Atinge ${stimulusLabel}`
+            : `${stimulusLabel[0]?.toUpperCase()}${stimulusLabel.slice(1)} – așteaptă`
+        }; semnalul ${index + 1} din ${level.payload.trials.length}`,
+        onTargetActivate() {
+          finishTrial("tap");
+          return false;
+        },
+        onSelect: () => undefined,
+      });
+      ctx.onCleanup(scene.destroy);
+      scene.readyElement.dataset.gameReady = "true";
+      if (stimulusKind === "sun" || stimulusKind === "moon") {
+        playItemVoice(stimulusKind);
+      }
       if (isGo) {
         sfxGo();
-        playItemVoice("sun");
       } else {
-        playItemVoice("moon");
-        speak("Stai!", { rate: 1.05 });
+        speak("Așteaptă!", { rate: 1.05 });
       }
+      timeout = window.setTimeout(
+        () => finishTrial("wait"),
+        isGo ? 3_200 : 2_100,
+      );
+      cancelWatch = window.setInterval(() => {
+        if (ctx.isCancelled()) finishTrial("wait");
+      }, 100);
 
-      const observed = await new Promise<"tap" | "wait">((resolveTap) => {
-        let done = false;
-        const finish = (value: "tap" | "wait") => {
-          if (done) return;
-          done = true;
-          sky.removeEventListener("pointerdown", onTap);
-          resolveTap(value);
-        };
-        const onTap = () => finish("tap");
-        sky.addEventListener("pointerdown", onTap);
-        setTimeout(() => finish("wait"), isGo ? 3200 : 2100);
+      const observed = await observedResult;
+      scene.destroy();
+      state = reduceGoNoGo(state, {
+        type: "resolve_trial",
+        observedAction: observed,
       });
-
-      state = reduceGoNoGo(state, { type: "resolve_trial", observedAction: observed });
-
-      if (observed === trial.expectedAction) {
-        const rect = stimulus.getBoundingClientRect();
-        const skyRect = sky.getBoundingClientRect();
-        sparklesAt(sky, rect.left - skyRect.left + rect.width / 2, rect.top - skyRect.top + rect.height / 2, 6);
-      } else if (observed === "tap" && !isGo) {
-        sfxGentleNo();
-        speak("La lună stăm cuminti!", { rate: 1 });
-        hintsUsed += 0; // nu e indiciu; e doar feedback
-        await wait(900);
-      } else {
-        // A așteptat la soare — îl invităm să atingă.
-        speak("Atinge soarele!");
+      if (ctx.isCancelled()) break;
+      if (observed !== trial.expectedAction) {
+        if (observed === "tap") {
+          sfxGentleNo();
+          speak("La lună așteptăm!", { rate: 1 });
+        } else {
+          speak("Când vezi soarele, atinge-l!", { rate: 1 });
+        }
+      } else if (!isGo) {
+        speak("Ai așteptat. Bravo!", { rate: 1 });
       }
-
-      stimulus.style.transform = "scale(0)";
-      await wait(420);
+      await wait(ctx.reducedMotion ? 120 : 360);
     }
 
-    const correctTrials = state.correctTrials;
     const total = level.payload.trials.length;
     const completed = !ctx.isCancelled();
-    const accuracy = total === 0 ? 0 : correctTrials / total;
+    const accuracy = total === 0 ? 0 : state.correctTrials / total;
     return {
       completed,
       correctFirstTry: completed && accuracy === 1,
       correctEventually: completed && accuracy >= 0.75,
-      hintsUsed,
-      wrongAttempts: total - correctTrials,
+      hintsUsed: 0,
+      wrongAttempts: total - state.correctTrials,
       abandoned: ctx.isCancelled(),
     };
   },

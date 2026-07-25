@@ -46,9 +46,11 @@ reutilizabile, după golden slice.
   activitatea deschisă din lumea reală;
 - `peek-and-find` reutilizează rendererul `choice`, ascunde modelul inclusiv
   semantic și consumă stage-ul complet cu trei locații și întârziere;
+- `wait-for-go` reutilizează promptul Pixi pentru toate cele 19 stage-uri,
+  până la 16 semnale, cu delay, stimuli multipli și inversarea regulii;
 - `sort-by-shape` și `sort-by-size` rulează cu `sort-by-color` pe batch-uri de
   maximum trei obiecte pe telefon și patru pe tabletă;
 - stage-ul maxim de 12 obiecte/4 coșuri este E2E, cu grid tactil de minimum
   96 px și exact un canvas;
-- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 26
-  baseline-uri vizuale pentru cele treisprezece scene Pixi.
+- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 28
+  baseline-uri vizuale pentru cele paisprezece scene Pixi.
