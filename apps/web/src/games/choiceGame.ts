@@ -1,0 +1,216 @@
+/**
+ * Fabrică pentru jocuri de tip „alege imaginea corectă":
+ * same-picture, shadow-match, listen-find, emotion-match.
+ * Mecanica pură vine din core (generateVisualChoice + reduceChoice).
+ */
+
+import {
+  generateVisualChoice,
+  initializeChoice,
+  reduceChoice,
+  type ContentItem,
+  type DifficultyAxisSpec,
+  type DifficultyVector,
+  type Scalar,
+} from "@core";
+import type { GameContext, PlayResult, WebGame } from "./types";
+import { SupportTracker } from "./support";
+import { choiceRow, targetStage } from "./widgets";
+import { el, clear, wait } from "../ui/dom";
+import { markCorrect, showHintGlow, danceItem, particlesAt, jelly } from "../ui/feedback";
+import { playItemVoice } from "../audio/voices";
+import { speak } from "../audio/speech";
+
+export interface ChoiceRound {
+  /** SVG-ul țintei (modelul); null pentru jocuri doar audio. */
+  readonly targetSvg: string | null;
+  readonly targetLabel: string;
+  /** Text rostit când începe runda (poate diferi de instrucțiunea jocului). */
+  readonly roundSpeech: string;
+  readonly options: readonly { id: string; svg: string; label: string }[];
+  readonly correctId: string;
+}
+
+export interface ChoiceGameSpec {
+  readonly id: string;
+  readonly title: string;
+  readonly skillId: string;
+  readonly domain: string;
+  readonly instruction: string;
+  readonly coPlayPrompt: string;
+  readonly icon: () => string;
+  readonly bubbleColor: string;
+  readonly axes: readonly DifficultyAxisSpec[];
+  readonly initialDifficulty: DifficultyVector;
+  /** Conținutul din care generează core-ul (id + atribute). */
+  readonly content: readonly ContentItem[];
+  /** Construiește runda vizuală din nivelul generat. */
+  readonly buildRound: (
+    level: { targetId: string; choiceIds: readonly string[]; correctChoiceId: string },
+    difficulty: DifficultyVector,
+  ) => ChoiceRound;
+  /** Atribut de similitudine pentru distractori (opțional). */
+  readonly similarityAttribute?: string;
+}
+
+export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
+  return {
+    id: spec.id,
+    title: spec.title,
+    skillId: spec.skillId,
+    domain: spec.domain,
+    instruction: spec.instruction,
+    coPlayPrompt: spec.coPlayPrompt,
+    icon: spec.icon,
+    bubbleColor: spec.bubbleColor,
+    axes: spec.axes,
+    initialDifficulty: spec.initialDifficulty,
+    scored: true,
+
+    async play(ctx: GameContext, difficulty: DifficultyVector, seed: string): Promise<PlayResult> {
+      const choiceCount = Number(difficulty["choiceCount"] ?? 2);
+      const useSimilarity = Number(difficulty["distractorSimilarity"] ?? 0) >= 1;
+
+      const level = generateVisualChoice(seed, {
+        gameId: spec.id,
+        items: spec.content,
+        choiceCount: Math.max(2, Math.min(choiceCount, spec.content.length)),
+        similarityAttribute:
+          useSimilarity && spec.similarityAttribute !== undefined
+            ? spec.similarityAttribute
+            : undefined,
+      });
+
+      const round = spec.buildRound(level.payload, difficulty);
+      let state = initializeChoice(level.payload.correctChoiceId, level.payload.choiceIds);
+      const support = new SupportTracker();
+
+      clear(ctx.mount);
+
+      const layout = el("div", {});
+      layout.style.cssText =
+        "display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;width:100%;height:100%;gap:8px;";
+
+      if (round.targetSvg !== null) {
+        layout.append(targetStage(round.targetSvg, ""));
+      }
+
+      const { row, cards } = choiceRow(
+        round.options.map((o) => ({ id: o.id, svg: o.svg, label: o.label })),
+      );
+      layout.append(row);
+      ctx.mount.append(layout);
+
+      // Anunț + scurtă demonstrație: mânuța atinge ținta, apoi copilul alege.
+      speak(round.roundSpeech);
+      await wait(1300);
+      if (ctx.isCancelled()) return aborted();
+
+      const correctCard = cards.get(round.correctId);
+      if (correctCard && !ctx.reducedMotion) {
+        await ctx.demonstrate(correctCard);
+        const hand = ctx.shell.querySelector<HTMLElement>(".demo-hand");
+        if (hand) hand.style.opacity = "0";
+      }
+
+      return await new Promise<PlayResult>((resolve) => {
+        let settled = false;
+        const finish = (result: PlayResult) => {
+          if (settled) return;
+          settled = true;
+          resolve(result);
+        };
+
+        for (const option of round.options) {
+          const card = cards.get(option.id);
+          if (!card) continue;
+          card.addEventListener("click", () => {
+            if (settled || state.completed) return;
+            const before = state;
+            state = reduceChoice(state, { type: "select", value: option.id as Scalar });
+            if (state === before) return;
+
+            if (state.completed) {
+              support.registerSuccess();
+              markCorrect(card);
+              danceItem(card);
+              playItemVoice(option.id);
+              const shellRect = ctx.shell.getBoundingClientRect();
+              const cardRect = card.getBoundingClientRect();
+              particlesAt(
+                ctx.shell,
+                cardRect.left - shellRect.left + cardRect.width / 2,
+                cardRect.top - shellRect.top + cardRect.height / 2,
+              );
+              const correctFirstTry = state.correctFirstTry;
+              setTimeout(
+                () =>
+                  finish({
+                    completed: true,
+                    correctFirstTry,
+                    correctEventually: true,
+                    hintsUsed: support.hintsUsed,
+                    wrongAttempts: support.wrongAttempts,
+                  }),
+                ctx.reducedMotion ? 350 : 1100,
+              );
+              return;
+            }
+
+            const verdict = support.registerError(card);
+            if (verdict === "hint" && correctCard) {
+              showHintGlow(correctCard);
+              jelly(correctCard);
+              speak("Uite, acesta e la fel!");
+            } else if (verdict === "simplify" && correctCard) {
+              // Încheiem cu succes: arătăm răspunsul bucuroși, fără presiune.
+              for (const other of round.options) {
+                if (other.id !== round.correctId) {
+                  cards.get(other.id)?.classList.add("dimmed");
+                }
+              }
+              showHintGlow(correctCard);
+              speak(`Uite! Acesta e ${round.targetLabel}. Bravo că ai încercat!`);
+              setTimeout(() => {
+                markCorrect(correctCard);
+                finish({
+                  completed: true,
+                  correctFirstTry: false,
+                  correctEventually: true,
+                  hintsUsed: support.hintsUsed + 1,
+                  wrongAttempts: support.wrongAttempts,
+                });
+              }, 2200);
+            }
+          });
+        }
+
+        // Ieșire din ecran în timpul nivelului.
+        const cancelWatch = setInterval(() => {
+          if (ctx.isCancelled()) {
+            clearInterval(cancelWatch);
+            finish({
+              completed: false,
+              correctFirstTry: false,
+              correctEventually: false,
+              hintsUsed: support.hintsUsed,
+              wrongAttempts: support.wrongAttempts,
+              abandoned: true,
+            });
+          }
+        }, 250);
+      });
+    },
+  };
+}
+
+function aborted(): PlayResult {
+  return {
+    completed: false,
+    correctFirstTry: false,
+    correctEventually: false,
+    hintsUsed: 0,
+    wrongAttempts: 0,
+    abandoned: true,
+  };
+}

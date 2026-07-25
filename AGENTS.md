@@ -33,19 +33,23 @@ Build a calm, offline-first, privacy-preserving mobile learning game for ages ro
 
 When documents conflict, safety/privacy wins, then `AGENTS.md`, then schemas/catalog, then implementation notes.
 
-## Recommended implementation stack
+## Implementation stack
 
-At implementation time use the current stable Expo SDK compatible with the current stable React Native New Architecture. Use TypeScript strict mode. Recommended components:
+The product is web/PWA-first. The canonical stack and delivery order are in
+`docs/12-roadmap.md` and ADR 005.
 
-- React Native views for semantic/accessibility structure.
-- React Native Skia only for game canvases and animation-heavy scenes.
-- Reanimated for controlled motion.
-- Expo SQLite for local persistence.
-- Expo Audio and Haptics, both user-controllable.
-- JSON Schema or Zod at content boundaries.
-- No backend in v1.
+- TypeScript 7 native, pinned at the workspace root, strict mode.
+- React for the application shell, parent mode and semantic UI.
+- PixiJS 8 with the production WebGL renderer for interactive game scenes.
+- DOM accessibility overlays for every actionable canvas object.
+- IndexedDB with versioned migrations for local persistence.
+- Bundled Romanian recordings and Web Audio for child-facing audio.
+- Generated, revisioned service-worker precaching.
+- Vitest/property tests and committed Playwright tests.
+- Static Cloudflare Pages deployment; no runtime backend.
 
-Do not pin old framework versions merely to match this document. Record final version choices in an ADR.
+Do not add a second native application until the P0 web/PWA release passes its
+product and device gates. Record exact dependency versions in ADR 005.
 
 ## Architecture rules
 
@@ -57,9 +61,11 @@ Do not pin old framework versions merely to match this document. Record final ve
 - Every generated level must be replayable from its seed.
 - Each major game mechanic needs unit tests and a solvability/property test.
 
-## First vertical slice
+## Current delivery order
 
-Implement `same-picture` end-to-end before adding more games:
+Stabilize the existing web prototype, then rebuild the golden slice
+(`same-picture`, `sort-by-color`, `inset-puzzle`) at production quality before
+adding or migrating more games:
 
 - parent creates a local profile or chooses anonymous default;
 - child sees a visual/audio demonstration;
@@ -71,7 +77,8 @@ Implement `same-picture` end-to-end before adding more games:
 - short real-world transfer prompt;
 - session ends cleanly at the configured limit.
 
-Acceptance criteria are in `tasks/01-same-picture-vertical-slice.md` and `docs/11-codex-build-plan.md`.
+Acceptance criteria are in `tasks/01-golden-slice.md` and
+`docs/12-roadmap.md`.
 
 ## Quality gate
 
@@ -79,6 +86,8 @@ Before any release candidate:
 
 ```bash
 npm test
+npm run typecheck
+npm run build:web
 ```
 
 Then verify on small and large iOS/Android screens, VoiceOver/TalkBack, Reduce Motion, audio off, airplane mode and after local-data deletion.

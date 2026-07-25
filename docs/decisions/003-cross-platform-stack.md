@@ -1,14 +1,15 @@
 # ADR 003 — React Native/Expo with pure TypeScript core
 
-Status: proposed until implementation versions are selected.
+Status: superseded by ADR 004 and ADR 005.
 
 ## Context
 
 The app needs iOS and Android, rich 2D interaction, local storage, audio, accessibility and efficient iteration by a coding agent.
 
-## Decision
+## Historical decision
 
-Use the current stable Expo SDK compatible with stable React Native New Architecture. Use standard React Native UI for semantics and React Native Skia selectively for game canvases. Keep the domain core platform-independent.
+The initial proposal was Expo/React Native. It was not implemented. The active
+product is web/PWA-first; see ADR 005.
 
 ## Consequences
 

@@ -2,11 +2,12 @@
 
 ## Goal
 
-Prepare a private family pilot, not a public launch claim.
+Prepare a private family pilot for the web/PWA product, not a public launch
+claim.
 
 ## Accessibility
 
-- VoiceOver and TalkBack traversal on every child and parent screen;
+- VoiceOver/TalkBack traversal through the React shell and Pixi DOM overlays;
 - color never carries meaning alone;
 - audio-off equivalent for all instructions;
 - Reduce Motion path;
@@ -16,13 +17,13 @@ Prepare a private family pilot, not a public launch claim.
 
 ## Privacy/security
 
-- audit dependency tree and native permissions;
+- audit dependency tree, CSP and browser permissions;
 - verify no runtime network egress;
 - parent gate for links/settings/export/delete;
 - no child name in logs;
 - review backup behavior;
 - privacy notice accurately states local-only behavior;
-- Data Safety/App Privacy forms match binaries.
+- privacy notice matches the deployed PWA.
 
 ## Pilot protocol
 

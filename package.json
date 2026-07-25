@@ -4,10 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Evidence-informed, offline-first architecture and content library for logic games ages 2.5–6.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "validate": "node scripts/validate-content.mjs",
     "generate:catalog": "node scripts/generate-catalog-doc.mjs",
     "build": "tsc -p packages/core/tsconfig.json",
+    "build:web": "npm run build --workspace @little-logic-lab/web",
+    "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && npm run typecheck --workspace @little-logic-lab/web",
     "test": "npm run generate:curriculum && npm run generate:ladders && npm run validate && npm run policy:check && npm run build && node --test packages/core/test/*.test.mjs",
     "preview": "npm run build && node scripts/generate-level-preview.mjs",
     "generate:ladders": "node scripts/generate-level-ladders.mjs",
@@ -16,7 +22,8 @@
     "generate:curriculum": "node scripts/generate-curriculum-map.mjs"
   },
   "devDependencies": {
-    "typescript": "^5.9.0"
+    "typescript": "7.0.2",
+    "vite": "8.1.5"
   },
   "engines": {
     "node": ">=22"

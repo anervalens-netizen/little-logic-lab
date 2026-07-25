@@ -1,6 +1,7 @@
 # Little Logic Lab / „Minte în joacă”
 
-Bibliotecă și arhitectură pentru o aplicație mobilă de jocuri logice destinată aproximativ vârstelor **2 ani și 6 luni – 6 ani**.
+Aplicație web/PWA și bibliotecă de jocuri logice pentru aproximativ
+**2 ani și 6 luni – 6 ani**.
 
 Proiectul este construit pentru un copil real, dar repo-ul nu conține nume, fotografii, data nașterii sau alte date personale. Personalizarea se face numai local, în aplicația instalată.
 
@@ -58,29 +59,32 @@ packages/core/           logică TypeScript independentă de UI
 schemas/                 contracte JSON pentru conținut și date locale
 scripts/                 generare, validare, policy checks și preview
 tasks/                   pași de implementare gata pentru Codex
-apps/mobile/             contractul pentru viitoarea aplicație Expo
-AGENTS.md                 instrucțiuni autoritative pentru Codex
+apps/web/                prototipul web/PWA și viitorul shell React
+AGENTS.md                instrucțiuni autoritative pentru Codex
 ```
+
+**Aplicația web este jucabilă ca prototip:** vezi `apps/web/README.md`.
+Roadmap-ul canonic este `docs/12-roadmap.md`; stack-ul activ este în ADR 005.
 
 ## Verificare locală
 
 ```bash
 npm install
 npm test
-npm run generate
+npm run typecheck
+npm run build:web
 ```
 
 `npm test` regenerează și validează cele 1.030 de ancore, verifică politica offline/privacy, compilează nucleul TypeScript și rulează 22 de teste, inclusiv verificări pe sute de seed-uri.
 
-## Ordinea recomandată de implementare
+## Ordinea de implementare
 
-1. Expo/React Native + shell copil/părinte.
-2. Un vertical slice complet: „Găsește perechea identică”.
-3. Runtime de plugin + conținut JSON + progres local.
-4. Cele opt arhetipuri implementate în nucleu.
-5. Pachetul P0 de 15 jocuri.
-6. Accesibilitate, reduced motion, audio românesc și parent gate.
-7. Pilot observat de părinte, fără a colecta date online.
-8. Extindere către P1–P3.
+1. Stabilizare, Git/deploy și contracte de date/PWA.
+2. React shell + runtime PixiJS.
+3. Golden slice: pereche, sortare culoare, puzzle.
+4. Cele 15 familii P0.
+5. Pilot observat și hardening.
+6. Extindere P1–P3 prin cele 19 arhetipuri.
 
-Pentru implementare: `tasks/00-bootstrap.md`, apoi `tasks/01-same-picture-vertical-slice.md`. Vezi și `docs/11-codex-build-plan.md` și `AGENTS.md`.
+Vezi `tasks/00-stabilization.md`, `docs/11-codex-build-plan.md` și
+`docs/12-roadmap.md`.

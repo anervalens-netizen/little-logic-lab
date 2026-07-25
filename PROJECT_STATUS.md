@@ -1,44 +1,52 @@
 # Project status
 
-Prepared: 24 July 2026
+Updated: 25 July 2026
 
-## Complete in this seed repository
+## Current state
 
-- research basis and claim boundaries;
-- 80 game families across 19 reusable archetypes and 10 domains;
-- four age bands from 30 to 72 months;
-- 1,030 generated one-axis progression anchors;
-- 15-game P0 starter pack;
-- deterministic generators for eight core archetypes;
-- pure runtime reducers/evaluators for the first implementation set;
-- mastery, support, adaptation and session scheduling logic;
-- JSON schemas, sample templates, local data contracts and Romanian/English localization placeholders;
-- offline/privacy policy checker;
-- CI, issue templates and PR checklist;
-- Codex task files and release checklist;
-- 22 passing tests, including multi-seed property checks.
+- The specification/core commit is intact.
+- The OpenCode web prototype is present locally and not yet checkpointed.
+- Root tests pass: 80 families, 1,030 progression anchors, 22 core tests.
+- The web prototype type-checks and builds.
+- 14 playable prototype modules exist; P0 contains 15 families and
+  `drag-and-fit` is missing.
+- The prototype manually declares games/difficulty axes; it does not consume
+  the catalog and generated ladders as runtime content.
+- OpenCode browser scripts were temporary and are not a committed quality gate.
+- `logic-lab.astancu.eu` currently returns 404.
 
-## Deliberately not implemented
+## Active direction
 
-- mobile UI and animation;
-- production artwork or recorded audio;
-- SQLite adapter and native parent gate;
-- store metadata and privacy policy text for a legal entity;
-- public/cloud services of any kind.
+The product is web/PWA-first:
 
-These belong to the implementation phase and must preserve `AGENTS.md`.
+- TypeScript 7 native;
+- React semantic shell;
+- PixiJS 8/WebGL game scenes;
+- IndexedDB persistence with deterministic replay;
+- bundled Romanian recordings;
+- generated, revisioned PWA caching;
+- committed Playwright tests;
+- Cloudflare Pages static deployment.
 
-## Validation command
+See `docs/12-roadmap.md` and ADR 005.
+
+## Preserved foundation
+
+- research and claim boundaries;
+- 80 families, 19 archetypes, 10 domains;
+- four age bands, 30–72 months;
+- 1,030 one-axis progression anchors;
+- pure generators/reducers/evaluators;
+- mastery, support, adaptation and scheduler;
+- JSON schemas, policy checker and localization placeholders.
+
+## Current validation
 
 ```bash
 npm test
+npm run typecheck
+npm run build:web
 ```
 
-Expected summary:
-
-```text
-80 game families
-1,030 progression anchors
-22 passing tests
-0 policy violations
-```
+The prototype is not a release candidate until R0 and the golden slice gates
+from the roadmap pass.

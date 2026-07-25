@@ -1,0 +1,848 @@
+/* ============================================================
+   Minte în joacă — design system
+   Blând, rotunjit, contrast bun, ținte mari pentru degete mici.
+   ============================================================ */
+
+@font-face {
+  font-family: "Baloo 2";
+  src: url("/fonts/baloo2-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Baloo 2";
+  src: url("/fonts/baloo2-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Baloo 2";
+  src: url("/fonts/baloo2-800.woff2") format("woff2");
+  font-weight: 800;
+  font-display: swap;
+}
+
+:root {
+  --cream: #fff9ee;
+  --cream-deep: #fff3d9;
+  --paper: #fffdf7;
+  --ink: #4a3f35;
+  --ink-soft: #7a6c5d;
+  --sun: #ffd35c;
+  --sun-deep: #ffb63c;
+  --coral: #ff7a66;
+  --coral-deep: #e85c47;
+  --blue: #4fa8e8;
+  --blue-deep: #2f86c8;
+  --sky: #bfe3f2;
+  --grass: #7fc86b;
+  --grass-deep: #4e9a51;
+  --purple: #9b8cf2;
+  --purple-deep: #7a68e0;
+  --pink: #ff9ec6;
+  --brown: #a67b5b;
+  --white: #ffffff;
+  --shadow-soft: 0 6px 0 rgba(74, 63, 53, 0.12);
+  --shadow-lift: 0 10px 24px rgba(74, 63, 53, 0.16);
+  --radius-lg: 28px;
+  --radius-xl: 40px;
+  --tap-min: 96px;
+  --font: "Baloo 2", "Comic Sans MS", "Chalkboard SE", "Segoe UI Rounded", system-ui, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--cream);
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  position: fixed;
+  inset: 0;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* ---------- Ecrane și tranziții ---------- */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: screen-in 360ms cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
+.screen.leaving {
+  animation: screen-out 240ms ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes screen-in {
+  from { opacity: 0; transform: scale(1.04) translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes screen-out {
+  from { opacity: 1; }
+  to { opacity: 0; transform: scale(0.98); }
+}
+
+/* ---------- Fundaluri ---------- */
+
+.bg-meadow {
+  background: linear-gradient(180deg, #bde6f7 0%, #d9f0e2 46%, #fff6e3 100%);
+}
+.bg-night {
+  background: linear-gradient(180deg, #3d4a8a 0%, #6a63b8 55%, #9b8cf2 100%);
+}
+.bg-sunset {
+  background: linear-gradient(180deg, #ffd9a0 0%, #ffc4c4 55%, #fff3d9 100%);
+}
+
+/* ---------- Butoane mari ---------- */
+
+.btn-big {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  padding: 18px 44px;
+  border-radius: var(--radius-xl);
+  background: var(--sun);
+  color: var(--ink);
+  font-size: clamp(26px, 5vw, 40px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: var(--shadow-soft);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  border: 4px solid rgba(74, 63, 53, 0.08);
+}
+
+.btn-big:active {
+  transform: translateY(4px) scale(0.97);
+  box-shadow: 0 2px 0 rgba(74, 63, 53, 0.12);
+}
+
+.btn-big.green { background: var(--grass); color: #fff; }
+.btn-big.blue { background: var(--blue); color: #fff; }
+.btn-big.coral { background: var(--coral); color: #fff; }
+.btn-big.purple { background: var(--purple); color: #fff; }
+
+.btn-icon {
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  border-radius: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-soft);
+  border: 3px solid rgba(74, 63, 53, 0.06);
+  transition: transform 120ms ease;
+}
+.btn-icon:active { transform: scale(0.92); }
+.btn-icon svg { width: 40px; height: 40px; }
+
+/* ---------- Cartonașe de alegere ---------- */
+
+.choice-card {
+  position: relative;
+  background: var(--paper);
+  border-radius: var(--radius-xl);
+  border: 5px solid rgba(74, 63, 53, 0.07);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 160ms ease, box-shadow 160ms ease;
+  aspect-ratio: 1;
+}
+
+.choice-card:active { transform: scale(0.94); }
+
+.choice-card.pop-in {
+  animation: pop-in 480ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.choice-card.correct-flash {
+  border-color: var(--grass-deep);
+  box-shadow: 0 0 0 10px rgba(127, 200, 107, 0.35), var(--shadow-soft);
+  animation: happy-jump 620ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.choice-card.gentle-no {
+  animation: wiggle 420ms ease;
+  border-color: #f0b8a8;
+}
+
+.choice-card.hint-glow {
+  animation: hint-pulse 900ms ease-in-out infinite;
+  border-color: var(--sun-deep);
+}
+
+.choice-card.dimmed {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.4) translateY(30px); }
+  70% { transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px) rotate(-2deg); }
+  55% { transform: translateX(9px) rotate(2deg); }
+  80% { transform: translateX(-5px); }
+}
+
+@keyframes happy-jump {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.12) translateY(-14px); }
+  65% { transform: scale(0.96) translateY(2px); }
+  100% { transform: scale(1); }
+}
+
+@keyframes hint-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(255, 182, 60, 0.35), var(--shadow-soft); }
+  50% { box-shadow: 0 0 0 16px rgba(255, 182, 60, 0.16), var(--shadow-soft); }
+}
+
+/* ---------- Mascota Lumi ---------- */
+
+.lumi {
+  position: relative;
+  pointer-events: none;
+}
+.lumi svg { display: block; overflow: visible; }
+
+.lumi.idle svg { animation: lumi-bob 2.6s ease-in-out infinite; }
+.lumi.happy svg { animation: lumi-dance 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 2; }
+.lumi.think svg { animation: lumi-bob 1.6s ease-in-out infinite; }
+.lumi.sleepy svg { animation: lumi-sleep 3.4s ease-in-out infinite; }
+
+@keyframes lumi-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes lumi-dance {
+  0% { transform: rotate(0) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.08) translateY(-8px); }
+  55% { transform: rotate(7deg) scale(1.1) translateY(-12px); }
+  100% { transform: rotate(0) scale(1); }
+}
+@keyframes lumi-sleep {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(3px) rotate(-2deg); }
+}
+
+.lumi-glow {
+  animation: glow-pulse 2.2s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.95; }
+}
+
+/* ---------- Balon de vorbă ---------- */
+
+.speech-bubble {
+  position: relative;
+  background: var(--white);
+  border-radius: 30px;
+  padding: 18px 26px;
+  max-width: min(560px, 86vw);
+  font-size: clamp(22px, 4vw, 32px);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+  border: 4px solid rgba(74, 63, 53, 0.06);
+  animation: pop-in 380ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -18px;
+  left: 44px;
+  border: 12px solid transparent;
+  border-top: 18px solid var(--white);
+}
+
+/* ---------- Confetti / scântei ---------- */
+
+.confetti-piece {
+  position: absolute;
+  width: 16px;
+  height: 22px;
+  border-radius: 5px;
+  pointer-events: none;
+  animation: confetti-fall var(--fall-ms, 1600ms) cubic-bezier(0.25, 0.8, 0.45, 1) forwards;
+  z-index: 60;
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-4vh) rotate(0deg); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(104vh) rotate(var(--spin, 540deg)); opacity: 0; }
+}
+
+.sparkle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 55;
+  animation: sparkle-pop 900ms ease-out forwards;
+}
+@keyframes sparkle-pop {
+  0% { transform: scale(0.2) rotate(0deg); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: scale(1.5) rotate(70deg) translateY(-30px); opacity: 0; }
+}
+
+/* ---------- Overlay lăudare ---------- */
+
+.praise-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.praise-text {
+  font-size: clamp(44px, 10vw, 92px);
+  font-weight: 800;
+  color: var(--grass-deep);
+  text-shadow: 0 4px 0 rgba(255, 255, 255, 0.9);
+  animation: praise-zoom 1400ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes praise-zoom {
+  0% { transform: scale(0.3); opacity: 0; }
+  25% { transform: scale(1.12); opacity: 1; }
+  45% { transform: scale(1); }
+  80% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1.05); opacity: 0; }
+}
+
+/* ---------- Zone joc ---------- */
+
+.play-area {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  min-height: 0;
+}
+
+.choice-row {
+  display: flex;
+  gap: clamp(14px, 3vw, 34px);
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 900px;
+}
+
+.choice-row .choice-card {
+  width: clamp(150px, 26vmin, 260px);
+  flex: 0 1 auto;
+}
+
+.target-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 20px;
+}
+
+.target-card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  border: 5px dashed rgba(74, 63, 53, 0.18);
+  padding: 14px;
+  width: clamp(150px, 24vmin, 230px);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-soft);
+}
+
+.stage-label {
+  font-size: clamp(20px, 3.4vw, 28px);
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+/* ---------- Coșuri sortare ---------- */
+
+.sort-bins {
+  display: flex;
+  gap: clamp(16px, 4vw, 44px);
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+  padding-bottom: 8px;
+}
+
+.sort-bin {
+  position: relative;
+  width: clamp(150px, 26vmin, 250px);
+  aspect-ratio: 0.92;
+  border-radius: 26px 26px 40px 40px;
+  border: 6px solid rgba(74, 63, 53, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  gap: 6px;
+  padding: 14px 10px 16px;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  box-shadow: inset 0 -10px 0 rgba(0, 0, 0, 0.07), var(--shadow-soft);
+}
+
+.sort-bin.bin-ready {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 10px rgba(255, 213, 92, 0.4), inset 0 -10px 0 rgba(0, 0, 0, 0.07);
+}
+
+.sort-bin .bin-item {
+  width: 30%;
+  animation: pop-in 300ms backwards;
+}
+
+.tray {
+  display: flex;
+  gap: clamp(12px, 2.4vw, 26px);
+  justify-content: center;
+  align-items: center;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: var(--radius-xl);
+  margin: 0 auto 10px;
+  min-height: 110px;
+  flex-wrap: wrap;
+}
+
+.tray-item {
+  width: clamp(84px, 15vmin, 130px);
+  aspect-ratio: 1;
+  border-radius: 24px;
+  background: var(--paper);
+  border: 4px solid rgba(74, 63, 53, 0.08);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: pop-in 380ms backwards;
+}
+
+.tray-item.selected {
+  transform: scale(1.14) translateY(-8px);
+  border-color: var(--sun-deep);
+  box-shadow: 0 0 0 8px rgba(255, 213, 92, 0.45), var(--shadow-soft);
+}
+
+.tray-item.placed {
+  opacity: 0;
+  transform: scale(0.3);
+  pointer-events: none;
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+/* ---------- Cursor mânuță (demo) ---------- */
+
+.demo-hand {
+  position: absolute;
+  z-index: 70;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(74, 63, 53, 0.3));
+  transition: left 700ms cubic-bezier(0.5, 1.4, 0.4, 1), top 700ms cubic-bezier(0.5, 1.4, 0.4, 1), opacity 300ms ease;
+}
+
+.demo-hand.tapping {
+  animation: hand-tap 620ms ease-in-out infinite;
+}
+@keyframes hand-tap {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.82); }
+}
+
+/* ---------- Ecran părinte ---------- */
+
+.parent-panel {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 18px clamp(14px, 4vw, 44px) 60px;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: pan-y;
+}
+
+.parent-card {
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-soft);
+  border: 3px solid rgba(74, 63, 53, 0.05);
+}
+
+.parent-card h2 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(74, 63, 53, 0.09);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--grass), var(--sun));
+  transition: width 500ms ease;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 0;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.toggle {
+  width: 78px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(74, 63, 53, 0.15);
+  position: relative;
+  transition: background 200ms ease;
+  flex-shrink: 0;
+}
+
+.toggle.on { background: var(--grass); }
+
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  transition: left 200ms ease;
+}
+
+.toggle.on::after { left: 38px; }
+
+/* ---------- Poarta pentru adulți ---------- */
+
+.gate-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(58, 48, 40, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fade-in 220ms ease;
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.gate-card {
+  background: var(--paper);
+  border-radius: var(--radius-xl);
+  padding: 30px 34px;
+  width: min(480px, 92vw);
+  text-align: center;
+  box-shadow: var(--shadow-lift);
+  animation: pop-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.gate-hold {
+  margin: 22px auto 8px;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-soft);
+}
+
+.gate-hold .fill {
+  position: absolute;
+  inset: 0;
+  background: var(--blue-deep);
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+
+.gate-hold span { position: relative; z-index: 1; }
+
+/* ---------- Utilitare ---------- */
+
+.row { display: flex; align-items: center; }
+.grow { flex: 1; }
+.hidden { display: none !important; }
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 4px;
+  gap: 10px;
+  z-index: 20;
+}
+
+.session-dots {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 999px;
+}
+
+.session-dots .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(74, 63, 53, 0.14);
+  transition: background 300ms ease, transform 300ms ease;
+}
+
+.session-dots .dot.done {
+  background: var(--sun-deep);
+  transform: scale(1.15);
+}
+
+.fade-text {
+  animation: fade-in 400ms ease;
+}
+
+/* ---------- Viață și mișcare (runda 2) ---------- */
+
+/* Gelatină la atingere — totul răspunde elastic */
+@keyframes lll-jelly {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(0.86, 1.14); }
+  45% { transform: scale(1.13, 0.87); }
+  65% { transform: scale(0.94, 1.06); }
+  82% { transform: scale(1.04, 0.96); }
+  100% { transform: scale(1, 1); }
+}
+.lll-jelly { animation: lll-jelly 560ms cubic-bezier(0.36, 0.66, 0.4, 1); }
+
+/* Plutire leneșă — obiectele „respiră" */
+@keyframes lll-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-7px) rotate(1.2deg); }
+}
+.lll-float { animation: lll-float 3.4s ease-in-out infinite; animation-delay: var(--float-delay, 0s); }
+
+/* Clipit pentru ochii din SVG (necesită class pe cercurile ochilor) */
+.lll-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lll-blink 5.2s infinite;
+  animation-delay: var(--blink-delay, 0s);
+}
+@keyframes lll-blink {
+  0%, 92.5%, 100% { transform: scaleY(1); }
+  95.5% { transform: scaleY(0.05); }
+}
+
+/* Coș care așteaptă entuziast */
+@keyframes lll-eager {
+  0%, 100% { transform: scale(1.04) rotate(0deg); }
+  50% { transform: scale(1.09) rotate(1.6deg); }
+}
+.drop-hover {
+  outline: 6px solid rgba(255, 213, 92, 0.9);
+  outline-offset: 4px;
+  animation: lll-eager 480ms ease-in-out infinite;
+}
+
+/* Clonă trasă cu degetul */
+.lll-drag-clone {
+  position: fixed;
+  z-index: 200;
+  pointer-events: none;
+  filter: drop-shadow(0 14px 16px rgba(74, 63, 53, 0.3));
+}
+.lll-drag-ghost { opacity: 0.3; }
+
+/* Particule care urcă la reușită */
+@keyframes lll-rise {
+  0% { transform: translateY(0) scale(0.4) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(-170px) scale(1) rotate(50deg); opacity: 0; }
+}
+.lll-particle {
+  position: absolute;
+  pointer-events: none;
+  animation: lll-rise 1.15s ease-out forwards;
+  z-index: 65;
+}
+
+/* Dans al obiectului corect */
+@keyframes lll-dance {
+  0% { transform: rotate(0) scale(1); }
+  20% { transform: rotate(-10deg) scale(1.14); }
+  40% { transform: rotate(9deg) scale(1.17); }
+  60% { transform: rotate(-7deg) scale(1.13); }
+  80% { transform: rotate(5deg) scale(1.06); }
+  100% { transform: rotate(0) scale(1); }
+}
+.lll-dance { animation: lll-dance 820ms ease-in-out 2; }
+
+/* Hop — pentru iepuraș și sărituri */
+@keyframes lll-hop {
+  0% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-30%) scale(0.9, 1.12); }
+  55% { transform: translateY(0) scale(1.1, 0.88); }
+  75% { transform: translateY(-9%) scale(0.97, 1.04); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+.lll-hop { animation: lll-hop 620ms cubic-bezier(0.36, 0.66, 0.4, 1); }
+
+/* Legănare pentru pahare */
+@keyframes lll-sway {
+  0%, 100% { transform: rotate(-2.2deg); }
+  50% { transform: rotate(2.2deg); }
+}
+.lll-sway { animation: lll-sway 2.8s ease-in-out infinite; animation-delay: var(--float-delay, 0s); }
+
+/* Ambient: nori, licurici, fluture */
+.ambient-cloud {
+  position: absolute;
+  animation: lll-cloud-drift linear infinite;
+  opacity: 0.8;
+  pointer-events: none;
+}
+@keyframes lll-cloud-drift {
+  from { transform: translateX(-28vw); }
+  to { transform: translateX(126vw); }
+}
+
+.ambient-firefly {
+  position: absolute;
+  bottom: -4vh;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fff3b8;
+  box-shadow: 0 0 12px 4px rgba(255, 243, 184, 0.75);
+  animation: lll-firefly-rise linear infinite;
+  pointer-events: none;
+}
+@keyframes lll-firefly-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  12% { opacity: 0.85; }
+  85% { opacity: 0.55; }
+  100% { transform: translate(4vw, -42vh); opacity: 0; }
+}
+
+.ambient-butterfly {
+  position: absolute;
+  width: 62px;
+  opacity: 0;
+  animation: lll-flutter-by 30s linear infinite;
+  animation-delay: 7s;
+  pointer-events: none;
+}
+@keyframes lll-flutter-by {
+  0% { transform: translate(-14vw, 64vh) rotate(-8deg); opacity: 0; }
+  3% { opacity: 1; }
+  25% { transform: translate(20vw, 46vh) rotate(7deg); }
+  50% { transform: translate(54vw, 60vh) rotate(-6deg); }
+  75% { transform: translate(84vw, 44vh) rotate(8deg); }
+  97% { opacity: 1; }
+  100% { transform: translate(120vw, 52vh) rotate(-6deg); opacity: 0; }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html.reduced-motion *,
+html.reduced-motion *::before,
+html.reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

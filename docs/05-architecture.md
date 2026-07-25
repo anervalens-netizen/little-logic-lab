@@ -2,7 +2,9 @@
 
 ## Decision summary
 
-Use a cross-platform React Native application, preferably through the current stable Expo SDK at implementation time, with the New Architecture enabled. Keep learning logic in a pure TypeScript package and render games through plugins.
+Use a web/PWA-first application with a React semantic shell and PixiJS game
+scenes. Keep learning logic in a pure TypeScript package and render games
+through plugins. TypeScript 7 is the workspace compiler.
 
 The system is offline-first and has no runtime backend in v1.
 
@@ -10,11 +12,11 @@ The system is offline-first and has no runtime backend in v1.
 
 ```text
 ┌──────────────────────────────────────────────┐
-│ Mobile shell                                 │
+│ React web shell                              │
 │ child home · session · parent gate · settings│
 ├──────────────────────────────────────────────┤
 │ Game renderers                               │
-│ RN semantic UI + optional Skia canvas        │
+│ PixiJS WebGL + accessible DOM overlay        │
 ├──────────────────────────────────────────────┤
 │ Game runtime                                 │
 │ plugin state machines · hints · evaluation   │
@@ -26,24 +28,27 @@ The system is offline-first and has no runtime backend in v1.
 │ JSON catalog · presets · assets · audio      │
 ├──────────────────────────────────────────────┤
 │ Local platform services                      │
-│ SQLite · audio · haptics · secure settings   │
+│ IndexedDB · bundled audio · PWA cache         │
 └──────────────────────────────────────────────┘
 ```
 
-Dependencies point downward. The core package never imports React Native, Expo, SQLite, Skia or platform APIs.
+Dependencies point downward. The core package never imports React, PixiJS,
+IndexedDB or browser APIs.
 
 ## Suggested monorepo target
 
 ```text
-apps/mobile/
+apps/web/
 packages/core/
 packages/game-runtime/
 packages/game-renderers/
 packages/content/
+packages/storage/
 packages/testing/
 ```
 
-This seed repo implements only `packages/core`; Codex should add the rest incrementally.
+The current prototype implements `apps/web` and `packages/core`; the remaining
+packages are extracted incrementally during R1/R2.
 
 ## Game plugin contract
 
@@ -92,7 +97,7 @@ Any state can transition to `closed` through parent stop, session limit or distr
 
 ## Rendering strategy
 
-Use standard React Native views for:
+Use React/DOM for:
 
 - navigation;
 - buttons;
@@ -101,14 +106,15 @@ Use standard React Native views for:
 - accessibility semantics;
 - simple card grids and sorting.
 
-Use React Native Skia for:
+Use PixiJS with the production WebGL renderer for:
 
 - animated 2D scenes;
 - paths, tracing and mazes;
 - drag-heavy shape puzzles;
 - controlled particle or character animation.
 
-Keep an accessible semantic overlay when a Skia canvas contains actionable objects. Do not sacrifice VoiceOver/TalkBack for visual convenience.
+Keep an accessible DOM overlay for every actionable canvas object. Do not
+sacrifice VoiceOver/TalkBack for visual convenience.
 
 ## State management
 
@@ -135,7 +141,7 @@ attempt_events
 content_version
 ```
 
-SQLite characteristics:
+IndexedDB characteristics:
 
 - one transaction per completed attempt or session end;
 - schema migrations are versioned and tested;
@@ -165,19 +171,18 @@ Content updates in v1 ship through normal app releases. Avoid remote configurati
 - Do not use remote image URLs.
 - Avoid copyrighted characters or third-party art without licenses.
 
-## Recommended stack at implementation time
+## Stack
 
-- Current stable Expo SDK and compatible stable React Native.
-- TypeScript strict mode.
-- React Native Skia for selected canvases.
-- Reanimated for motion.
-- Expo SQLite.
-- Expo Audio.
-- Expo Haptics.
+- TypeScript 7 native in strict mode.
+- React 19.2 for shell and semantic UI.
+- PixiJS 8/WebGL for game scenes and controlled motion.
+- IndexedDB with versioned repositories and migrations.
+- Bundled Romanian audio plus Web Audio.
 - JSON Schema/Zod at boundaries.
-- Jest/Vitest for pure logic; React Native Testing Library for shell; Maestro or Detox for critical flows.
+- Node/Vitest/property tests and Playwright for critical flows.
+- Vite 8 and Cloudflare Pages for static delivery.
 
-Framework versions change. Codex should verify current official documentation, use stable compatible versions and record them in an ADR.
+Exact versions and rationale are in ADR 005.
 
 ## Security boundaries
 

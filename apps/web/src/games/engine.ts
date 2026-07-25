@@ -1,0 +1,105 @@
+/**
+ * Motorul care rulează un joc în shell:
+ * instrucțiune → joc → laudă → mastery → ajustare dificultate (o axă).
+ */
+
+import {
+  recommendDifficultyDirection,
+  stepDifficulty,
+  type DifficultyVector,
+} from "@core";
+import type { GameContext, WebGame, PlayResult } from "./types";
+import { getProfile, recordAttempt, setGameDifficulty } from "../app/appState";
+import { speak, stopSpeaking } from "../audio/speech";
+import { praise, isMotionReduced } from "../ui/feedback";
+import { demoTap, demoHand } from "../ui/feedback";
+import { wait } from "../ui/dom";
+
+export interface RunOutcome {
+  readonly result: PlayResult;
+  readonly cancelled: boolean;
+}
+
+let cancelFlag = false;
+
+export function cancelCurrentGame(): void {
+  cancelFlag = true;
+  stopSpeaking();
+}
+
+/** Sesiunea resetează flag-ul O DATĂ la start — niciodată între niveluri. */
+export function resetCancelFlag(): void {
+  cancelFlag = false;
+}
+
+export function cancelFlagPending(): boolean {
+  return cancelFlag;
+}
+
+export function makeContext(mount: HTMLElement, shell: HTMLElement): GameContext {
+  return {
+    mount,
+    shell,
+    speak: (text, opts) => speak(text, opts),
+    hush: () => stopSpeaking(),
+    reducedMotion: isMotionReduced(),
+    demonstrate: async (target) => {
+      const host = shell;
+      if (!host.querySelector(".demo-hand")) host.append(demoHand());
+      await demoTap(host, target);
+    },
+    isCancelled: () => cancelFlag,
+  };
+}
+
+/** Rulează un nivel: returnează rezultatul; se ocupă de tot ce e transversal. */
+export async function runGame(
+  game: WebGame,
+  mount: HTMLElement,
+  shell: HTMLElement,
+  seedSalt: string,
+): Promise<RunOutcome> {
+  const profile = getProfile();
+  const stored = profile.progressByGame[game.id];
+  const difficulty: DifficultyVector =
+    stored && Object.keys(stored.difficulty).length > 0
+      ? { ...stored.difficulty }
+      : { ...game.initialDifficulty };
+
+  const seed = `${game.id}:${new Date().toISOString().slice(0, 10)}:${seedSalt}:${stored?.timesPlayed ?? 0}`;
+  const ctx = makeContext(mount, shell);
+
+  const result = await game.play(ctx, difficulty, seed);
+  if (cancelFlag) {
+    return { result: { ...result, abandoned: true }, cancelled: true };
+  }
+
+  if (game.scored) {
+    recordAttempt(game.id, game.skillId, result);
+
+    // Ajustare dificultate: o singură axă, pe baza ultimelor rezultate.
+    const updated = getProfile().progressByGame[game.id];
+    const outcomes = (updated?.recentOutcomes ?? []).map((a) => ({
+      completed: a.completed,
+      correctFirstTry: a.correctFirstTry,
+      correctEventually: a.correctEventually,
+      hintsUsed: a.hintsUsed,
+      wrongAttempts: a.wrongAttempts,
+    }));
+    const direction = recommendDifficultyDirection(outcomes);
+    if (direction !== 0) {
+      const step = stepDifficulty(difficulty, game.axes, direction);
+      if (step.changedAxis !== null) {
+        setGameDifficulty(game.id, step.vector);
+      }
+    } else if (!stored || Object.keys(stored.difficulty).length === 0) {
+      setGameDifficulty(game.id, difficulty);
+    }
+  }
+
+  if (result.completed && !cancelFlag) {
+    await praise(shell, { win: result.correctFirstTry });
+  }
+  await wait(250);
+  return { result, cancelled: false };
+}
