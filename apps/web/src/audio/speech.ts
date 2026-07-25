@@ -1,11 +1,16 @@
-/**
- * Voce sintetizată în română (Web Speech API).
- * Dacă nu există voce de română, folosim vocea implicită cu rată încetinită;
- * instrucțiunile au oricum și demonstrație vizuală — cititul nu e niciodată necesar.
- */
+/** Voce RO locală, versionată și disponibilă offline. */
+
+import manifest from "./ro-RO-v1.json";
 
 let voiceEnabled = true;
-let cachedVoice: SpeechSynthesisVoice | null | undefined;
+let activeAudio: HTMLAudioElement | null = null;
+
+const clipByText = new Map(
+  manifest.prompts.map((prompt) => [
+    prompt.text,
+    `/audio/${manifest.version}/${prompt.id}.mp3`,
+  ]),
+);
 
 export function setVoiceEnabled(value: boolean): void {
   voiceEnabled = value;
@@ -13,27 +18,7 @@ export function setVoiceEnabled(value: boolean): void {
 }
 
 export function voiceAvailable(): boolean {
-  return "speechSynthesis" in window;
-}
-
-function pickRomanianVoice(): SpeechSynthesisVoice | null {
-  if (cachedVoice !== undefined) return cachedVoice;
-  if (!voiceAvailable()) {
-    cachedVoice = null;
-    return null;
-  }
-  const voices = window.speechSynthesis.getVoices();
-  cachedVoice =
-    voices.find((v) => v.lang.toLowerCase().startsWith("ro")) ??
-    voices.find((v) => v.lang.toLowerCase().includes("ro")) ??
-    null;
-  return cachedVoice;
-}
-
-if (voiceAvailable()) {
-  window.speechSynthesis.onvoiceschanged = () => {
-    cachedVoice = undefined;
-  };
+  return typeof Audio !== "undefined" && clipByText.size > 0;
 }
 
 export interface SpeakOptions {
@@ -43,29 +28,41 @@ export interface SpeakOptions {
 }
 
 export function speak(text: string, options: SpeakOptions = {}): void {
+  stopSpeaking();
   if (!voiceEnabled || !voiceAvailable()) {
     options.onEnd?.();
     return;
   }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  const voice = pickRomanianVoice();
-  if (voice) {
-    utterance.voice = voice;
-    utterance.lang = voice.lang;
-  } else {
-    utterance.lang = "ro-RO";
+
+  const source = clipByText.get(text);
+  if (!source) {
+    // Instrucțiunea vizuală rămâne autoritară; nu apelăm servicii remote.
+    options.onEnd?.();
+    return;
   }
-  utterance.rate = options.rate ?? 0.92;
-  utterance.pitch = options.pitch ?? 1.15;
-  utterance.volume = 1;
-  if (options.onEnd) {
-    utterance.onend = () => options.onEnd?.();
-    utterance.onerror = () => options.onEnd?.();
-  }
-  window.speechSynthesis.speak(utterance);
+
+  const audio = new Audio(source);
+  activeAudio = audio;
+  audio.preload = "auto";
+  audio.playbackRate = options.rate ?? 1;
+  audio.preservesPitch = true;
+
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    if (activeAudio === audio) activeAudio = null;
+    options.onEnd?.();
+  };
+  audio.addEventListener("ended", finish, { once: true });
+  audio.addEventListener("error", finish, { once: true });
+  void audio.play().catch(finish);
 }
 
 export function stopSpeaking(): void {
-  if (voiceAvailable()) window.speechSynthesis.cancel();
+  if (!activeAudio) return;
+  activeAudio.pause();
+  activeAudio.removeAttribute("src");
+  activeAudio.load();
+  activeAudio = null;
 }

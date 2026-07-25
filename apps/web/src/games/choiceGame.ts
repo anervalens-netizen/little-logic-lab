@@ -182,7 +182,7 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
                 }
               }
               showHintGlow(correctCard);
-              speak(`Uite! Acesta e ${round.targetLabel}. Bravo că ai încercat!`);
+              speak("Uite! Aceasta este perechea. Bravo că ai încercat!");
               setTimeout(() => {
                 markCorrect(correctCard);
                 finish({
@@ -285,7 +285,7 @@ async function playPixiRound(
         inputReady = false;
         scene.dimExcept(round.correctId);
         scene.emphasize(round.correctId);
-        speak(`Uite! Acesta e ${round.targetLabel}. Bravo că ai încercat!`);
+        speak("Uite! Aceasta este perechea. Bravo că ai încercat!");
         window.setTimeout(() => {
           scene.markCorrect(round.correctId);
           finish({

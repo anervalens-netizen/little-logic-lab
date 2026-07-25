@@ -18,7 +18,7 @@ semantic UI, local-only storage and reliable offline updates.
 - PixiJS `8.19.0` with WebGL for production game scenes.
 - Vite `8.1.x` for builds.
 - IndexedDB through `idb` `8.0.3`, with versioned repositories and migrations.
-- Bundled Romanian recordings and Web Audio.
+- Versioned local Romanian clips and Web Audio.
 - Revisioned PWA precaching generated from the production build.
 - Node/property tests plus Playwright `1.62.0`.
 - `vite-plugin-pwa` `1.3.0` for Workbox-generated revisioned precaching.

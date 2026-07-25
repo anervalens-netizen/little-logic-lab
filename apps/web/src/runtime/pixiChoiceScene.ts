@@ -7,6 +7,10 @@ import {
   type Ticker,
 } from "pixi.js";
 import { loadSvgTexture } from "./svgTexture";
+import {
+  attachPixiPerformanceDiagnostics,
+  markInputForDiagnostics,
+} from "./performanceMetrics";
 
 export interface PixiChoiceOption {
   readonly id: string;
@@ -86,6 +90,9 @@ export async function createPixiChoiceScene(
   app.canvas.setAttribute("aria-hidden", "true");
   host.classList.add("pixi-host");
   host.append(app.canvas);
+  const stopPerformanceDiagnostics = attachPixiPerformanceDiagnostics(
+    app.ticker,
+  );
 
   const accessibility = document.createElement("div");
   accessibility.className = "choice-row pixi-accessibility";
@@ -152,6 +159,7 @@ export async function createPixiChoiceScene(
 
     const press = () => {
       if (!enabled || card.selected) return;
+      markInputForDiagnostics();
       card.container.scale.set(0.94);
     };
     const release = () => {
@@ -357,6 +365,7 @@ export async function createPixiChoiceScene(
       app.renderer.off("resize", layout);
       tickerCallbacks.forEach((callback) => app.ticker.remove(callback));
       tickerCallbacks.clear();
+      stopPerformanceDiagnostics();
       accessibility.remove();
       app.destroy({ removeView: true }, { children: true });
       releases.forEach((release) => release());

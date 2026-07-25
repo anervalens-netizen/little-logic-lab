@@ -8,6 +8,10 @@ import {
   type Ticker,
 } from "pixi.js";
 import { loadSvgTexture } from "./svgTexture";
+import {
+  attachPixiPerformanceDiagnostics,
+  markInputForDiagnostics,
+} from "./performanceMetrics";
 
 export interface PixiDragItem {
   readonly id: string;
@@ -122,6 +126,9 @@ export async function createPixiDragScene(
   app.canvas.setAttribute("aria-hidden", "true");
   host.classList.add("pixi-host");
   host.append(app.canvas);
+  const stopPerformanceDiagnostics = attachPixiPerformanceDiagnostics(
+    app.ticker,
+  );
   app.stage.sortableChildren = true;
   app.stage.eventMode = "static";
 
@@ -229,6 +236,7 @@ export async function createPixiDragScene(
 
     container.on("pointerdown", (event: FederatedPointerEvent) => {
       if (!enabled || item.placed) return;
+      markInputForDiagnostics();
       const local = app.stage.toLocal(event.global);
       active = {
         item,
@@ -249,6 +257,7 @@ export async function createPixiDragScene(
       selectedId = selectedId === item.id ? null : item.id;
       updateSelection();
     });
+    button.addEventListener("pointerdown", markInputForDiagnostics);
 
     items.push(item);
     app.stage.addChild(container);
@@ -527,6 +536,7 @@ export async function createPixiDragScene(
       app.renderer.off("resize", layout);
       tickerCallbacks.forEach((callback) => app.ticker.remove(callback));
       tickerCallbacks.clear();
+      stopPerformanceDiagnostics();
       accessibility.remove();
       app.destroy({ removeView: true }, { children: true });
       releases.forEach((release) => release());

@@ -69,6 +69,12 @@ Generators must assert:
 - no inaccessible color-only distinction;
 - all audio keys exist or a visual fallback is defined.
 
+Vocea din golden slice folosește manifestul versionat
+`apps/web/src/audio/ro-RO-v1.json` și clipuri locale mono MP3. Regenerarea se
+face explicit cu `npm run generate:audio`; runtime-ul nu folosește Web Speech
+și nu face request-uri către servicii audio externe. Orice text fără clip
+rămâne exclusiv vizual, fără eroare.
+
 ## Content packs
 
 Recommended packs:

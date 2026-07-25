@@ -15,7 +15,7 @@ export function isMotionReduced(): boolean {
   return motionReduced;
 }
 
-const PRAISES = ["Bravo!", "Ai reușit!", "Minunat!", "Super!", "Ce destept ești!"];
+const PRAISES = ["Bravo!", "Ai reușit!", "Minunat!", "Super!", "Ce deștept ești!"];
 
 export function confettiBurst(container: HTMLElement, count = 36): void {
   if (motionReduced) return;

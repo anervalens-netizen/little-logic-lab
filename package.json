@@ -15,15 +15,18 @@
     "build:web": "npm run build --workspace @little-logic-lab/web",
     "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && npm run typecheck --workspace @little-logic-lab/web",
     "test:web": "playwright test",
-    "test": "npm run generate:curriculum && npm run generate:ladders && npm run generate:content && npm run validate && npm run policy:check && npm run build && node --test packages/core/test/*.test.mjs",
+    "test": "npm run generate:curriculum && npm run generate:ladders && npm run generate:content && npm run validate && npm run validate:audio && npm run policy:check && npm run build && node --test packages/core/test/*.test.mjs",
     "preview": "npm run build && node scripts/generate-level-preview.mjs",
     "generate:ladders": "node scripts/generate-level-ladders.mjs",
     "generate": "npm run generate:curriculum && npm run generate:ladders && npm run generate:content && npm run generate:catalog && npm run preview",
     "policy:check": "node scripts/check-product-policy.mjs",
     "generate:curriculum": "node scripts/generate-curriculum-map.mjs",
-    "generate:content": "node scripts/generate-web-content.mjs"
+    "generate:content": "node scripts/generate-web-content.mjs",
+    "generate:audio": "node scripts/generate-ro-audio.mjs",
+    "validate:audio": "node scripts/validate-audio.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@playwright/test": "1.62.0",
     "typescript": "7.0.2",
     "vite": "8.1.5",

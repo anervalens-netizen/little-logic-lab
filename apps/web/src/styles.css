@@ -153,10 +153,10 @@ button {
   box-shadow: 0 2px 0 rgba(74, 63, 53, 0.12);
 }
 
-.btn-big.green { background: var(--grass); color: #fff; }
-.btn-big.blue { background: var(--blue); color: #fff; }
-.btn-big.coral { background: var(--coral); color: #fff; }
-.btn-big.purple { background: var(--purple); color: #fff; }
+.btn-big.green { background: var(--grass); color: var(--ink); }
+.btn-big.blue { background: var(--blue); color: var(--ink); }
+.btn-big.coral { background: var(--coral); color: var(--ink); }
+.btn-big.purple { background: var(--purple); color: var(--ink); }
 
 .btn-icon {
   width: 72px;

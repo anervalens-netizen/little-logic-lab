@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 async function readStoredProfile(
   page: Page,
@@ -78,14 +79,31 @@ async function seedCleanProgress(
   }, gameIds);
 }
 
-async function enterHome(page: Page): Promise<void> {
-  await page.goto("/");
+async function enterHome(page: Page, path = "/"): Promise<void> {
+  await page.goto(path);
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
   await page.locator("body").click({ position: { x: 20, y: 20 } });
   await expect(
     page.locator('[data-screen="home"][data-screen-ready="true"]'),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Joacă" })).toBeVisible();
+}
+
+async function expectNoAutomaticAccessibilityViolations(
+  page: Page,
+): Promise<void> {
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(
+    results.violations,
+    results.violations
+      .map(
+        (violation) =>
+          `${violation.id}: ${violation.nodes
+            .map((node) => node.target.join(" "))
+            .join(", ")}`,
+      )
+      .join("\n"),
+  ).toEqual([]);
 }
 
 test("child home is local-only and progressively unlocked", async ({ page }) => {
@@ -140,6 +158,108 @@ test("parent mode is React-owned and persists semantic settings", async ({
     page.locator('[data-screen="home"][data-screen-ready="true"]'),
   ).toBeVisible();
   await expect(page.locator(".parent-panel")).toHaveCount(0);
+});
+
+test("home, Parent Mode and Pixi semantics pass Axe", async ({ page }) => {
+  await enterHome(page);
+  await expectNoAutomaticAccessibilityViolations(page);
+
+  await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+  await page
+    .getByRole("button", { name: "Ține apăsat 3 secunde" })
+    .dispatchEvent("pointerdown");
+  await expect(
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 5_000 });
+  await expectNoAutomaticAccessibilityViolations(page);
+
+  await page.getByRole("button", { name: "Înapoi" }).click();
+  await page.getByRole("button", { name: "Găsește perechea" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expectNoAutomaticAccessibilityViolations(page);
+});
+
+test("Romanian voice is bundled and cached for offline use", async ({
+  page,
+  context,
+}) => {
+  await page.goto("/");
+  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await page.locator("body").click({ position: { x: 20, y: 20 } });
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+    const deadline = Date.now() + 8_000;
+    while (!navigator.serviceWorker.controller && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  });
+
+  await context.setOffline(true);
+  const cachedRecording = await page.evaluate(async () => {
+    let response: Response | undefined;
+    for (const cacheName of await caches.keys()) {
+      const cache = await caches.open(cacheName);
+      const recordingRequest = (await cache.keys()).find(
+        (request) =>
+          new URL(request.url).pathname ===
+          "/audio/ro-RO-v1/hello-lumi.mp3",
+      );
+      if (recordingRequest) {
+        response = await cache.match(recordingRequest);
+      }
+      if (response) break;
+    }
+    if (!response) return { ok: false, contentType: null, size: 0 };
+    return {
+      ok: response.ok,
+      contentType: response.headers.get("content-type"),
+      size: (await response.blob()).size,
+    };
+  });
+  expect(cachedRecording.ok).toBe(true);
+  expect(cachedRecording.contentType).toContain("audio");
+  expect(cachedRecording.size).toBeGreaterThan(10_000);
+});
+
+test("Pixi exposes frame diagnostics and meets the input budget", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "Chromium is the repeatable synthetic performance gate; device QA is separate.",
+  );
+  await enterHome(page, "/?diagnostics=1");
+  await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+  await page
+    .getByRole("button", { name: "Ține apăsat 3 secunde" })
+    .dispatchEvent("pointerdown");
+  const reducedMotion = page.getByRole("switch", {
+    name: "Mișcare redusă (fără animații)",
+  });
+  await expect(reducedMotion).toHaveAttribute("aria-checked", "true");
+  await reducedMotion.click();
+  await page.getByRole("button", { name: "Înapoi" }).click();
+  await page.getByRole("button", { name: "Găsește perechea" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await page.evaluate(() => window.__logicLabPerformance?.reset());
+  await page.waitForTimeout(2_000);
+  await page.locator(".pixi-accessibility-choice").first().click();
+  await page.waitForTimeout(120);
+
+  const metrics = await page.evaluate(() =>
+    window.__logicLabPerformance?.snapshot(),
+  );
+  expect(metrics).toBeDefined();
+  const evidence = JSON.stringify(metrics);
+  expect(metrics!.frameSamples, evidence).toBeGreaterThan(20);
+  expect(metrics!.frameP95Ms, evidence).toBeGreaterThan(0);
+  expect(metrics!.inputSamples, evidence).toBeGreaterThan(0);
+  expect(metrics!.inputP95Ms, evidence).toBeLessThan(50);
+  expect(metrics!.longTasksOver100Ms, evidence).toBeGreaterThanOrEqual(0);
 });
 
 test("completed attempt stores deterministic replay metadata", async ({ page }) => {
@@ -220,7 +340,7 @@ test("Pixi scene is destroyed and recreated without residual canvas", async ({
 
 test("color sorting completes through the accessible Pixi input bridge", async ({
   page,
-}) => {
+}, testInfo) => {
   await seedCleanProgress(page, ["same-picture"]);
   await enterHome(page);
   await page.getByRole("button", { name: "Coșurile de culori" }).click();
@@ -237,21 +357,24 @@ test("color sorting completes through the accessible Pixi input bridge", async (
     const target = page.locator(
       `button.pixi-drop-target[aria-label="coșul ${color}"]`,
     );
-    if (index === 0) {
+    if (index === 0 && testInfo.project.name === "chromium-touch") {
       const itemBox = await item.boundingBox();
       const targetBox = await target.boundingBox();
       expect(itemBox).not.toBeNull();
       expect(targetBox).not.toBeNull();
-      await page.mouse.move(
-        itemBox!.x + itemBox!.width / 2,
-        itemBox!.y + itemBox!.height / 2,
-      );
+      const from = {
+        x: itemBox!.x + itemBox!.width / 2,
+        y: itemBox!.y + itemBox!.height / 2,
+      };
+      const to = {
+        x: targetBox!.x + targetBox!.width / 2,
+        y: targetBox!.y + targetBox!.height / 2,
+      };
+      await page.mouse.move(from.x, from.y);
       await page.mouse.down();
-      await page.mouse.move(
-        targetBox!.x + targetBox!.width / 2,
-        targetBox!.y + targetBox!.height / 2,
-        { steps: 4 },
-      );
+      await page.waitForTimeout(80);
+      await page.mouse.move(to.x, to.y, { steps: 12 });
+      await page.waitForTimeout(80);
       await page.mouse.up();
       await expect(item).toBeDisabled();
     } else {
@@ -299,6 +422,47 @@ test("inset puzzle consumes shared drag/snap runtime", async ({ page }) => {
     })
     .toBe(true);
 });
+
+const GOLDEN_SCENES = [
+  {
+    id: "same-picture",
+    name: "Găsește perechea",
+    unlocks: [] as string[],
+  },
+  {
+    id: "sort-by-color",
+    name: "Coșurile de culori",
+    unlocks: ["same-picture"],
+  },
+  {
+    id: "inset-puzzle",
+    name: "Pune forma la loc",
+    unlocks: ["same-picture", "sort-by-color"],
+  },
+] as const;
+
+for (const scene of GOLDEN_SCENES) {
+  test(`visual baseline: ${scene.id}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    if (scene.unlocks.length > 0) {
+      await seedCleanProgress(page, scene.unlocks);
+    }
+    await enterHome(page);
+    await page.getByRole("button", { name: scene.name }).click();
+    await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+      timeout: 8_000,
+    });
+    await page.addStyleTag({
+      content:
+        "*,*::before,*::after{animation:none!important;transition:none!important;}",
+    });
+    await expect(page).toHaveScreenshot(`${scene.id}.png`, {
+      animations: "disabled",
+      caret: "hide",
+      scale: "css",
+    });
+  });
+}
 
 test("legacy local profile migrates without losing progress", async ({ page }) => {
   await page.addInitScript(() => {

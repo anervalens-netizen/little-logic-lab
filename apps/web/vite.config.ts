@@ -52,7 +52,7 @@ export default defineConfig({
       workbox: {
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        globPatterns: ["**/*.{js,css,html,woff2,png,svg,webmanifest}"],
+        globPatterns: ["**/*.{js,css,html,woff2,png,svg,mp3,webmanifest}"],
         globIgnores: ["icons/**/*", "manifest.webmanifest"],
         navigateFallback: "/index.html",
       },

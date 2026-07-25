@@ -227,6 +227,10 @@ function ParentScreen() {
               if (voiceEnabled) speak("Vocea este pornită! Salut!");
             }}
           />
+          <p style={{ color: "#7A6C5D", fontSize: 14, margin: "2px 0 10px" }}>
+            Vocea este sintetică, în limba română, și rulează din fișiere
+            salvate în aplicație; nu trimite text sau audio în cloud.
+          </p>
           <ToggleRow
             label="Muzică de fundal discretă"
             value={settings.musicEnabled}

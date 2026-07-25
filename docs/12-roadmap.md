@@ -19,8 +19,9 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   catalogul P0 este compilat într-un manifest compact, iar scenele Pixi au
   lifecycle și overlay semantic.
 - R2: primul pass funcțional există pentru `same-picture`, `sort-by-color` și
-  `inset-puzzle`; lipsesc încă audio RO înregistrat, regresia vizuală
-  versionată, măsurarea pe dispozitiv și validarea observată.
+  `inset-puzzle`; 66 clipuri RO locale, Axe și regresia vizuală versionată sunt
+  integrate. Lipsesc măsurarea pe dispozitiv, revizia umană a vocii și
+  validarea observată.
 
 ## 1. Obiectiv
 
@@ -54,7 +55,7 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 - registrul manual de jocuri cu un loader tipizat din catalog și ladders;
 - DOM-ul imperativ al scenelor cu runtime React + PixiJS;
 - `localStorage` cu IndexedDB și migrări;
-- Web Speech cu înregistrări românești locale;
+- vocea sintetică din browser cu audio românesc local, versionat;
 - service worker-ul cu cache versionat din manifestul build-ului;
 - testele temporare/brute-force cu teste Playwright versionate și aserțiuni;
 - ilustrațiile SVG generice cu un sistem artistic coerent și asset manifests.
@@ -62,9 +63,8 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 ### Probleme care blochează extinderea
 
 - 11 jocuri rămân pe rendererul DOM de prototip, iar `drag-and-fit` lipsește;
-- Web Speech trebuie înlocuit cu audio românesc local, revizuit;
-- porțile reale de FPS, input latency, VoiceOver/TalkBack și device QA nu sunt
-  încă închise.
+- cele 66 de clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
+- porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
 ## 3. Stack țintă
 
@@ -79,10 +79,10 @@ schimbare verificată.
 | Build | Vite 8 |
 | Logică pedagogică | `@little-logic-lab/core`, fără dependențe UI |
 | Persistență | IndexedDB, repositories și migrări versionate |
-| Audio | înregistrări RO bundled + Web Audio |
+| Audio | clipuri RO locale, versionate + Web Audio |
 | PWA | precache generat cu revizii per asset |
 | Testare | Node/Vitest, property tests, Playwright, Axe |
-| Hosting | Cloudflare Pages static + custom domain |
+| Hosting | Cloudflare Tunnel + Caddy static; Pages rămâne opțional |
 
 PixiJS este renderer, nu sursă de adevăr. Reducerul pur decide corectitudinea;
 coordonatele, animația și callback-urile vizuale nu decid mastery.
@@ -238,6 +238,11 @@ Estimare realistă până la toate cele 80 de familii la calitate ridicată:
 - zero creștere persistentă de listeners, textures sau audio nodes după scene;
 - start offline cald sub o secundă pe tableta țintă.
 
+`?diagnostics=1` expune local `window.__logicLabPerformance.snapshot()` pentru
+frame p95, input-to-frame și long tasks. Playwright impune input sub 50 ms;
+pragul de 60 FPS nu se evaluează în headless/SwiftShader, ci pe dispozitivul
+Android țintă.
+
 Pixi folosește WebGL în producție. WebGPU poate fi evaluat ulterior, nu este
 poartă pentru v1.
 
@@ -336,9 +341,9 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. înlocuiește Web Speech cu audio RO local și manifest versionat;
-2. adaugă Axe și regresie vizuală pentru golden slice;
-3. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
+1. revizuiește auditiv cele 66 de clipuri RO și înlocuiește pronunțiile slabe;
+2. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
+3. verifică manual VoiceOver și TalkBack;
 4. rulează observația cu copilul și rezolvă blocajele majore;
 5. evaluează exit-ul golden slice înainte de orice joc nou.
 
