@@ -42,9 +42,11 @@ reutilizabile, după golden slice.
   inclusiv stage-ul complet cu trei prieteni;
 - `daily-order` rulează pe secvențiere Pixi comună și consumă atât pașii, cât
   și distractorul din ladder;
+- `real-color-hunt` reutilizează promptul Pixi fără a introduce scor pentru
+  activitatea deschisă din lumea reală;
 - `sort-by-shape` și `sort-by-size` rulează cu `sort-by-color` pe batch-uri de
   maximum trei obiecte pe telefon și patru pe tabletă;
 - stage-ul maxim de 12 obiecte/4 coșuri este E2E, cu grid tactil de minimum
   96 px și exact un canvas;
-- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 22
-  baseline-uri vizuale pentru cele unsprezece scene Pixi.
+- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 24
+  baseline-uri vizuale pentru cele douăsprezece scene Pixi.

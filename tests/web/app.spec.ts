@@ -741,6 +741,58 @@ const P0_BEFORE_DRAG_AND_FIT = [
   "sort-by-shape",
   "sort-by-size",
 ] as const;
+const P0_BEFORE_COLOR_HUNT = [
+  ...P0_BEFORE_DRAG_AND_FIT,
+  "drag-and-fit",
+] as const;
+
+test("color hunt uses a Pixi real-world prompt without scoring the child", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the open-ended three-step contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_COLOR_HUNT);
+  await seedGameDifficulty(page, "real-color-hunt", 72, {
+    stepCount: 3,
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Vânătoarea de culori" }).click();
+
+  for (let step = 0; step < 3; step += 1) {
+    await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+      timeout: 8_000,
+    });
+    await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+    const found = page.locator("button.pixi-accessibility-choice");
+    await expect(found).toHaveCount(1);
+    await expect(found).toHaveAttribute(
+      "aria-label",
+      /^Am găsit ceva (roșu|albastru|galben|verde)$/,
+    );
+    const currentLabel = await found.getAttribute("aria-label");
+    await found.evaluate((button: HTMLButtonElement) => button.click());
+    if (step < 2) {
+      await expect
+        .poll(() =>
+          page
+            .locator("button.pixi-accessibility-choice")
+            .getAttribute("aria-label"),
+        )
+        .not.toBe(currentLabel);
+    }
+  }
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(0, {
+    timeout: 3_000,
+  });
+  const profile = await readStoredProfile(page);
+  expect(
+    (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+      (attempt) => attempt.gameId === "real-color-hunt",
+    ),
+  ).toBe(false);
+});
 
 const P0_BEFORE_SHADOW = [
   "same-picture",
@@ -1115,6 +1167,11 @@ const GOLDEN_SCENES = [
     id: "drag-and-fit",
     name: "Mută și potrivește",
     unlocks: P0_BEFORE_DRAG_AND_FIT,
+  },
+  {
+    id: "real-color-hunt",
+    name: "Vânătoarea de culori",
+    unlocks: P0_BEFORE_COLOR_HUNT,
   },
   {
     id: "shadow-match",
