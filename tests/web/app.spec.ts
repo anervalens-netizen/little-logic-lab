@@ -586,6 +586,73 @@ test("spatial-fit batches the full ten-piece ladder stage", async ({
     .toBe("inset-puzzle:L015");
 });
 
+const P0_BEFORE_DAILY = [
+  "same-picture",
+  "sort-by-color",
+  "inset-puzzle",
+] as const;
+
+test("daily order uses the shared Pixi sequence renderer", async ({ page }) => {
+  await seedCleanProgress(page, P0_BEFORE_DAILY);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Ce facem întâi?" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  const cards = page.locator("button.pixi-sequence-card");
+  await expect(cards).toHaveCount(2);
+
+  for (let step = 0; step < 2; step += 1) {
+    for (let index = 0; index < 2; index += 1) {
+      const card = cards.nth(index);
+      if (await card.isDisabled()) continue;
+      await card.evaluate((button: HTMLButtonElement) => button.click());
+      await page.waitForTimeout(520);
+      if (await card.isDisabled()) break;
+    }
+  }
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "daily-order",
+      );
+    })
+    .toBe(true);
+});
+
+test("daily order renders the full three-step stage plus distractor", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage layout contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_DAILY);
+  await seedGameDifficulty(page, "daily-order", 72, {
+    stepCount: 3,
+    distractorCount: 1,
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Ce facem întâi?" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  const cards = page.locator("button.pixi-sequence-card");
+  await expect(cards).toHaveCount(4);
+  const boxes = await cards.evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const box = button.getBoundingClientRect();
+      return { width: box.width, height: box.height };
+    }),
+  );
+  for (const box of boxes) {
+    expect(box.width).toBeGreaterThanOrEqual(96);
+    expect(box.height).toBeGreaterThanOrEqual(96);
+  }
+});
+
 const P0_BEFORE_COUNT = [
   "same-picture",
   "sort-by-color",
@@ -1033,6 +1100,11 @@ const GOLDEN_SCENES = [
     id: "inset-puzzle",
     name: "Pune forma la loc",
     unlocks: ["same-picture", "sort-by-color"],
+  },
+  {
+    id: "daily-order",
+    name: "Ce facem întâi?",
+    unlocks: P0_BEFORE_DAILY,
   },
   {
     id: "one-to-one-count",

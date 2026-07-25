@@ -26,8 +26,9 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   12 obiecte/4 coșuri pentru culoare, formă și mărime. `listen-find` consumă
   toate cele 16 stage-uri pe rendererul `choice`, cu indiciu audio și replay
   semantic fără expunerea răspunsului. `one-to-one-count` folosește drag/snap
-  Pixi cu plasare unică pentru fiecare prieten. 324 clipuri RO locale, Axe și
-  20 baseline-uri vizuale sunt integrate. Lipsesc măsurarea pe
+  Pixi cu plasare unică pentru fiecare prieten, iar `daily-order` folosește
+  secvențiere Pixi și aplică inclusiv axa de distractori. 324 clipuri RO locale,
+  Axe și 22 baseline-uri vizuale sunt integrate. Lipsesc măsurarea pe
   dispozitiv, revizia umană a vocii și validarea observată.
 
 ## 1. Obiectiv
@@ -69,7 +70,7 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- 5 jocuri rămân pe rendererul DOM de prototip;
+- 4 jocuri rămân pe rendererul DOM de prototip;
 - cele 324 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
 - porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
@@ -350,7 +351,7 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. migrează cele cinci scene DOM rămase prin arhetipurile comune;
+1. migrează cele patru scene DOM rămase prin arhetipurile comune;
 2. revizuiește auditiv cele 324 clipuri RO și înlocuiește pronunțiile slabe;
 3. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
 4. verifică manual VoiceOver și TalkBack;
