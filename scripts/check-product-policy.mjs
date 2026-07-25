@@ -62,9 +62,13 @@ const prohibitedSourcePatterns = [
 
 for (const file of sourceFiles) {
   const source = fs.readFileSync(file, "utf8");
+  const sourceWithoutStaticNamespaces = source.replaceAll(
+    "http://www.w3.org/2000/svg",
+    "",
+  );
   const relative = path.relative(root, file);
   for (const rule of prohibitedSourcePatterns) {
-    if (rule.pattern.test(source)) {
+    if (rule.pattern.test(sourceWithoutStaticNamespaces)) {
       errors.push(`${relative}: ${rule.label} violates offline-first v1`);
     }
   }

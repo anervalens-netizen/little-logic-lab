@@ -25,6 +25,7 @@ export const samePictureGame = createChoiceGame({
     { name: "distractorSimilarity", values: [0, 1] },
   ],
   initialDifficulty: { choiceCount: 2, distractorSimilarity: 0 },
+  renderer: "pixi",
   content: CONTENT,
   similarityAttribute: "category",
   buildRound: (level) => {

@@ -16,6 +16,8 @@ export interface GameContext {
   readonly reducedMotion: boolean;
   /** Mânuță demonstrativă peste un element. */
   readonly demonstrate: (target: HTMLElement) => Promise<void>;
+  /** Înregistrează cleanup idempotent executat de motor la final/anulare. */
+  readonly onCleanup: (cleanup: () => void) => void;
   /** Semnal de așteptare: true dacă jocul a fost întrerupt (ieșire din ecran). */
   readonly isCancelled: () => boolean;
 }

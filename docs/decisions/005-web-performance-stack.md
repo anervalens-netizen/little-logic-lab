@@ -14,18 +14,19 @@ semantic UI, local-only storage and reliable offline updates.
 ## Decision
 
 - TypeScript `7.0.2`, native compiler, strict and pinned at the workspace root.
-- React `19.2.x` for the application shell, parent mode and semantic controls.
-- PixiJS `8.x` with WebGL for production game scenes.
+- React `19.2.8` for the application shell, parent mode and semantic controls.
+- PixiJS `8.19.0` with WebGL for production game scenes.
 - Vite `8.1.x` for builds.
-- IndexedDB with versioned repositories and migrations.
+- IndexedDB through `idb` `8.0.3`, with versioned repositories and migrations.
 - Bundled Romanian recordings and Web Audio.
 - Revisioned PWA precaching generated from the production build.
-- Node/Vitest/property tests plus committed Playwright tests.
+- Node/property tests plus Playwright `1.62.0`.
+- `vite-plugin-pwa` `1.3.0` for Workbox-generated revisioned precaching.
 - Cloudflare Pages static delivery at `logic-lab.astancu.eu`.
 
-Exact React/Pixi/storage/PWA testing packages will be locked during R1 after a
-small compatibility and lifecycle spike. Major versions above are product
-constraints; patch versions follow verified upgrades.
+Aceste versiuni au trecut spike-ul R1 de lifecycle, WebGL, IndexedDB,
+Chromium/WebKit touch și offline. Upgrade-urile rămân intenționate și
+verificate local.
 
 ## Why
 

@@ -47,8 +47,9 @@ packages/storage/
 packages/testing/
 ```
 
-The current prototype implements `apps/web` and `packages/core`; the remaining
-packages are extracted incrementally during R1/R2.
+Implementarea curentă are `apps/web`, `packages/core`, un manifest P0 generat
+și runtime-urile Pixi lazy-loaded în `apps/web/src/runtime`. Pachetele separate
+se extrag numai când al doilea consumator justifică granița.
 
 ## Game plugin contract
 
@@ -129,21 +130,19 @@ Avoid a global store that mixes animation state, persistence and pedagogy. The g
 
 ## Persistence
 
-Recommended local model:
+Modelul R1 curent:
 
 ```text
-profiles
-settings
-skill_mastery
-game_difficulty
-sessions
-attempt_events
-content_version
+IndexedDB: minte-in-joaca / profiles
+  current          -> snapshot schema v2
+  recovery-latest  -> ultimul payload invalid, păstrat pentru recovery
 ```
 
 IndexedDB characteristics:
 
-- one transaction per completed attempt or session end;
+- stare sincronă în memorie și scrieri IndexedDB serializate;
+- migrare automată din `localStorage` v1/v2, apoi eliminarea cheilor vechi;
+- fallback local numai când IndexedDB nu este disponibil;
 - schema migrations are versioned and tested;
 - delete/export from parent mode;
 - optional display name only;
@@ -174,9 +173,9 @@ Content updates in v1 ship through normal app releases. Avoid remote configurati
 ## Stack
 
 - TypeScript 7 native in strict mode.
-- React 19.2 for shell and semantic UI.
-- PixiJS 8/WebGL for game scenes and controlled motion.
-- IndexedDB with versioned repositories and migrations.
+- React 19.2.8 for shell and semantic UI.
+- PixiJS 8.19.0/WebGL for game scenes and controlled motion.
+- IndexedDB prin `idb` 8.0.3, cu repository și migrări versionate.
 - Bundled Romanian audio plus Web Audio.
 - JSON Schema/Zod at boundaries.
 - Node/Vitest/property tests and Playwright for critical flows.

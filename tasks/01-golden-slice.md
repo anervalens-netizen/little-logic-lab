@@ -1,5 +1,7 @@
 # Task 01 — Golden slice
 
+Status: activ
+
 ## Goal
 
 Definește standardul final de produs prin trei jocuri:
@@ -26,3 +28,16 @@ Definește standardul final de produs prin trei jocuri:
 - observația cu copilul nu identifică blocaje majore.
 
 Nu se migrează alte jocuri înainte de acest exit.
+
+## Implementat
+
+- shell React și scene Pixi lazy-loaded;
+- lifecycle cu cleanup verificat prin distrugere/recreare;
+- tap plus runtime comun drag/snap magnetic;
+- overlay semantic pentru toate obiectele acționabile;
+- IndexedDB cu migrare v1/v2 și fallback;
+- manifest P0 compact generat din catalog/ladders;
+- primul pass pentru toate cele trei jocuri și E2E Chromium/WebKit.
+
+Rămân deschise audio RO, visual regression versionat, toate ancorele A30_36,
+device performance și observația cu copilul.

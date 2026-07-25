@@ -39,6 +39,7 @@ export interface SortGameSpec {
   readonly bubbleColor: string;
   readonly axes: readonly DifficultyAxisSpec[];
   readonly initialDifficulty: DifficultyVector;
+  readonly renderer?: "dom" | "pixi";
   readonly content: readonly ContentItem[];
   /** Alternativ: conținut ales deterministic din seed (ex. un singur tip de obiect). */
   readonly contentForSeed?: (seed: string) => readonly ContentItem[];
@@ -87,6 +88,10 @@ export function createSortGame(spec: SortGameSpec): WebGame {
           binCount: Math.max(2, binCount),
           itemCount: Math.max(2, itemCount),
         });
+      }
+
+      if (spec.renderer === "pixi") {
+        return playPixiSortRound(ctx, spec, level.payload);
       }
 
       let state = initializeSort(level.payload.correctBinByItemId);
@@ -284,5 +289,161 @@ export function createSortGame(spec: SortGameSpec): WebGame {
         }
       });
     },
+  };
+}
+
+async function playPixiSortRound(
+  ctx: GameContext,
+  spec: SortGameSpec,
+  level: {
+    readonly bins: readonly string[];
+    readonly itemIds: readonly string[];
+    readonly correctBinByItemId: Readonly<Record<string, string>>;
+  },
+): Promise<PlayResult> {
+  clear(ctx.mount);
+  const { createPixiDragScene } = await import("../runtime/pixiDragScene");
+  const support = new SupportTracker();
+  let state = initializeSort(level.correctBinByItemId);
+  let settled = false;
+  let inputReady = false;
+  let cancelWatch: number | null = null;
+  let resolveResult: (result: PlayResult) => void = () => undefined;
+  let simplifying = false;
+  const result = new Promise<PlayResult>((resolve) => {
+    resolveResult = resolve;
+  });
+  const finish = (outcome: PlayResult) => {
+    if (settled) return;
+    settled = true;
+    if (cancelWatch !== null) window.clearInterval(cancelWatch);
+    resolveResult(outcome);
+  };
+
+  const itemVisuals = new Map(
+    level.itemIds.map((itemId) => {
+      const visual = spec.itemVisual(itemId);
+      return [itemId, visual] as const;
+    }),
+  );
+
+  const scene = await createPixiDragScene(ctx.mount, {
+    items: level.itemIds.map((itemId) => {
+      const visual = itemVisuals.get(itemId);
+      return {
+        id: itemId,
+        svg: visual?.svg ?? spec.icon(),
+        label: visual?.speakOnPlace ?? itemId,
+      };
+    }),
+    targets: level.bins.map((binId, index) => {
+      const visual = spec.binVisual(binId, index);
+      return {
+        id: binId,
+        label: visual.label,
+        color: visual.hex,
+        ...(visual.badge ? { svg: visual.badge } : {}),
+      };
+    }),
+    presentation: "bins",
+    reducedMotion: ctx.reducedMotion,
+    onDrop(itemId, binId) {
+      if (!inputReady || settled || simplifying) return "ignore";
+      const before = state;
+      state = reduceSort(state, { type: "place", itemId, binId });
+      if (state === before) return "ignore";
+
+      if (state.lastIncorrectItemId === itemId) {
+        const verdict = support.registerError();
+        if (verdict === "hint") {
+          const correctBin = level.correctBinByItemId[itemId];
+          if (correctBin) {
+            window.setTimeout(() => scene.emphasizeTarget(correctBin), 180);
+          }
+          speak("Uite, aici e locul lui!");
+        } else if (verdict === "simplify") {
+          simplifying = true;
+          inputReady = false;
+          void autoCompleteRemaining();
+        }
+        return "incorrect";
+      }
+
+      support.registerSuccess();
+      sfxPlace();
+      playItemVoice(itemId);
+      const speakText = itemVisuals.get(itemId)?.speakOnPlace;
+      if (speakText) speak(speakText, { rate: 1 });
+      if (state.completed) {
+        window.setTimeout(
+          () =>
+            finish({
+              completed: true,
+              correctFirstTry: support.wasFirstTryClean,
+              correctEventually: true,
+              hintsUsed: support.hintsUsed,
+              wrongAttempts: support.wrongAttempts,
+            }),
+          ctx.reducedMotion ? 380 : 720,
+        );
+      }
+      return "correct";
+    },
+  });
+  ctx.onCleanup(scene.destroy);
+
+  async function autoCompleteRemaining(): Promise<void> {
+    speak("Hai să le punem împreună! Uite așa!");
+    for (const itemId of level.itemIds) {
+      if (ctx.isCancelled()) return;
+      if (state.placedBinByItemId[itemId] !== undefined) continue;
+      const correctBin = level.correctBinByItemId[itemId];
+      if (!correctBin) continue;
+      scene.emphasizeTarget(correctBin);
+      state = reduceSort(state, {
+        type: "place",
+        itemId,
+        binId: correctBin,
+      });
+      await scene.autoPlace(itemId, correctBin);
+      await wait(ctx.reducedMotion ? 100 : 280);
+    }
+    finish({
+      completed: true,
+      correctFirstTry: false,
+      correctEventually: true,
+      hintsUsed: support.hintsUsed + 1,
+      wrongAttempts: support.wrongAttempts,
+    });
+  }
+
+  speak(spec.instruction);
+  await wait(900);
+  if (ctx.isCancelled()) return abortedSort();
+  inputReady = true;
+  scene.readyElement.dataset.gameReady = "true";
+  cancelWatch = window.setInterval(() => {
+    if (ctx.isCancelled()) {
+      finish({
+        completed: state.completed,
+        correctFirstTry: false,
+        correctEventually: state.completed,
+        hintsUsed: support.hintsUsed,
+        wrongAttempts: support.wrongAttempts,
+        abandoned: !state.completed,
+      });
+    }
+  }, 200);
+  return result;
+}
+
+function abortedSort(): PlayResult {
+  return {
+    completed: false,
+    correctFirstTry: false,
+    correctEventually: false,
+    hintsUsed: 0,
+    wrongAttempts: 0,
+    abandoned: true,
   };
 }

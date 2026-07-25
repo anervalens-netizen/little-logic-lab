@@ -5,8 +5,8 @@ import { wait } from "../ui/dom";
 export type ScreenFactory = () => HTMLElement;
 
 const root = (): HTMLElement => {
-  const node = document.getElementById("app");
-  if (!node) throw new Error("Missing #app root");
+  const node = document.getElementById("screen-root");
+  if (!node) throw new Error("Missing #screen-root");
   return node;
 };
 

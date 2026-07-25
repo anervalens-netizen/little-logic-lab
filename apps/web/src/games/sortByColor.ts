@@ -29,6 +29,7 @@ export const sortByColorGame = createSortGame({
     { name: "binCount", values: [2, 3] },
   ],
   initialDifficulty: { itemCount: 2, binCount: 2 },
+  renderer: "pixi",
   content: CONTENT,
   attribute: "color",
   binVisual: (value) => {

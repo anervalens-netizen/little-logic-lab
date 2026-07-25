@@ -42,6 +42,8 @@ export interface ChoiceGameSpec {
   readonly bubbleColor: string;
   readonly axes: readonly DifficultyAxisSpec[];
   readonly initialDifficulty: DifficultyVector;
+  /** Golden-slice games use the lazy-loaded Pixi renderer. */
+  readonly renderer?: "dom" | "pixi";
   /** Conținutul din care generează core-ul (id + atribute). */
   readonly content: readonly ContentItem[];
   /** Construiește runda vizuală din nivelul generat. */
@@ -82,6 +84,11 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
       });
 
       const round = spec.buildRound(level.payload, difficulty);
+
+      if (spec.renderer === "pixi" && round.targetSvg !== null) {
+        return playPixiRound(ctx, { ...round, targetSvg: round.targetSvg });
+      }
+
       let state = initializeChoice(level.payload.correctChoiceId, level.payload.choiceIds);
       const support = new SupportTracker();
 
@@ -203,6 +210,114 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
       });
     },
   };
+}
+
+async function playPixiRound(
+  ctx: GameContext,
+  round: ChoiceRound & { readonly targetSvg: string },
+): Promise<PlayResult> {
+  clear(ctx.mount);
+  const { createPixiChoiceScene } = await import("../runtime/pixiChoiceScene");
+  const support = new SupportTracker();
+  let state = initializeChoice(
+    round.correctId,
+    round.options.map((option) => option.id),
+  );
+  let inputReady = false;
+  let settled = false;
+  let cancelWatch: number | null = null;
+  let resolveResult: (result: PlayResult) => void = () => undefined;
+
+  const result = new Promise<PlayResult>((resolve) => {
+    resolveResult = resolve;
+  });
+  const finish = (outcome: PlayResult) => {
+    if (settled) return;
+    settled = true;
+    if (cancelWatch !== null) window.clearInterval(cancelWatch);
+    resolveResult(outcome);
+  };
+
+  const scene = await createPixiChoiceScene(ctx.mount, {
+    targetSvg: round.targetSvg,
+    targetLabel: round.targetLabel,
+    options: round.options,
+    reducedMotion: ctx.reducedMotion,
+    onSelect(optionId) {
+      if (!inputReady || settled || state.completed) return;
+      const before = state;
+      state = reduceChoice(state, {
+        type: "select",
+        value: optionId as Scalar,
+      });
+      if (state === before) return;
+
+      if (state.completed) {
+        support.registerSuccess();
+        scene.markCorrect(optionId);
+        playItemVoice(optionId);
+        window.setTimeout(
+          () =>
+            finish({
+              completed: true,
+              correctFirstTry: state.correctFirstTry,
+              correctEventually: true,
+              hintsUsed: support.hintsUsed,
+              wrongAttempts: support.wrongAttempts,
+            }),
+          ctx.reducedMotion ? 350 : 950,
+        );
+        return;
+      }
+
+      scene.markIncorrect(optionId);
+      const verdict = support.registerError(scene.readyElement);
+      if (verdict === "hint") {
+        scene.emphasize(round.correctId);
+        speak("Uite, acesta e la fel!");
+      } else if (verdict === "simplify") {
+        inputReady = false;
+        scene.dimExcept(round.correctId);
+        scene.emphasize(round.correctId);
+        speak(`Uite! Acesta e ${round.targetLabel}. Bravo că ai încercat!`);
+        window.setTimeout(() => {
+          scene.markCorrect(round.correctId);
+          finish({
+            completed: true,
+            correctFirstTry: false,
+            correctEventually: true,
+            hintsUsed: support.hintsUsed + 1,
+            wrongAttempts: support.wrongAttempts,
+          });
+        }, 1800);
+      }
+    },
+  });
+  ctx.onCleanup(scene.destroy);
+
+  speak(round.roundSpeech);
+  await wait(900);
+  if (ctx.isCancelled()) return aborted();
+  if (!ctx.reducedMotion) scene.emphasize(round.correctId);
+  await wait(400);
+  if (ctx.isCancelled()) return aborted();
+  inputReady = true;
+  scene.readyElement.dataset.gameReady = "true";
+
+  cancelWatch = window.setInterval(() => {
+    if (ctx.isCancelled()) {
+      finish({
+        completed: false,
+        correctFirstTry: false,
+        correctEventually: false,
+        hintsUsed: support.hintsUsed,
+        wrongAttempts: support.wrongAttempts,
+        abandoned: true,
+      });
+    }
+  }, 200);
+
+  return result;
 }
 
 function aborted(): PlayResult {

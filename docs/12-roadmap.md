@@ -9,6 +9,19 @@ Acest document este sursa canonică pentru direcția produsului, ordinea
 livrărilor și porțile de acceptare. Arhitectura detaliată este în
 `docs/05-architecture.md`; regulile obligatorii sunt în `AGENTS.md`.
 
+## Status de execuție
+
+- R0 engineering: complet; repository privat, TypeScript 7, PWA versionat,
+  replay, age gating, migrare și E2E sunt verificate.
+- R0 release: blocat numai de publicarea domeniului; producția răspunde încă
+  `404`.
+- R1: activ; React deține shell-ul, profilul este în IndexedDB, catalogul P0
+  este compilat într-un manifest compact, iar scenele Pixi au lifecycle și
+  overlay semantic.
+- R2: primul pass funcțional există pentru `same-picture`, `sort-by-color` și
+  `inset-puzzle`; lipsesc încă audio RO înregistrat, regresia vizuală
+  versionată, măsurarea pe dispozitiv și validarea observată.
+
 ## 1. Obiectiv
 
 Construim o aplicație educațională calmă, foarte interactivă și performantă,
@@ -48,14 +61,14 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- munca web nu are încă checkpoint Git/remote;
 - `logic-lab.astancu.eu` răspunde 404;
-- cele 1.030 ancore nu sunt conectate la aplicația web;
-- 14 din 15 familii P0 au prototip; lipsește `drag-and-fit`;
-- seed-ul nivelului nu este persistat pentru replay;
-- eligibilitatea pe vârstă și deblocarea graduală nu sunt aplicate;
-- testele E2E OpenCode au rămas în `/tmp`, în afara repo-ului;
-- cache key-ul PWA este static și poate ține utilizatorii pe build-uri vechi.
+- parent mode trebuie migrat complet în React;
+- cele trei scene golden-slice trebuie conectate la toate ancorele relevante,
+  nu numai la intrarea conservatoare;
+- 11 jocuri rămân pe rendererul DOM de prototip, iar `drag-and-fit` lipsește;
+- Web Speech trebuie înlocuit cu audio românesc local, revizuit;
+- porțile reale de FPS, input latency, VoiceOver/TalkBack și device QA nu sunt
+  încă închise.
 
 ## 3. Stack țintă
 

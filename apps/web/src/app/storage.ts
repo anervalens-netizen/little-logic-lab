@@ -1,10 +1,25 @@
-/**
- * Persistență locală versionată. R1 va muta repository-ul în IndexedDB;
- * schema v2 repară deja replay-ul și limitele de sesiune fără pierdere de date.
- */
+/** Persistență locală IndexedDB, cu migrare și fallback fără blocarea jocului. */
 
+import { openDB, type DBSchema, type IDBPDatabase } from "idb";
+
+const DATABASE_NAME = "minte-in-joaca";
+const DATABASE_VERSION = 1;
+const PROFILE_STORE = "profiles";
+const CURRENT_PROFILE_KEY = "current";
+const RECOVERY_PROFILE_KEY = "recovery-latest";
+const FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v2";
 const STORAGE_KEY = "minte-in-joaca/v2";
 const LEGACY_STORAGE_KEY = "minte-in-joaca/v1";
+
+interface LogicLabDatabase extends DBSchema {
+  profiles: {
+    key: string;
+    value: unknown;
+  };
+}
+
+let databasePromise: Promise<IDBPDatabase<LogicLabDatabase>> | null = null;
+let writeQueue: Promise<void> = Promise.resolve();
 
 export interface StoredAttempt {
   readonly atLocal: string;
@@ -106,38 +121,134 @@ export function defaultProfile(ageMonths = 31): StoredProfile {
   };
 }
 
-export function loadProfile(): StoredProfile {
+function database(): Promise<IDBPDatabase<LogicLabDatabase>> {
+  databasePromise ??= openDB<LogicLabDatabase>(
+    DATABASE_NAME,
+    DATABASE_VERSION,
+    {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains(PROFILE_STORE)) {
+          db.createObjectStore(PROFILE_STORE);
+        }
+      },
+    },
+  );
+  return databasePromise;
+}
+
+function isStoredProfile(value: unknown): value is StoredProfile {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Partial<StoredProfile>;
+  return (
+    candidate.schemaVersion === 2 &&
+    typeof candidate.createdAtLocal === "string" &&
+    typeof candidate.ageMonths === "number" &&
+    typeof candidate.settings === "object" &&
+    candidate.settings !== null &&
+    typeof candidate.masteryBySkill === "object" &&
+    candidate.masteryBySkill !== null &&
+    typeof candidate.progressByGame === "object" &&
+    candidate.progressByGame !== null &&
+    Array.isArray(candidate.attempts) &&
+    Array.isArray(candidate.sessions)
+  );
+}
+
+function readLocalMigrationCandidate(): StoredProfile | null {
   try {
     const current = localStorage.getItem(STORAGE_KEY);
     if (current) {
-      const parsed = JSON.parse(current) as StoredProfile;
-      if (parsed.schemaVersion === 2) return parsed;
+      const parsed: unknown = JSON.parse(current);
+      if (isStoredProfile(parsed)) return parsed;
     }
 
     const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (legacy) {
-      const migrated = migrateLegacy(JSON.parse(legacy) as LegacyProfile);
-      saveProfile(migrated);
-      localStorage.removeItem(LEGACY_STORAGE_KEY);
-      return migrated;
+      return migrateLegacy(JSON.parse(legacy) as LegacyProfile);
     }
   } catch {
-    // Date corupte: profil conservator nou; jocul nu trebuie să se blocheze.
+    return null;
   }
-  return defaultProfile();
+  return null;
+}
+
+function clearMigratedLocalStorage(): void {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
+}
+
+export async function loadProfile(): Promise<StoredProfile> {
+  try {
+    const db = await database();
+    const stored = await db.get(PROFILE_STORE, CURRENT_PROFILE_KEY);
+    if (isStoredProfile(stored)) return stored;
+    if (stored !== undefined) {
+      await db.put(PROFILE_STORE, stored, RECOVERY_PROFILE_KEY);
+    }
+
+    const migrated = readLocalMigrationCandidate();
+    if (migrated) {
+      await db.put(PROFILE_STORE, migrated, CURRENT_PROFILE_KEY);
+      clearMigratedLocalStorage();
+      localStorage.removeItem(FALLBACK_STORAGE_KEY);
+      return migrated;
+    }
+
+    const fallback = localStorage.getItem(FALLBACK_STORAGE_KEY);
+    if (fallback) {
+      const parsed: unknown = JSON.parse(fallback);
+      if (isStoredProfile(parsed)) {
+        await db.put(PROFILE_STORE, parsed, CURRENT_PROFILE_KEY);
+        localStorage.removeItem(FALLBACK_STORAGE_KEY);
+        return parsed;
+      }
+    }
+
+    const created = defaultProfile();
+    await db.put(PROFILE_STORE, created, CURRENT_PROFILE_KEY);
+    return created;
+  } catch {
+    try {
+      const fallback: unknown = JSON.parse(
+        localStorage.getItem(FALLBACK_STORAGE_KEY) ?? "null",
+      );
+      if (isStoredProfile(fallback)) return fallback;
+    } catch {
+      // Profilul conservator de mai jos menține aplicația utilizabilă.
+    }
+    return readLocalMigrationCandidate() ?? defaultProfile();
+  }
 }
 
 export function saveProfile(profile: StoredProfile): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-  } catch {
-    // Stocarea plină nu trebuie să oprească joaca.
-  }
+  const snapshot = structuredClone(profile);
+  writeQueue = writeQueue
+    .catch(() => undefined)
+    .then(async () => {
+      try {
+        const db = await database();
+        await db.put(PROFILE_STORE, snapshot, CURRENT_PROFILE_KEY);
+        localStorage.removeItem(FALLBACK_STORAGE_KEY);
+      } catch {
+        try {
+          localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(snapshot));
+        } catch {
+          // Stocarea plină nu trebuie să oprească joaca.
+        }
+      }
+    });
 }
 
-export function wipeProfile(): void {
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(LEGACY_STORAGE_KEY);
+export async function wipeProfile(): Promise<void> {
+  await writeQueue.catch(() => undefined);
+  try {
+    const db = await database();
+    await db.clear(PROFILE_STORE);
+  } catch {
+    // Fallback-ul local este șters mai jos.
+  }
+  localStorage.removeItem(FALLBACK_STORAGE_KEY);
+  clearMigratedLocalStorage();
 }
 
 export function exportProfileJson(profile: StoredProfile): string {

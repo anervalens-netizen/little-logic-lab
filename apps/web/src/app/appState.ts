@@ -1,7 +1,7 @@
 /** Stare globală: profil + aplicarea setărilor în subsisteme. */
 
 import type { StoredProfile, StoredAttempt } from "./storage";
-import { loadProfile, saveProfile, defaultProfile } from "./storage";
+import { loadProfile, saveProfile, defaultProfile, wipeProfile } from "./storage";
 import { setAudioEnabled } from "../audio/audio";
 import { setVoiceEnabled } from "../audio/speech";
 import { setMotionReduced } from "../ui/feedback";
@@ -14,7 +14,11 @@ import {
   type AttemptOutcome,
 } from "@core";
 
-let profile: StoredProfile = loadProfile();
+let profile: StoredProfile = defaultProfile();
+
+export async function initializeProfile(): Promise<void> {
+  profile = await loadProfile();
+}
 
 export interface AttemptMetadata {
   readonly sessionId: string;
@@ -31,7 +35,8 @@ export function persist(): void {
   saveProfile(profile);
 }
 
-export function resetProfile(): void {
+export async function resetProfile(): Promise<void> {
+  await wipeProfile();
   profile = defaultProfile(profile.ageMonths);
   persist();
   applySettings();

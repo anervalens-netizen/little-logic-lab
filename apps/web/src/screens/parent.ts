@@ -183,9 +183,9 @@ export async function showParentScreen(): Promise<void> {
       URL.revokeObjectURL(url);
     });
     const deleteBtn = el("button", { className: "btn-big coral", style: "font-size:18px;min-height:56px;padding:10px 24px;" }, "Șterge progresul");
-    deleteBtn.addEventListener("click", () => {
+    deleteBtn.addEventListener("click", async () => {
       if (window.confirm("Sigur ștergi tot progresul local? Acțiunea nu poate fi anulată.")) {
-        resetProfile();
+        await resetProfile();
         window.location.reload();
       }
     });
