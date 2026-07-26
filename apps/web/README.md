@@ -31,7 +31,10 @@ bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
   Web Audio, fără servicii remote;
 - overlay semantic, Reduced Motion, contrast ridicat, ținte de 112 px,
   demonstrații 1,5× mai lente, Axe și baseline-uri Chromium/WebKit;
-- PWA versionată, CSP strict și zero egress de gameplay.
+- PWA versionată, CSP strict și zero egress de gameplay;
+- buildurile de release pornesc fail-closed numai dintr-un worktree Git curat,
+  expun commitul și tree-ul în HTML plus `/release.json`, iar identitatea este
+  inclusă în precache-ul offline și validată de `check:web-build`;
 - Parent Mode și orchestratorul sesiunii sunt chunk-uri lazy, precached;
 - diagnostics verifică cinci cicluri consecutive fără canvas, overlay, clone,
   voce, tonuri sau lease-uri SVG reziduale;

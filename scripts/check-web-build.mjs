@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
@@ -7,10 +8,43 @@ const dist = path.join(root, "apps/web/dist");
 const assets = path.join(dist, "assets");
 const html = readFileSync(path.join(dist, "index.html"), "utf8");
 const serviceWorker = readFileSync(path.join(dist, "sw.js"), "utf8");
+const releaseIdentity = JSON.parse(
+  readFileSync(path.join(dist, "release.json"), "utf8"),
+);
 const release = JSON.parse(
   readFileSync(path.join(root, "content/p0-release.json"), "utf8"),
 );
 const assetFiles = readdirSync(assets);
+const git = (...arguments_) =>
+  execFileSync("git", arguments_, { cwd: root, encoding: "utf8" }).trim();
+const expectedCommit = git("rev-parse", "--verify", "HEAD");
+const expectedTree = git("rev-parse", "HEAD^{tree}");
+const expectedVersion = JSON.parse(
+  readFileSync(path.join(root, "package.json"), "utf8"),
+).version;
+
+if (
+  releaseIdentity.schemaVersion !== 1 ||
+  releaseIdentity.application !== "little-logic-lab" ||
+  releaseIdentity.version !== expectedVersion ||
+  releaseIdentity.commit !== expectedCommit ||
+  releaseIdentity.tree !== expectedTree ||
+  !/^\d{4}-\d{2}-\d{2}T/.test(releaseIdentity.committedAt)
+) {
+  throw new Error(
+    `Release identity does not match HEAD ${expectedCommit}: ${JSON.stringify(releaseIdentity)}`,
+  );
+}
+if (
+  !html.includes(`name="logic-lab-release"`) ||
+  !html.includes(`content="${expectedCommit}"`) ||
+  !html.includes(`data-source-tree="${expectedTree}"`)
+) {
+  throw new Error("HTML does not expose the verified release commit and tree.");
+}
+if (!/url:"release\.json"/.test(serviceWorker)) {
+  throw new Error("release.json is absent from the PWA precache.");
+}
 
 const initialNames = new Set(
   [...html.matchAll(/(?:src|href)="\/assets\/([^"]+\.js)"/g)].map(
@@ -47,5 +81,5 @@ for (const gameId of release.gameIds) {
 }
 
 console.log(
-  `Web build valid: ${(initialGzipBytes / 1024).toFixed(2)} KiB initial JS gzip, ${release.gameIds.length} lazy P0 chunks precached.`,
+  `Web build valid: ${(initialGzipBytes / 1024).toFixed(2)} KiB initial JS gzip, ${release.gameIds.length} lazy P0 chunks precached, release ${expectedCommit.slice(0, 12)} verified.`,
 );
