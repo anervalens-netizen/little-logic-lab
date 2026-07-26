@@ -515,6 +515,29 @@ test("Romanian voice is bundled and cached for offline use", async ({
   expect(cachedRecording.ok).toBe(true);
   expect(cachedRecording.contentType).toContain("audio");
   expect(cachedRecording.size).toBeGreaterThan(10_000);
+
+  const offlineReleaseIdentity = await page.evaluate(async () => {
+    const metadata = document.querySelector<HTMLMetaElement>(
+      'meta[name="logic-lab-release"]',
+    );
+    const response = await fetch("/release.json");
+    const release = (await response.json()) as {
+      commit: string;
+      tree: string;
+    };
+    return {
+      ok: response.ok,
+      commit: release.commit,
+      tree: release.tree,
+      htmlCommit: metadata?.content,
+      htmlTree: metadata?.dataset.sourceTree,
+    };
+  });
+  expect(offlineReleaseIdentity.ok).toBe(true);
+  expect(offlineReleaseIdentity.commit).toMatch(/^[0-9a-f]{40}$/);
+  expect(offlineReleaseIdentity.tree).toMatch(/^[0-9a-f]{40}$/);
+  expect(offlineReleaseIdentity.htmlCommit).toBe(offlineReleaseIdentity.commit);
+  expect(offlineReleaseIdentity.htmlTree).toBe(offlineReleaseIdentity.tree);
 });
 
 test("Pixi exposes frame diagnostics and meets the input budget", async ({
