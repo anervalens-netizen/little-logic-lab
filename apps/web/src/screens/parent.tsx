@@ -6,6 +6,7 @@ import {
   updateSettings,
   resetProfile,
   masteryMeanFor,
+  unlockSession,
 } from "../app/appState";
 import type { StoredProfile } from "../app/storage";
 import { exportProfileJson } from "../app/storage";
@@ -93,6 +94,7 @@ function SessionMinutes({
 function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
   const profile = getProfile();
   const [settings, setSettings] = useState(profile.settings);
+  const [sessionLocked, setSessionLocked] = useState(profile.sessionLocked);
   const [deleting, setDeleting] = useState(false);
   const progressGames = useMemo(() => {
     const seen = new Set<string>();
@@ -211,6 +213,34 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
             value={settings.coPlayPrompts}
             onChange={(coPlayPrompts) => changeSettings({ coPlayPrompts })}
           />
+          {sessionLocked ? (
+            <div
+              style={{
+                marginTop: 14,
+                padding: 16,
+                borderRadius: 20,
+                background: "rgba(127, 200, 107, 0.16)",
+              }}
+            >
+              <p style={{ marginBottom: 12, color: "#4A3F35" }}>
+                Sesiunea copilului s-a încheiat. O sesiune nouă poate fi
+                pornită numai de aici.
+              </p>
+              <button
+                type="button"
+                className="btn-big green"
+                style={compactButton}
+                onClick={() => {
+                  sfxTap();
+                  unlockSession();
+                  setSessionLocked(false);
+                  void showHome();
+                }}
+              >
+                Permite o sesiune nouă
+              </button>
+            </div>
+          ) : null}
         </section>
 
         <section className="parent-card" aria-labelledby="parent-audio">

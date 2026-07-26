@@ -24,6 +24,7 @@ bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
 - 36 ilustrații procedurale originale, cu metadate canonice și ID-uri tipizate;
 - jocurile și runtime-urile Pixi sunt chunk-uri lazy, precached pentru offline;
 - profil, replay, progres și setări în IndexedDB cu migrări/recovery;
+- snapshot local v3 și blocare calmă după sesiune, deblocată numai din Parent Mode;
 - 324 clipuri românești locale și efecte Web Audio, fără servicii remote;
 - overlay semantic, Reduced Motion, Axe și baseline-uri Chromium/WebKit;
 - PWA versionată, CSP strict și zero egress de gameplay.

@@ -23,14 +23,17 @@ let sessionRunning = false;
 
 export async function showHome(): Promise<void> {
   stopSpeaking();
-  const unlocked = unlockedGameIds(getProfile(), new Set(GAME_IDS));
-  const games = await loadGames(
-    GAME_IDS.filter((gameId) => unlocked.has(gameId)),
-  );
+  const profile = getProfile();
+  const sessionLocked = profile.sessionLocked;
+  const unlocked = unlockedGameIds(profile, new Set(GAME_IDS));
+  const games = sessionLocked
+    ? []
+    : await loadGames(GAME_IDS.filter((gameId) => unlocked.has(gameId)));
 
   await showScreen(() => {
     const screen = el("div", { className: "bg-meadow" });
     screen.setAttribute("data-screen", "home");
+    screen.setAttribute("data-session-locked", String(sessionLocked));
 
     const sceneHolder = el("div", {});
     sceneHolder.style.cssText = "position:absolute;inset:0;pointer-events:none;overflow:hidden;";
@@ -63,25 +66,45 @@ export async function showHome(): Promise<void> {
     hero.style.cssText =
       "display:flex;align-items:center;justify-content:center;gap:clamp(14px,4vw,44px);flex:0 1 auto;min-height:0;padding:2px 0;";
 
-    const lumiWrap = el("div", { className: "lumi idle" });
-    lumiWrap.append(svgEl(drawLumi("idle", 120)));
-    lumiWrap.style.cssText = "flex-shrink:0;width:clamp(88px,17vmin,150px);";
-
-    const playBtn = el("button", { className: "btn-big green", "aria-label": "Joacă" });
-    playBtn.style.cssText = "gap:16px;";
-    const playIcon = svgEl(PLAY_ICON);
-    playIcon.style.cssText = "width:44px;height:44px;background:rgba(255,255,255,0.35);border-radius:50%;padding:8px;";
-    playBtn.append(playIcon, "JOACĂ");
-    playBtn.addEventListener("click", () => {
-      if (sessionRunning) return;
-      sessionRunning = true;
-      sfxTap();
-      void runSession().finally(() => {
-        sessionRunning = false;
-      });
+    const lumiWrap = el("div", {
+      className: `lumi ${sessionLocked ? "sleepy" : "idle"}`,
     });
+    lumiWrap.append(
+      svgEl(drawLumi(sessionLocked ? "sleepy" : "idle", sessionLocked ? 150 : 120)),
+    );
+    lumiWrap.style.cssText = sessionLocked
+      ? "flex-shrink:0;width:clamp(112px,22vmin,180px);"
+      : "flex-shrink:0;width:clamp(88px,17vmin,150px);";
 
-    hero.append(lumiWrap, playBtn);
+    if (sessionLocked) {
+      const rest = el(
+        "div",
+        { className: "speech-bubble", role: "status" },
+        "Joaca s-a încheiat pentru acum. Un adult poate porni o sesiune nouă.",
+      );
+      rest.style.cssText =
+        "max-width:520px;font-size:clamp(20px,3.6vw,30px);text-align:center;";
+      hero.append(lumiWrap, rest);
+    } else {
+      const playBtn = el("button", {
+        className: "btn-big green",
+        "aria-label": "Joacă",
+      });
+      playBtn.style.cssText = "gap:16px;";
+      const playIcon = svgEl(PLAY_ICON);
+      playIcon.style.cssText =
+        "width:44px;height:44px;background:rgba(255,255,255,0.35);border-radius:50%;padding:8px;";
+      playBtn.append(playIcon, "JOACĂ");
+      playBtn.addEventListener("click", () => {
+        if (sessionRunning) return;
+        sessionRunning = true;
+        sfxTap();
+        void runSession().finally(() => {
+          sessionRunning = false;
+        });
+      });
+      hero.append(lumiWrap, playBtn);
+    }
 
     // Bulele cu jocuri.
     const bubblesTitle = el("div", {});
@@ -113,7 +136,8 @@ export async function showHome(): Promise<void> {
       bubbles.append(bubble);
     }
 
-    content.append(topBar, hero, bubblesTitle, bubbles);
+    if (sessionLocked) content.append(topBar, hero);
+    else content.append(topBar, hero, bubblesTitle, bubbles);
     screen.append(content);
     return screen;
   });

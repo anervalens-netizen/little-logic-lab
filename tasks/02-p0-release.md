@@ -59,5 +59,7 @@ reutilizabile, după golden slice.
 - stage-ul maxim de 12 obiecte/4 coșuri este E2E, cu grid tactil de minimum
   96 px și exact un canvas;
 - toate cele 15 familii P0 folosesc acum Pixi, fără renderer DOM de prototip;
+- finalul sesiunii persistă un lock local; Child Mode nu mai expune continuarea,
+  iar Parent Mode este singura cale de a permite o sesiune nouă;
 - lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 30
   baseline-uri vizuale deterministe pentru cele cincisprezece scene Pixi.

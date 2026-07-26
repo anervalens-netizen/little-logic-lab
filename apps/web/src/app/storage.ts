@@ -7,8 +7,9 @@ const DATABASE_VERSION = 1;
 const PROFILE_STORE = "profiles";
 const CURRENT_PROFILE_KEY = "current";
 const RECOVERY_PROFILE_KEY = "recovery-latest";
-const FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v2";
-const STORAGE_KEY = "minte-in-joaca/v2";
+const FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v3";
+const V2_FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v2";
+const V2_STORAGE_KEY = "minte-in-joaca/v2";
 const LEGACY_STORAGE_KEY = "minte-in-joaca/v1";
 
 interface LogicLabDatabase extends DBSchema {
@@ -51,9 +52,10 @@ export interface StoredSession {
 }
 
 export interface StoredProfile {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly createdAtLocal: string;
   readonly ageMonths: number;
+  readonly sessionLocked: boolean;
   readonly settings: {
     audioEnabled: boolean;
     musicEnabled: boolean;
@@ -70,6 +72,13 @@ export interface StoredProfile {
   readonly attempts: readonly StoredAttempt[];
   readonly sessions: readonly StoredSession[];
 }
+
+type StoredProfileV2 = Omit<
+  StoredProfile,
+  "schemaVersion" | "sessionLocked"
+> & {
+  readonly schemaVersion: 2;
+};
 
 interface LegacyAttempt {
   readonly atLocal: string;
@@ -103,9 +112,10 @@ interface LegacyProfile {
 
 export function defaultProfile(ageMonths = 31): StoredProfile {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     createdAtLocal: new Date().toISOString(),
     ageMonths,
+    sessionLocked: false,
     settings: {
       audioEnabled: true,
       musicEnabled: false,
@@ -140,6 +150,25 @@ function isStoredProfile(value: unknown): value is StoredProfile {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Partial<StoredProfile>;
   return (
+    candidate.schemaVersion === 3 &&
+    typeof candidate.createdAtLocal === "string" &&
+    typeof candidate.ageMonths === "number" &&
+    typeof candidate.sessionLocked === "boolean" &&
+    typeof candidate.settings === "object" &&
+    candidate.settings !== null &&
+    typeof candidate.masteryBySkill === "object" &&
+    candidate.masteryBySkill !== null &&
+    typeof candidate.progressByGame === "object" &&
+    candidate.progressByGame !== null &&
+    Array.isArray(candidate.attempts) &&
+    Array.isArray(candidate.sessions)
+  );
+}
+
+function isStoredProfileV2(value: unknown): value is StoredProfileV2 {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Partial<StoredProfileV2>;
+  return (
     candidate.schemaVersion === 2 &&
     typeof candidate.createdAtLocal === "string" &&
     typeof candidate.ageMonths === "number" &&
@@ -154,12 +183,21 @@ function isStoredProfile(value: unknown): value is StoredProfile {
   );
 }
 
+function migrateV2(profile: StoredProfileV2): StoredProfile {
+  return {
+    ...profile,
+    schemaVersion: 3,
+    sessionLocked: false,
+  };
+}
+
 function readLocalMigrationCandidate(): StoredProfile | null {
   try {
-    const current = localStorage.getItem(STORAGE_KEY);
+    const current = localStorage.getItem(V2_STORAGE_KEY);
     if (current) {
       const parsed: unknown = JSON.parse(current);
       if (isStoredProfile(parsed)) return parsed;
+      if (isStoredProfileV2(parsed)) return migrateV2(parsed);
     }
 
     const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
@@ -173,7 +211,7 @@ function readLocalMigrationCandidate(): StoredProfile | null {
 }
 
 function clearMigratedLocalStorage(): void {
-  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(V2_STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
@@ -182,6 +220,12 @@ export async function loadProfile(): Promise<StoredProfile> {
     const db = await database();
     const stored = await db.get(PROFILE_STORE, CURRENT_PROFILE_KEY);
     if (isStoredProfile(stored)) return stored;
+    if (isStoredProfileV2(stored)) {
+      const migrated = migrateV2(stored);
+      await db.put(PROFILE_STORE, migrated, CURRENT_PROFILE_KEY);
+      localStorage.removeItem(V2_FALLBACK_STORAGE_KEY);
+      return migrated;
+    }
     if (stored !== undefined) {
       await db.put(PROFILE_STORE, stored, RECOVERY_PROFILE_KEY);
     }
@@ -191,6 +235,7 @@ export async function loadProfile(): Promise<StoredProfile> {
       await db.put(PROFILE_STORE, migrated, CURRENT_PROFILE_KEY);
       clearMigratedLocalStorage();
       localStorage.removeItem(FALLBACK_STORAGE_KEY);
+      localStorage.removeItem(V2_FALLBACK_STORAGE_KEY);
       return migrated;
     }
 
@@ -203,6 +248,16 @@ export async function loadProfile(): Promise<StoredProfile> {
         return parsed;
       }
     }
+    const v2Fallback = localStorage.getItem(V2_FALLBACK_STORAGE_KEY);
+    if (v2Fallback) {
+      const parsed: unknown = JSON.parse(v2Fallback);
+      if (isStoredProfileV2(parsed)) {
+        const migrated = migrateV2(parsed);
+        await db.put(PROFILE_STORE, migrated, CURRENT_PROFILE_KEY);
+        localStorage.removeItem(V2_FALLBACK_STORAGE_KEY);
+        return migrated;
+      }
+    }
 
     const created = defaultProfile();
     await db.put(PROFILE_STORE, created, CURRENT_PROFILE_KEY);
@@ -213,6 +268,10 @@ export async function loadProfile(): Promise<StoredProfile> {
         localStorage.getItem(FALLBACK_STORAGE_KEY) ?? "null",
       );
       if (isStoredProfile(fallback)) return fallback;
+      const v2Fallback: unknown = JSON.parse(
+        localStorage.getItem(V2_FALLBACK_STORAGE_KEY) ?? "null",
+      );
+      if (isStoredProfileV2(v2Fallback)) return migrateV2(v2Fallback);
     } catch {
       // Profilul conservator de mai jos menține aplicația utilizabilă.
     }
@@ -248,6 +307,7 @@ export async function wipeProfile(): Promise<void> {
     // Fallback-ul local este șters mai jos.
   }
   localStorage.removeItem(FALLBACK_STORAGE_KEY);
+  localStorage.removeItem(V2_FALLBACK_STORAGE_KEY);
   clearMigratedLocalStorage();
 }
 
@@ -276,7 +336,8 @@ function migrateLegacy(profile: LegacyProfile): StoredProfile {
 
   return {
     ...profile,
-    schemaVersion: 2,
+    schemaVersion: 3,
+    sessionLocked: false,
     settings: { ...profile.settings, reducedMotion: profile.settings.reducedMotion ?? true },
     progressByGame,
     attempts: profile.attempts.map(migrateAttempt),

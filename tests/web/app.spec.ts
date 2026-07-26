@@ -216,6 +216,73 @@ test("parent mode is React-owned and persists semantic settings", async ({
   await expect(page.locator(".parent-panel")).toHaveCount(0);
 });
 
+test("session limit locks child play until Parent Mode allows a new session", async ({
+  page,
+}) => {
+  await enterHome(page);
+  await page.getByRole("button", { name: "Joacă" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+
+  const choices = page.locator(".choice-row .choice-card");
+  await expect(choices).toHaveCount(2);
+  const secondChoiceLabel = await choices.nth(1).getAttribute("aria-label");
+  expect(secondChoiceLabel).not.toBeNull();
+  const coPlayDone = page.getByRole("button", { name: "Am făcut-o!" });
+  await choices.nth(0).click();
+  const firstChoiceCompleted = await coPlayDone
+    .waitFor({ state: "visible", timeout: 1_800 })
+    .then(() => true)
+    .catch(() => false);
+  if (!firstChoiceCompleted) {
+    await page
+      .getByRole("button", { name: secondChoiceLabel!, exact: true })
+      .click();
+  }
+  await expect(coPlayDone).toBeVisible({ timeout: 8_000 });
+  await page.evaluate(() => {
+    const afterLimit = Date.now() + 4 * 60_000;
+    Date.now = () => afterLimit;
+  });
+  await coPlayDone.click();
+
+  await expect(page.getByText("Gata pentru azi!", { exact: false })).toBeVisible();
+  await expect
+    .poll(async () => (await readStoredProfile(page))?.sessionLocked)
+    .toBe(true);
+  await page.getByRole("button", { name: "Înapoi acasă" }).click();
+
+  await expect(
+    page.locator(
+      '[data-screen="home"][data-session-locked="true"][data-screen-ready="true"]',
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Joacă" })).toHaveCount(0);
+  await expect(page.locator("button.choice-card")).toHaveCount(0);
+  await expectNoAutomaticAccessibilityViolations(page);
+
+  await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+  await page
+    .getByRole("button", { name: "Ține apăsat 3 secunde" })
+    .dispatchEvent("pointerdown");
+  await expect(
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 5_000 });
+  await expectNoAutomaticAccessibilityViolations(page);
+  await page.getByRole("button", { name: "Permite o sesiune nouă" }).click();
+
+  await expect(
+    page.locator(
+      '[data-screen="home"][data-session-locked="false"][data-screen-ready="true"]',
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Joacă" })).toBeVisible();
+  await expect
+    .poll(async () => (await readStoredProfile(page))?.sessionLocked)
+    .toBe(false);
+});
+
 test("home, Parent Mode and Pixi semantics pass Axe", async ({ page }) => {
   await enterHome(page);
   await expectNoAutomaticAccessibilityViolations(page);
@@ -1602,8 +1669,54 @@ test("legacy local profile migrates without losing progress", async ({ page }) =
     }))),
   };
 
-  expect(result.current).toMatchObject({ schemaVersion: 2, ageMonths: 31 });
+  expect(result.current).toMatchObject({
+    schemaVersion: 3,
+    ageMonths: 31,
+    sessionLocked: false,
+  });
   expect(result.legacy).toBeNull();
+});
+
+test("IndexedDB v2 profile migrates to the session-lock schema", async ({
+  page,
+}) => {
+  await enterHome(page);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open("minte-in-joaca");
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          const transaction = db.transaction("profiles", "readwrite");
+          const store = transaction.objectStore("profiles");
+          const get = store.get("current");
+          get.onerror = () => reject(get.error);
+          get.onsuccess = () => {
+            const profile = get.result as Record<string, unknown>;
+            profile.schemaVersion = 2;
+            profile.ageMonths = 47;
+            delete profile.sessionLocked;
+            store.put(profile, "current");
+          };
+          transaction.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          transaction.onerror = () => reject(transaction.error);
+        };
+      }),
+  );
+
+  await page.reload();
+  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect
+    .poll(async () => await readStoredProfile(page))
+    .toMatchObject({
+      schemaVersion: 3,
+      ageMonths: 47,
+      sessionLocked: false,
+    });
 });
 
 test("installed build reloads with the network disabled", async ({

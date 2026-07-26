@@ -42,7 +42,8 @@ Pentru această etapă: 2–3 opțiuni, o singură regulă, fără cronometru, i
 ## Principii obligatorii
 
 - Offline-first; fără cont, reclame, analytics terț, push, cameră, microfon, locație sau identificatori.
-- Sesiune implicită 5–7 minute, configurabilă de adult.
+- Sesiune implicită 5 minute, configurabilă de adult la 3, 5 sau 7 minute.
+- După finalul sesiunii, numai Parent Mode poate permite una nouă.
 - Fără infinite scroll, streak-uri, clasamente, vieți, loot sau recompense aleatorii.
 - Fără rușinare și fără ecran de eșec. După erori: feedback specific, indiciu, simplificare, apoi încheiere pozitivă.
 - Vârsta este doar punct de pornire; progresul se bazează pe stăpânire demonstrată.

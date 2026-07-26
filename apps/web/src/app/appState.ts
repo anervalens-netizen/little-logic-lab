@@ -48,6 +48,13 @@ export function updateSettings(patch: Partial<StoredProfile["settings"]>): void 
   applySettings();
 }
 
+/** Deblocarea unei sesiuni noi este disponibilă exclusiv din Parent Mode. */
+export function unlockSession(): void {
+  if (!profile.sessionLocked) return;
+  profile = { ...profile, sessionLocked: false };
+  persist();
+}
+
 export function applySettings(): void {
   setAudioEnabled(profile.settings.audioEnabled);
   setVoiceEnabled(profile.settings.voiceEnabled && profile.settings.audioEnabled);
@@ -154,6 +161,7 @@ export function recordSession(
 ): void {
   profile = {
     ...profile,
+    sessionLocked: true,
     sessions: [
       ...profile.sessions,
       { sessionId, atLocal: new Date().toISOString(), minutes, gamesPlayed },

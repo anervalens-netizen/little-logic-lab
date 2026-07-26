@@ -19,7 +19,7 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   IndexedDB, iar catalogul + ordinea P0 generează manifestul compact și
   registry-ul TypeScript lazy. Cele 36 de ilustrații procedurale originale au
   manifest canonic, ID-uri tipizate și mapare completă renderer–asset.
-  Shell-ul inițial este 81,85 KiB gzip, toate cele 15 chunk-uri de joc sunt
+  Shell-ul inițial este 82,32 KiB gzip, toate cele 15 chunk-uri de joc sunt
   precached, iar scenele Pixi au lifecycle și overlay semantic. Exit-ul real
   rămâne condiționat de dispozitiv.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
@@ -43,6 +43,10 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   familii P0 sunt acum Pixi. 324 clipuri RO locale, Axe și 30 baseline-uri
   vizuale cu seed și ceas fixe sunt integrate. Lipsesc măsurarea pe
   dispozitiv, revizia umană a vocii și validarea observată.
+- R3 engineering: complet; 15/15 familii P0 consumă ladder-ele, scheduler-ul și
+  unlock policy, iar finalul de sesiune blochează persistent continuarea în
+  Child Mode. Numai Parent Mode poate permite o sesiune nouă. Pilotul privat
+  rămâne condiționat de porțile externe de mai sus.
 
 ## 1. Obiectiv
 
@@ -217,6 +221,8 @@ dispozitiv și observația umană.
 - conectează progresia reală, deblocarea graduală și scheduler-ul;
 - finalizează audio RO, parent dashboard și transfer prompts;
 - testează ecrane mici/mari, audio off, Reduce Motion și offline.
+- după încheiere, ascunde toate intrările de joc până când un adult permite o
+  sesiune nouă din Parent Mode.
 
 Exit:
 
@@ -367,7 +373,7 @@ face când autentificarea Wrangler/Pages este disponibilă.
 2. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
 3. verifică manual VoiceOver și TalkBack;
 4. rulează observația cu copilul și rezolvă blocajele majore;
-5. începe R3 numai după închiderea problemelor P0 observate.
+5. începe R4 numai după închiderea problemelor P0 observate.
 
 ## Definition of done
 

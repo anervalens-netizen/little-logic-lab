@@ -2,76 +2,150 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://little-logic-lab.local/schemas/child-profile.schema.json",
   "title": "LocalChildProfile",
-  "description": "Local-only profile. Never transmitted and does not require a full date of birth.",
+  "description": "Runtime snapshot stored only in IndexedDB. It contains no account, full birth date or remote identifier.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schemaVersion",
-    "profileId",
-    "ageBand",
     "createdAtLocal",
+    "ageMonths",
+    "sessionLocked",
     "settings",
-    "mastery"
+    "masteryBySkill",
+    "progressByGame",
+    "attempts",
+    "sessions"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "profileId": {
-      "type": "string",
-      "description": "Random local UUID; never transmitted."
-    },
-    "displayName": {
-      "type": "string",
-      "maxLength": 32,
-      "description": "Optional local-only display name. Must not appear in logs or exports unless the parent explicitly requests it."
-    },
-    "ageMonthsAtSetup": {
+    "schemaVersion": { "const": 3 },
+    "createdAtLocal": { "type": "string", "format": "date-time" },
+    "ageMonths": {
       "type": "integer",
       "minimum": 30,
       "maximum": 72,
-      "description": "Optional approximate age; a full birth date is intentionally unnecessary."
+      "description": "Approximate local age used only for conservative entry difficulty."
     },
-    "ageBand": {
-      "enum": ["A30_36", "B36_48", "C48_60", "D60_72"]
+    "sessionLocked": {
+      "type": "boolean",
+      "description": "True after a completed session; only Parent Mode may clear it."
     },
-    "createdAtLocal": { "type": "string", "format": "date-time" },
     "settings": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "sessionMinutes",
         "audioEnabled",
         "musicEnabled",
-        "hapticsEnabled",
+        "voiceEnabled",
         "reducedMotion",
-        "highContrast",
-        "targetSize",
-        "demonstrationSpeed",
+        "sessionMinutes",
         "coPlayPrompts"
       ],
       "properties": {
-        "sessionMinutes": { "type": "integer", "enum": [3, 5, 7, 10, 15] },
         "audioEnabled": { "type": "boolean" },
         "musicEnabled": { "type": "boolean" },
-        "hapticsEnabled": { "type": "boolean" },
+        "voiceEnabled": { "type": "boolean" },
         "reducedMotion": { "type": "boolean" },
-        "highContrast": { "type": "boolean" },
-        "targetSize": { "enum": ["large", "extra_large"] },
-        "demonstrationSpeed": { "enum": ["normal", "slow"] },
+        "sessionMinutes": { "type": "integer", "enum": [3, 5, 7] },
         "coPlayPrompts": { "type": "boolean" }
       }
     },
+    "masteryBySkill": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/mastery" }
+    },
+    "progressByGame": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/gameProgress" }
+    },
+    "attempts": {
+      "type": "array",
+      "maxItems": 400,
+      "items": { "$ref": "#/$defs/attempt" }
+    },
+    "sessions": {
+      "type": "array",
+      "maxItems": 120,
+      "items": { "$ref": "#/$defs/session" }
+    }
+  },
+  "$defs": {
     "mastery": {
       "type": "object",
+      "additionalProperties": false,
+      "required": ["alpha", "beta", "evidenceCount", "lastPracticedAtLocal"],
+      "properties": {
+        "alpha": { "type": "number", "exclusiveMinimum": 0 },
+        "beta": { "type": "number", "exclusiveMinimum": 0 },
+        "evidenceCount": { "type": "integer", "minimum": 0 },
+        "lastPracticedAtLocal": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
+      }
+    },
+    "difficulty": {
+      "type": "object",
       "additionalProperties": {
-        "type": "object",
-        "required": ["alpha", "beta", "evidenceCount", "lastPracticedAtLocal"],
-        "properties": {
-          "alpha": { "type": "number", "exclusiveMinimum": 0 },
-          "beta": { "type": "number", "exclusiveMinimum": 0 },
-          "evidenceCount": { "type": "integer", "minimum": 0 },
-          "lastPracticedAtLocal": { "type": ["string", "null"] }
+        "type": ["string", "number", "boolean"]
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atLocal",
+        "sessionId",
+        "gameId",
+        "skillId",
+        "levelSeed",
+        "ladderStageId",
+        "contentVersion",
+        "completed",
+        "correctFirstTry",
+        "correctEventually",
+        "hintsUsed",
+        "wrongAttempts",
+        "abandoned"
+      ],
+      "properties": {
+        "atLocal": { "type": "string", "format": "date-time" },
+        "sessionId": { "type": "string", "minLength": 1 },
+        "gameId": { "type": "string", "minLength": 1 },
+        "skillId": { "type": "string", "minLength": 1 },
+        "levelSeed": { "type": "string", "minLength": 1 },
+        "ladderStageId": { "type": "string", "minLength": 1 },
+        "contentVersion": { "type": "string", "minLength": 1 },
+        "completed": { "type": "boolean" },
+        "correctFirstTry": { "type": "boolean" },
+        "correctEventually": { "type": "boolean" },
+        "hintsUsed": { "type": "integer", "minimum": 0 },
+        "wrongAttempts": { "type": "integer", "minimum": 0 },
+        "abandoned": { "type": "boolean" }
+      }
+    },
+    "gameProgress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["difficulty", "recentOutcomes", "timesPlayed"],
+      "properties": {
+        "difficulty": { "$ref": "#/$defs/difficulty" },
+        "recentOutcomes": {
+          "type": "array",
+          "maxItems": 6,
+          "items": { "$ref": "#/$defs/attempt" }
         },
-        "additionalProperties": false
+        "timesPlayed": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sessionId", "atLocal", "minutes", "gamesPlayed"],
+      "properties": {
+        "sessionId": { "type": "string", "minLength": 1 },
+        "atLocal": { "type": "string", "format": "date-time" },
+        "minutes": { "type": "number", "minimum": 0 },
+        "gamesPlayed": { "type": "integer", "minimum": 0 }
       }
     }
   }

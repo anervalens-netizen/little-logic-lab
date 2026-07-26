@@ -45,7 +45,7 @@ rămâne blocat până la validările umane și pe dispozitiv.
 - 324 clipuri RO locale, fără Web Speech sau request-uri audio externe;
 - Axe automat și 30 baseline-uri vizuale deterministe Chromium/WebKit;
 - telemetrie locală pentru frame p95, input latency și long tasks;
-- 81,85 KiB JS inițial gzip, sub bugetul de 100 KiB;
+- 82,32 KiB JS inițial gzip, sub bugetul de 100 KiB;
 - primul pass pentru toate cele trei jocuri și E2E Chromium/WebKit.
 
 Rămân deschise revizia auditivă umană, device performance, VoiceOver/TalkBack

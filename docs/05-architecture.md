@@ -140,7 +140,7 @@ Modelul R1 curent:
 
 ```text
 IndexedDB: minte-in-joaca / profiles
-  current          -> snapshot schema v2
+  current          -> snapshot schema v3 + session lock
   recovery-latest  -> ultimul payload invalid, păstrat pentru recovery
 ```
 
@@ -148,12 +148,15 @@ IndexedDB characteristics:
 
 - stare sincronă în memorie și scrieri IndexedDB serializate;
 - migrare automată din `localStorage` v1/v2, apoi eliminarea cheilor vechi;
+- migrare fără pierderi din snapshot-ul IndexedDB v2 la v3;
 - fallback local numai când IndexedDB nu este disponibil;
 - schema migrations are versioned and tested;
 - delete/export from parent mode;
 - optional display name only;
 - no cloud identifier;
 - no exact date of birth required; birth month/year is optional and local.
+- o sesiune încheiată setează persistent `sessionLocked`; numai Parent Mode îl
+  poate elimina pentru a permite o sesiune nouă.
 
 ## Content pipeline
 
