@@ -198,7 +198,6 @@ export async function createPixiDragScene(
     button.className = "pixi-drop-target";
     button.type = "button";
     button.setAttribute("aria-label", definition.label);
-    accessibility.append(button);
 
     const target: TargetVisual = {
       id: definition.id,
@@ -241,7 +240,6 @@ export async function createPixiDragScene(
     button.type = "button";
     button.setAttribute("aria-label", definition.label);
     button.setAttribute("aria-pressed", "false");
-    accessibility.append(button);
 
     const item: ItemVisual = {
       id: definition.id,
@@ -283,6 +281,10 @@ export async function createPixiDragScene(
     items.push(item);
     app.stage.addChild(container);
   }
+
+  // Ordinea semantică urmează acțiunea: obiect selectat, apoi destinație.
+  for (const item of items) accessibility.append(item.button);
+  for (const target of targets) accessibility.append(target.button);
 
   function updateSelection(): void {
     items.forEach((item) => {

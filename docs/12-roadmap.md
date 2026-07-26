@@ -23,7 +23,8 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   Parent Mode și orchestratorul sesiunii sunt lazy, iar shell-ul inițial este
   69,98 KiB gzip, sub bugetul de 100 KiB; toate cele 15 chunk-uri de joc sunt
   precached, iar scenele Pixi au lifecycle și overlay semantic.
-  Exit-ul pe Android este închis pe OnePlus 6T real; porțile umane rămân.
+  Exit-ul de performanță și traversarea semantică asistată TalkBack sunt închise
+  pe OnePlus 6T real; porțile umane rămân.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
   rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
   batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
@@ -53,7 +54,9 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
 - R3 accessibility automation: complet; profilul local v4 migrează fără
   pierderi v1/v2/v3 și expune în Parent Mode contrast ridicat, ținte tactile de
   112 px și demonstrații 1,5× mai lente. Setările au efect în shell, overlay-ul
-  Pixi și timpii explicativi, fără schimbarea dificultății.
+  Pixi și timpii explicativi, fără schimbarea dificultății. Parent gate este
+  dialog modal real, captează/restaurează focusul și acceptă apăsare lungă de la
+  pointer sau tastatură; scenele drag expun obiectele înaintea destinațiilor.
 - R3 visual polish: Home a fost migrat din DOM imperativ în React și redesenat
   responsive pentru un joc, toate cele 15 jocuri și landscape. Acțiunea
   principală, Lumi și biblioteca formează acum o compoziție unitară, cu motion
@@ -120,7 +123,9 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 ### Probleme care blochează extinderea
 
 - cele 321 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
-- VoiceOver/TalkBack și observația copil–adult nu sunt încă închise.
+- VoiceOver, gesturile TalkBack cu explorare tactilă și observația copil–adult
+  nu sunt încă închise. Traversarea și activarea semantică TalkBack asistată
+  sunt verificate pe Android real.
 
 ## 3. Stack țintă
 
@@ -404,7 +409,7 @@ de produs.
 ## 12. Ordinea imediată de lucru
 
 1. revizuiește auditiv cele 321 clipuri RO și înlocuiește pronunțiile slabe;
-2. verifică manual VoiceOver și TalkBack;
+2. verifică manual VoiceOver și gesturile TalkBack cu explorare tactilă;
 3. rulează observația cu copilul și rezolvă blocajele majore;
 4. începe R4 numai după închiderea problemelor P0 observate.
 

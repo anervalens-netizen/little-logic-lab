@@ -221,11 +221,20 @@ test("parent mode is React-owned and persists semantic settings", async ({
 }) => {
   await enterHome(page);
   await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+  const dialog = page.getByRole("dialog", { name: "Zonă pentru adulți" });
+  await expect(dialog).toHaveAttribute("aria-modal", "true");
   const hold = page.getByRole("button", { name: "Ține apăsat 3 secunde" });
-  await hold.dispatchEvent("pointerdown");
+  const cancel = page.getByRole("button", { name: "Înapoi" });
+  await expect(hold).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(cancel).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(hold).toBeFocused();
+  await page.keyboard.down("Enter");
   await expect(
     page.locator('[data-screen="parent"][data-screen-ready="true"]'),
   ).toBeVisible({ timeout: 5_000 });
+  await page.keyboard.up("Enter");
   await expect(
     page.getByRole("heading", { name: "Zonă pentru adulți" }),
   ).toBeVisible();
@@ -768,6 +777,9 @@ test("color sorting completes through the accessible Pixi input bridge", async (
 
   const items = page.locator("button.pixi-drag-item");
   await expect(items).toHaveCount(2);
+  await expect(
+    page.locator(".pixi-drag-accessibility > button").first(),
+  ).toHaveClass(/pixi-drag-item/);
   for (let index = 0; index < 2; index += 1) {
     const item = items.nth(index);
     const color = await item.getAttribute("aria-label");

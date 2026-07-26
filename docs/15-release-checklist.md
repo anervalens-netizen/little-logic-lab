@@ -31,7 +31,10 @@
 
 ## Accessibility
 
-- [ ] VoiceOver and TalkBack usable.
+- [x] TalkBack semantic traversal and activation verified on Android hardware.
+  Home, choice, drag and parent gate expose logical focus; the gate is modal and
+  supports long-press keyboard input.
+- [ ] VoiceOver and human TalkBack touch-exploration review complete.
 - [x] Logical focus order.
 - [x] Audio-off equivalent.
 - [x] Meaning not encoded by color alone.

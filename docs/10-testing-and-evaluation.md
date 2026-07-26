@@ -54,6 +54,7 @@ For many seeds:
 ## Accessibility tests
 
 - VoiceOver and TalkBack traversal;
+- real-device TalkBack semantic order and activation with keyboard navigation;
 - every canvas action has semantic equivalent;
 - color-blind simulation;
 - high contrast;
