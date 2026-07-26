@@ -25,14 +25,19 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   perspective vizuale. Familia `sort` folosește batch-uri responsive până la
   12 obiecte/4 coșuri pentru culoare, formă și mărime. `listen-find` consumă
   toate cele 16 stage-uri pe rendererul `choice`, cu indiciu audio și replay
-  semantic fără expunerea răspunsului. `one-to-one-count` folosește drag/snap
-  Pixi cu plasare unică pentru fiecare prieten, iar `daily-order` folosește
-  secvențiere Pixi și aplică inclusiv axa de distractori. `real-color-hunt`
-  este un prompt Pixi deschis, fără punctarea copilului, iar `peek-and-find`
-  ascunde răspunsul vizual și semantic înainte de alegere. `wait-for-go`
+  semantic fără expunerea răspunsului. `one-to-one-count` consumă toate cele
+  19 stage-uri, până la 20 de prieteni, într-un singur context WebGL paginat.
+  `daily-order` consumă toate cele 14 stage-uri, până la șase pași și trei
+  distractori, inclusiv distanța cauzală și suportul verbal. `real-color-hunt`
+  consumă toate cele 13 stage-uri, până la șase misiuni, două reguli și 40 s
+  de memorie, fără punctarea copilului. `peek-and-find` consumă toate cele 22
+  stage-uri, cu nouă locații, întârziere și transformări, ascunzând răspunsul
+  vizual și semantic înainte de alegere. `wait-for-go`
   consumă toate cele 19 stage-uri, inclusiv semnale întârziate și schimbarea
-  regulii. 324 clipuri RO locale, Axe și 28 baseline-uri vizuale sunt
-  integrate. Lipsesc măsurarea pe
+  regulii. `trace-road` folosește generator determinist în core și tracking
+  nativ de pointer pe canvas pentru toate cele 17 stage-uri. Toate cele 15
+  familii P0 sunt acum Pixi. 324 clipuri RO locale, Axe și 30 baseline-uri
+  vizuale cu seed și ceas fixe sunt integrate. Lipsesc măsurarea pe
   dispozitiv, revizia umană a vocii și validarea observată.
 
 ## 1. Obiectiv
@@ -59,22 +64,23 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 - 80 familii de jocuri, 19 arhetipuri și 10 domenii;
 - 1.030 ancore parametrice de dificultate cu schimbare pe o singură axă;
 - generatoare, runtime-uri, mastery, suport și planificatorul sesiunii;
-- schemele JSON, politica offline/privacy și cele 22 teste core;
+- schemele JSON, politica offline/privacy și cele 23 teste core;
 - toate cele 15 familii P0 au implementare funcțională;
 
-### De înlocuit controlat
+### Înlocuit în R1/R2
 
-- registrul manual de jocuri cu un loader tipizat din catalog și ladders;
-- DOM-ul imperativ al scenelor cu runtime React + PixiJS;
 - `localStorage` cu IndexedDB și migrări;
 - vocea sintetică din browser cu audio românesc local, versionat;
 - service worker-ul cu cache versionat din manifestul build-ului;
 - testele temporare/brute-force cu teste Playwright versionate și aserțiuni;
+
+### De înlocuit controlat
+
+- registrul manual de implementări cu un loader tipizat din catalog și ladders;
 - ilustrațiile SVG generice cu un sistem artistic coerent și asset manifests.
 
 ### Probleme care blochează extinderea
 
-- 1 joc rămâne pe rendererul DOM de prototip;
 - cele 324 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
 - porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
@@ -355,11 +361,11 @@ face când autentificarea Wrangler/Pages este disponibilă.
 
 ## 12. Ordinea imediată de lucru
 
-1. migrează ultima scenă DOM prin arhetipul comun;
-2. revizuiește auditiv cele 324 clipuri RO și înlocuiește pronunțiile slabe;
-3. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
-4. verifică manual VoiceOver și TalkBack;
-5. rulează observația cu copilul și rezolvă blocajele majore.
+1. revizuiește auditiv cele 324 clipuri RO și înlocuiește pronunțiile slabe;
+2. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
+3. verifică manual VoiceOver și TalkBack;
+4. rulează observația cu copilul și rezolvă blocajele majore;
+5. începe R3 numai după închiderea problemelor P0 observate.
 
 ## Definition of done
 

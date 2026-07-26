@@ -16,6 +16,7 @@
     "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && npm run typecheck --workspace @little-logic-lab/web",
     "test:web": "playwright test",
     "test:web:performance": "LOGIC_LAB_PERF=1 playwright test --grep \"Pixi exposes frame diagnostics\" --project chromium-touch --workers=1",
+    "test:web:trace-touch": "LOGIC_LAB_TRACE_TOUCH=1 playwright test --grep \"trace road follows continuous\" --project chromium-touch --workers=1",
     "test": "npm run generate:curriculum && npm run generate:ladders && npm run generate:content && npm run validate && npm run validate:audio && npm run policy:check && npm run build && node --test packages/core/test/*.test.mjs",
     "preview": "npm run build && node scripts/generate-level-preview.mjs",
     "generate:ladders": "node scripts/generate-level-ladders.mjs",

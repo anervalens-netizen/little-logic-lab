@@ -16,4 +16,5 @@ export * from "./generators/pattern.js";
 export * from "./generators/numberChoice.js";
 export * from "./generators/order.js";
 export * from "./generators/maze.js";
+export * from "./generators/trace.js";
 export * from "./runtime/index.js";

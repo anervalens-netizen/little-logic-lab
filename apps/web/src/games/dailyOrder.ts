@@ -27,10 +27,20 @@ export const dailyOrderGame: WebGame = {
   icon: () => drawRoutine("eat"),
   bubbleColor: "#9B8CF2",
   axes: [
-    { name: "stepCount", values: [2, 3] },
-    { name: "distractorCount", values: [0, 1] },
+    { name: "stepCount", values: [2, 3, 4, 5, 6] },
+    { name: "distractorCount", values: [0, 1, 2, 3] },
+    { name: "causalDistance", values: [0, 1, 2, 3] },
+    {
+      name: "verbalSupport",
+      values: ["full", "brief", "on_request", "minimal"],
+    },
   ],
-  initialDifficulty: { stepCount: 2, distractorCount: 0 },
+  initialDifficulty: {
+    stepCount: 2,
+    distractorCount: 0,
+    causalDistance: 0,
+    verbalSupport: "full",
+  },
   scored: true,
 
   async play(
@@ -40,18 +50,32 @@ export const dailyOrderGame: WebGame = {
   ): Promise<PlayResult> {
     const stepCount = Math.max(
       2,
-      Math.min(3, Number(difficulty["stepCount"] ?? 2)),
+      Math.min(6, Number(difficulty["stepCount"] ?? 2)),
     );
     const distractorCount = Math.max(
       0,
-      Math.min(1, Number(difficulty["distractorCount"] ?? 0)),
+      Math.min(3, Number(difficulty["distractorCount"] ?? 0)),
     );
+    const causalDistance = Math.max(
+      0,
+      Math.min(3, Number(difficulty["causalDistance"] ?? 0)),
+    );
+    const verbalSupport = String(difficulty["verbalSupport"] ?? "full");
     const rng = createRng(seed);
+    const sourceSpan = Math.min(6, stepCount + causalDistance);
     const chain = chooseOne(
-      ROUTINE_CHAINS.filter((candidate) => candidate.length >= stepCount),
+      ROUTINE_CHAINS.filter((candidate) => candidate.length >= sourceSpan),
       rng,
     );
-    const steps = chain.slice(0, stepCount) as RoutineId[];
+    const stepIndices =
+      stepCount === 1
+        ? [0]
+        : Array.from({ length: stepCount }, (_, index) =>
+            Math.round((index * (sourceSpan - 1)) / (stepCount - 1)),
+          );
+    const steps = stepIndices
+      .map((index) => chain[index])
+      .filter((id): id is RoutineId => id !== undefined);
     const distractors = shuffle(
       ALL_ROUTINES.filter((id) => !steps.includes(id)),
       createRng(`${seed}:distractors`),
@@ -100,11 +124,13 @@ export const dailyOrderGame: WebGame = {
           const verdict = support.registerError();
           if (verdict === "hint" && expected) {
             scene.emphasize(expected);
-            speak(
-              `Uite, asta facem ${STEP_WORDS[
-                Math.min(nextIndex, 2)
-              ]?.toLowerCase()}!`,
-            );
+            if (verbalSupport !== "minimal") {
+              speak(
+                `Uite, asta facem ${STEP_WORDS[
+                  Math.min(nextIndex, 2)
+                ]?.toLowerCase()}!`,
+              );
+            }
           } else if (verdict === "simplify") {
             simplifying = true;
             inputReady = false;
@@ -122,9 +148,12 @@ export const dailyOrderGame: WebGame = {
     async function acceptStep(id: RoutineId): Promise<void> {
       const slotIndex = nextIndex;
       sfxPlace();
-      speak(STEP_WORDS[Math.min(slotIndex, STEP_WORDS.length - 1)] ?? "Apoi", {
-        rate: 1,
-      });
+      if (verbalSupport === "full" || verbalSupport === "brief") {
+        speak(
+          STEP_WORDS[Math.min(slotIndex, STEP_WORDS.length - 1)] ?? "Apoi",
+          { rate: 1 },
+        );
+      }
       await scene.accept(id, slotIndex);
       nextIndex += 1;
       if (nextIndex >= steps.length) {
@@ -141,7 +170,9 @@ export const dailyOrderGame: WebGame = {
         );
         return;
       }
-      speak(`${STEP_WORDS[Math.min(nextIndex, STEP_WORDS.length - 1)]}?`);
+      if (verbalSupport === "full") {
+        speak(`${STEP_WORDS[Math.min(nextIndex, STEP_WORDS.length - 1)]}?`);
+      }
       inputReady = true;
     }
 
@@ -162,11 +193,15 @@ export const dailyOrderGame: WebGame = {
       });
     }
 
-    speak(
-      `${STEP_WORDS[0]}: ce facem ${
-        steps.length === 2 ? "întâi" : "la început"
-      }?`,
-    );
+    if (verbalSupport === "full") {
+      speak(
+        `${STEP_WORDS[0]}: ce facem ${
+          steps.length === 2 ? "întâi" : "la început"
+        }?`,
+      );
+    } else if (verbalSupport === "brief") {
+      speak("Ce facem întâi?");
+    }
     await wait(800);
     if (ctx.isCancelled()) {
       scene.destroy();

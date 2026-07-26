@@ -29,6 +29,10 @@ export const ROUTINE_LABELS: Record<RoutineId, string> = {
 
 /** Lanțuri de rutină (ordine corectă) pentru niveluri. */
 export const ROUTINE_CHAINS: readonly (readonly RoutineId[])[] = [
+  ["wake_up", "potty", "wash_hands", "get_dressed", "eat", "play"],
+  ["play", "wash_hands", "eat", "bath", "pajamas", "sleep"],
+  ["wake_up", "eat", "brush_teeth", "get_dressed", "play", "bath"],
+  ["eat", "play", "bath", "pajamas", "brush_teeth", "sleep"],
   ["wake_up", "potty", "eat"],
   ["wake_up", "get_dressed", "play"],
   ["eat", "brush_teeth", "sleep"],

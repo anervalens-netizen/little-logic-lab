@@ -29,10 +29,20 @@ export const peekAndFindGame: WebGame = {
   icon: () => drawItem("fish"),
   bubbleColor: "#7FC86B",
   axes: [
-    { name: "locationCount", values: [2, 3] },
-    { name: "delayMs", values: [0, 500] },
+    { name: "itemCount", values: [2, 3, 4, 6, 8, 10, 12] },
+    { name: "delayMs", values: [0, 500, 1_000, 1_500, 2_000, 3_000, 4_000, 6_000] },
+    { name: "locationCount", values: [2, 3, 4, 6, 9] },
+    {
+      name: "transformation",
+      values: ["none", "one_swap", "two_swaps", "remove_one", "rotate_layout"],
+    },
   ],
-  initialDifficulty: { locationCount: 2, delayMs: 0 },
+  initialDifficulty: {
+    itemCount: 2,
+    delayMs: 0,
+    locationCount: 2,
+    transformation: "none",
+  },
   scored: true,
 
   async play(
@@ -40,13 +50,26 @@ export const peekAndFindGame: WebGame = {
     difficulty: DifficultyVector,
     seed: string,
   ): Promise<PlayResult> {
+    const itemCount = Math.max(
+      2,
+      Math.min(12, Number(difficulty["itemCount"] ?? 2)),
+    );
     const locationCount = Math.max(
       2,
-      Math.min(3, Number(difficulty["locationCount"] ?? 2)),
+      Math.min(
+        9,
+        Math.max(
+          Number(difficulty["locationCount"] ?? 2),
+          Math.min(itemCount, 9),
+        ),
+      ),
     );
     const delayMs = Math.max(
       0,
-      Math.min(2_000, Number(difficulty["delayMs"] ?? 0)),
+      Math.min(6_000, Number(difficulty["delayMs"] ?? 0)),
+    );
+    const transformation = String(
+      difficulty["transformation"] ?? "none",
     );
     const rng = createRng(seed);
     const item = chooseOne(
@@ -59,6 +82,10 @@ export const peekAndFindGame: WebGame = {
     );
     const hiddenAt = positions[0] ?? 0;
     const correctId = `cup-${hiddenAt + 1}`;
+    const optionIds = Array.from(
+      { length: locationCount },
+      (_, index) => `cup-${index + 1}`,
+    );
 
     clear(ctx.mount);
     const { createPixiChoiceScene } = await import(
@@ -85,8 +112,8 @@ export const peekAndFindGame: WebGame = {
       targetSvg: drawItem(item.id),
       targetLabel: item.labelDef,
       targetDescriptionFollowsVisibility: true,
-      options: Array.from({ length: locationCount }, (_, index) => ({
-        id: `cup-${index + 1}`,
+      options: optionIds.map((id, index) => ({
+        id,
         svg: cupSvg(CUP_COLORS[index] ?? "#F25C4C"),
         label: `paharul ${index + 1}`,
       })),
@@ -151,9 +178,35 @@ export const peekAndFindGame: WebGame = {
       };
     }
     sfxPop();
+    await scene.moveTargetToOption(correctId);
     scene.setTargetVisible(false);
     speak("Se ascunde! Unde e?");
-    await wait((ctx.reducedMotion ? 180 : 520) + delayMs);
+    const transformedOrder = [...optionIds];
+    const swapCount =
+      transformation === "two_swaps"
+        ? 2
+        : transformation === "one_swap"
+          ? 1
+          : 0;
+    for (let swapIndex = 0; swapIndex < swapCount; swapIndex += 1) {
+      const first = (hiddenAt + swapIndex) % transformedOrder.length;
+      const second = (first + 1 + swapIndex) % transformedOrder.length;
+      [transformedOrder[first], transformedOrder[second]] = [
+        transformedOrder[second]!,
+        transformedOrder[first]!,
+      ];
+    }
+    if (transformation === "rotate_layout") {
+      transformedOrder.push(transformedOrder.shift()!);
+    }
+    if (swapCount > 0 || transformation === "rotate_layout") {
+      await scene.reorderOptions(transformedOrder);
+    }
+    if (transformation === "remove_one") {
+      const removed = optionIds.find((id) => id !== correctId);
+      if (removed) scene.hideOption(removed);
+    }
+    await wait((ctx.reducedMotion ? 180 : 420) + delayMs);
     if (ctx.isCancelled()) {
       scene.destroy();
       return {
@@ -167,6 +220,9 @@ export const peekAndFindGame: WebGame = {
     }
     inputReady = true;
     scene.readyElement.dataset.gameReady = "true";
+    scene.readyElement.dataset.itemCount = String(itemCount);
+    scene.readyElement.dataset.locationCount = String(locationCount);
+    scene.readyElement.dataset.transformation = transformation;
     cancelWatch = window.setInterval(() => {
       if (!ctx.isCancelled()) return;
       finish({

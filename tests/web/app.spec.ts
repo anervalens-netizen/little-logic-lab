@@ -622,7 +622,7 @@ test("daily order uses the shared Pixi sequence renderer", async ({ page }) => {
     .toBe(true);
 });
 
-test("daily order renders the full three-step stage plus distractor", async ({
+test("daily order renders the full six-step stage plus three distractors", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -631,8 +631,10 @@ test("daily order renders the full three-step stage plus distractor", async ({
   );
   await seedCleanProgress(page, P0_BEFORE_DAILY);
   await seedGameDifficulty(page, "daily-order", 72, {
-    stepCount: 3,
-    distractorCount: 1,
+    stepCount: 6,
+    distractorCount: 3,
+    causalDistance: 3,
+    verbalSupport: "minimal",
   });
   await enterHome(page);
   await page.getByRole("button", { name: "Ce facem întâi?" }).click();
@@ -640,7 +642,7 @@ test("daily order renders the full three-step stage plus distractor", async ({
     timeout: 8_000,
   });
   const cards = page.locator("button.pixi-sequence-card");
-  await expect(cards).toHaveCount(4);
+  await expect(cards).toHaveCount(9);
   const boxes = await cards.evaluateAll((buttons) =>
     buttons.map((button) => {
       const box = button.getBoundingClientRect();
@@ -664,6 +666,12 @@ test("one-to-one counting uses shared Pixi drag with one treat per friend", asyn
   page,
 }) => {
   await seedCleanProgress(page, P0_BEFORE_COUNT);
+  await seedGameDifficulty(page, "one-to-one-count", 31, {
+    maxQuantity: 2,
+    choiceCount: 2,
+    symbolSupport: "none",
+    perceptualControl: "basic",
+  });
   await enterHome(page);
   await page.getByRole("button", { name: "Dă câte unul" }).click();
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
@@ -694,36 +702,68 @@ test("one-to-one counting uses shared Pixi drag with one treat per friend", asyn
     .toBe(true);
 });
 
-test("one-to-one counting keeps the full three-friend stage touch-sized", async ({
+test("one-to-one counting batches the full twenty-friend ladder stage", async ({
   page,
 }, testInfo) => {
+  test.setTimeout(75_000);
   test.skip(
     testInfo.project.name !== "chromium-touch",
     "One engine is sufficient for the deterministic high-stage layout contract.",
   );
   await seedCleanProgress(page, P0_BEFORE_COUNT);
   await seedGameDifficulty(page, "one-to-one-count", 72, {
-    maxQuantity: 3,
+    maxQuantity: 20,
+    choiceCount: 8,
+    symbolSupport: "mixed",
+    perceptualControl: "strict",
   });
   await enterHome(page);
   await page.getByRole("button", { name: "Dă câte unul" }).click();
-  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
-    timeout: 8_000,
-  });
-  const controls = page.locator(
-    "button.pixi-drag-item, button.pixi-drop-target",
-  );
-  await expect(controls).toHaveCount(6);
-  const boxes = await controls.evaluateAll((buttons) =>
-    buttons.map((button) => {
-      const box = button.getBoundingClientRect();
-      return { width: box.width, height: box.height };
-    }),
-  );
-  for (const box of boxes) {
-    expect(box.width).toBeGreaterThanOrEqual(96);
-    expect(box.height).toBeGreaterThanOrEqual(96);
+
+  for (let batch = 1; batch <= 7; batch += 1) {
+    const ready = page.locator(
+      `[data-game-ready="true"][data-total-items="20"][data-batch-index="${batch}"][data-batch-count="7"][data-choice-count="8"]`,
+    );
+    await expect(ready).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+    const expectedCount = batch === 7 ? 2 : 3;
+    const items = page.locator("button.pixi-drag-item:not([hidden])");
+    const targets = page.locator("button.pixi-drop-target:not([hidden])");
+    await expect(items).toHaveCount(expectedCount);
+    await expect(targets).toHaveCount(expectedCount);
+    const controls = page.locator(
+      "button.pixi-drag-item:not([hidden]), button.pixi-drop-target:not([hidden])",
+    );
+    const boxes = await controls.evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const box = button.getBoundingClientRect();
+        return { width: box.width, height: box.height };
+      }),
+    );
+    for (const box of boxes) {
+      expect(box.width).toBeGreaterThanOrEqual(96);
+      expect(box.height).toBeGreaterThanOrEqual(96);
+    }
+    for (let index = 0; index < expectedCount; index += 1) {
+      await items
+        .nth(index)
+        .evaluate((button: HTMLButtonElement) => button.click());
+      await targets
+        .nth(index)
+        .evaluate((button: HTMLButtonElement) => button.click());
+    }
   }
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (
+        profile?.attempts as
+          | Array<{ gameId: string; ladderStageId: string }>
+          | undefined
+      )?.find((attempt) => attempt.gameId === "one-to-one-count")
+        ?.ladderStageId;
+    })
+    .toBe("one-to-one-count:L019");
 });
 
 const P0_BEFORE_DRAG_AND_FIT = [
@@ -756,6 +796,9 @@ test("color hunt uses a Pixi real-world prompt without scoring the child", async
   await seedCleanProgress(page, P0_BEFORE_COLOR_HUNT);
   await seedGameDifficulty(page, "real-color-hunt", 72, {
     stepCount: 3,
+    ruleCount: 1,
+    memoryDelaySec: 0,
+    parentPromptSupport: "full",
   });
   await enterHome(page);
   await page.getByRole("button", { name: "Vânătoarea de culori" }).click();
@@ -794,6 +837,33 @@ test("color hunt uses a Pixi real-world prompt without scoring the child", async
   ).toBe(false);
 });
 
+test("color hunt exposes the oldest six-step dual-rule memory stage", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic long-delay contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_COLOR_HUNT);
+  await seedGameDifficulty(page, "real-color-hunt", 72, {
+    stepCount: 6,
+    ruleCount: 2,
+    memoryDelaySec: 40,
+    parentPromptSupport: "optional",
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Vânătoarea de culori" }).click();
+  const scene = page.locator(
+    '[data-scene-ready="true"][data-step-count="6"][data-rule-count="2"][data-memory-delay-sec="40"][data-parent-prompt-support="optional"]',
+  );
+  await expect(scene).toBeVisible({ timeout: 8_000 });
+  await expect(page.locator("button.pixi-accessibility-choice")).toBeDisabled();
+  await page.getByRole("button", { name: "Înapoi acasă" }).click();
+  await expect(page.getByRole("button", { name: "Joacă" })).toBeVisible({
+    timeout: 3_000,
+  });
+});
+
 const P0_BEFORE_SHADOW = [
   "same-picture",
   "sort-by-color",
@@ -816,9 +886,132 @@ const P0_BEFORE_EMOTION = [
   "listen-find",
   "trace-road",
 ] as const;
+const P0_BEFORE_TRACE = [...P0_BEFORE_LISTEN, "listen-find"] as const;
 
 const P0_BEFORE_SHAPE = [...P0_BEFORE_EMOTION, "emotion-match"] as const;
 const P0_BEFORE_SIZE = [...P0_BEFORE_SHAPE, "sort-by-shape"] as const;
+
+test("trace road follows continuous Pixi pointer input to the goal", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "Trusted continuous touch injection is available in the Chromium project.",
+  );
+  test.skip(
+    process.env["LOGIC_LAB_TRACE_TOUCH"] !== "1",
+    "Continuous touch runs serially in its dedicated release gate.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_TRACE);
+  await enterHome(page);
+  await page.getByRole("button", { name: "Urmează drumul" }).click();
+  const trace = page.locator(
+    '[data-game-ready="true"][data-trace-points="3"]',
+  );
+  await expect(trace).toBeVisible({ timeout: 8_000 });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  const canvas = await page.locator("canvas.pixi-stage").boundingBox();
+  expect(canvas).not.toBeNull();
+  const startX = Number(await trace.getAttribute("data-trace-start-x"));
+  const startY = Number(await trace.getAttribute("data-trace-start-y"));
+  const checkpoints = page.locator("button.pixi-trace-checkpoint");
+  const firstBox = await checkpoints.nth(0).boundingBox();
+  expect(firstBox).not.toBeNull();
+  const start = { x: canvas!.x + startX, y: canvas!.y + startY };
+  const middle = {
+    x: firstBox!.x + firstBox!.width / 2,
+    y: firstBox!.y + firstBox!.height / 2,
+  };
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: start.x, y: start.y, id: 0 }],
+  });
+  await page.waitForTimeout(100);
+  for (let step = 1; step <= 10; step += 1) {
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [
+        {
+          x: start.x + ((middle.x - start.x) * step) / 10,
+          y: start.y + ((middle.y - start.y) * step) / 10,
+          id: 0,
+        },
+      ],
+    });
+    await page.waitForTimeout(24);
+  }
+  await expect(trace).toHaveAttribute("data-trace-progress", "1");
+  await page.waitForTimeout(380);
+  const currentBox = await checkpoints.nth(0).boundingBox();
+  const nextBox = await checkpoints.nth(1).boundingBox();
+  expect(currentBox).not.toBeNull();
+  expect(nextBox).not.toBeNull();
+  const current = {
+    x: currentBox!.x + currentBox!.width / 2,
+    y: currentBox!.y + currentBox!.height / 2,
+  };
+  const destination = {
+    x: nextBox!.x + nextBox!.width / 2,
+    y: nextBox!.y + nextBox!.height / 2,
+  };
+  for (let step = 1; step <= 10; step += 1) {
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [
+        {
+          x: current.x + ((destination.x - current.x) * step) / 10,
+          y: current.y + ((destination.y - current.y) * step) / 10,
+          id: 0,
+        },
+      ],
+    });
+    await page.waitForTimeout(24);
+  }
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
+  });
+
+  await expect
+    .poll(async () => {
+      const profile = await readStoredProfile(page);
+      return (profile?.attempts as Array<{ gameId: string }> | undefined)?.some(
+        (attempt) => attempt.gameId === "trace-road",
+      );
+    })
+    .toBe(true);
+});
+
+test("trace road consumes the oldest narrow twelve-step route", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-touch",
+    "One engine is sufficient for the deterministic high-stage route contract.",
+  );
+  await seedCleanProgress(page, P0_BEFORE_TRACE);
+  await seedGameDifficulty(page, "trace-road", 72, {
+    pathLength: 8,
+    pathWidth: "narrow",
+    turnCount: 10,
+    guideStrength: "on_request",
+  });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Urmează drumul" }).click();
+  const trace = page.locator(
+    '[data-game-ready="true"][data-trace-points="13"]',
+  );
+  await expect(trace).toBeVisible({ timeout: 8_000 });
+  await expect(
+    page.getByRole("group", { name: "Urmează drumul în 12 pași" }),
+  ).toBeVisible();
+  const next = page.locator("button.pixi-trace-checkpoint:enabled");
+  await expect(next).toHaveCount(1);
+  const box = await next.boundingBox();
+  expect(box?.width).toBeGreaterThanOrEqual(96);
+  expect(box?.height).toBeGreaterThanOrEqual(96);
+});
 
 test("peek and find hides both the visual and semantic answer in Pixi", async ({
   page,
@@ -850,7 +1043,7 @@ test("peek and find hides both the visual and semantic answer in Pixi", async ({
     .toBe(true);
 });
 
-test("peek and find renders the full three-cup delayed stage", async ({
+test("peek and find renders the oldest nine-cup transformed stage", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -859,16 +1052,22 @@ test("peek and find renders the full three-cup delayed stage", async ({
   );
   await seedCleanProgress(page, P0_BEFORE_PEEK);
   await seedGameDifficulty(page, "peek-and-find", 72, {
-    locationCount: 3,
-    delayMs: 500,
+    itemCount: 12,
+    delayMs: 6_000,
+    locationCount: 9,
+    transformation: "rotate_layout",
   });
   await enterHome(page);
   await page.getByRole("button", { name: "Privește și găsește" }).click();
-  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
-    timeout: 8_000,
+  await expect(
+    page.locator(
+      '[data-game-ready="true"][data-item-count="12"][data-location-count="9"][data-transformation="rotate_layout"]',
+    ),
+  ).toBeVisible({
+    timeout: 12_000,
   });
-  const cups = page.locator("button.pixi-accessibility-choice");
-  await expect(cups).toHaveCount(3);
+  const cups = page.locator("button.pixi-accessibility-choice:not(:disabled)");
+  await expect(cups).toHaveCount(9);
   const boxes = await cups.evaluateAll((buttons) =>
     buttons.map((button) => {
       const box = button.getBoundingClientRect();
@@ -1319,6 +1518,11 @@ const GOLDEN_SCENES = [
     unlocks: P0_BEFORE_LISTEN,
   },
   {
+    id: "trace-road",
+    name: "Urmează drumul",
+    unlocks: P0_BEFORE_TRACE,
+  },
+  {
     id: "sort-by-shape",
     name: "Casa formelor",
     unlocks: P0_BEFORE_SHAPE,
@@ -1332,6 +1536,7 @@ const GOLDEN_SCENES = [
 
 for (const scene of GOLDEN_SCENES) {
   test(`visual baseline: ${scene.id}`, async ({ page }) => {
+    await page.clock.setFixedTime(new Date("2026-07-25T10:00:00.000Z"));
     await page.emulateMedia({ reducedMotion: "reduce" });
     if (scene.unlocks.length > 0) {
       await seedCleanProgress(page, scene.unlocks);

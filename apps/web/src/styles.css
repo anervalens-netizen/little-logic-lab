@@ -457,6 +457,39 @@ button {
   outline-offset: 4px;
 }
 
+.pixi-sequence-accessibility,
+.pixi-trace-accessibility {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.pixi-sequence-accessibility button,
+.pixi-trace-accessibility button {
+  position: absolute;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  margin: 0;
+  padding: 0;
+  opacity: 0.001;
+  pointer-events: auto;
+  touch-action: manipulation;
+  border: 0;
+  border-radius: 28px;
+}
+
+.pixi-sequence-accessibility button:focus-visible,
+.pixi-trace-accessibility button:focus-visible {
+  opacity: 0.16;
+  outline: 7px solid var(--blue-deep);
+  outline-offset: 4px;
+}
+
+.pixi-trace-accessibility button {
+  pointer-events: none;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

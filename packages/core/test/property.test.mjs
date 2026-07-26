@@ -9,6 +9,7 @@ import {
   generateOrderLevel,
   generatePattern,
   generateSortLevel,
+  generateTracePath,
   generateVisualChoice,
 } from "../dist/index.js";
 
@@ -97,6 +98,34 @@ test("100 gentle mazes are contiguous from start to goal", () => {
     assert.deepEqual(level.payload.safePath.at(-1), level.payload.goal);
     for (let pathIndex = 1; pathIndex < level.payload.safePath.length; pathIndex += 1) {
       assert.ok(adjacent(level.payload.safePath[pathIndex - 1], level.payload.safePath[pathIndex]));
+    }
+  }
+});
+
+test("100 trace routes stay bounded and progress from start to goal", () => {
+  for (let index = 0; index < 100; index += 1) {
+    const level = generateTracePath(`trace:${index}`, {
+      gameId: "trace-road",
+      pathLength: 8,
+      pathWidth: "narrow",
+      turnCount: 10,
+      guideStrength: "on_request",
+    });
+    assert.equal(level.payload.points.length, 13);
+    assert.ok(
+      level.payload.points.every(
+        (point) =>
+          point.x >= 0 &&
+          point.x <= 1 &&
+          point.y >= 0 &&
+          point.y <= 1,
+      ),
+    );
+    for (let pointIndex = 1; pointIndex < level.payload.points.length; pointIndex += 1) {
+      assert.ok(
+        level.payload.points[pointIndex].x >
+          level.payload.points[pointIndex - 1].x,
+      );
     }
   }
 });

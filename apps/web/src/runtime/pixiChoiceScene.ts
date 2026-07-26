@@ -40,6 +40,10 @@ export interface PixiChoiceScene {
   readonly emphasize: (id: string) => void;
   readonly dimExcept: (id: string) => void;
   readonly setTargetVisible: (visible: boolean) => void;
+  readonly moveTargetToOption: (id: string) => Promise<void>;
+  readonly reorderOptions: (orderIds: readonly string[]) => Promise<void>;
+  readonly hideOption: (id: string) => void;
+  readonly setOptionEnabled: (id: string, enabled: boolean) => void;
   readonly destroy: () => void;
 }
 
@@ -54,6 +58,8 @@ interface CardVisual {
   baseX: number;
   baseY: number;
   selected: boolean;
+  available: boolean;
+  hidden: boolean;
 }
 
 function drawPlate(
@@ -191,19 +197,21 @@ export async function createPixiChoiceScene(
       baseX: 0,
       baseY: 0,
       selected: false,
+      available: true,
+      hidden: false,
     };
 
     const press = () => {
-      if (!enabled || card.selected) return;
+      if (!enabled || card.selected || !card.available) return;
       markInputForDiagnostics();
       card.container.scale.set(0.94);
     };
     const release = () => {
-      if (!enabled || card.selected) return;
+      if (!enabled || card.selected || !card.available) return;
       card.container.scale.set(1);
     };
     const select = () => {
-      if (!enabled || card.selected) return;
+      if (!enabled || card.selected || !card.available) return;
       card.container.scale.set(1);
       options.onSelect(card.id);
     };
@@ -220,6 +228,8 @@ export async function createPixiChoiceScene(
     app.stage.addChild(container);
   }
 
+  const displayOrder = cards.map((card) => card.id);
+  let targetAnchorId: string | null = null;
   const layout = () => {
     if (destroyed) return;
     const width = app.screen.width;
@@ -278,7 +288,8 @@ export async function createPixiChoiceScene(
     const startX = (width - totalWidth) / 2 + cardWidth / 2;
     const gridTop = height * (grid ? 0.34 : compact ? 0.69 : 0.7);
 
-    cards.forEach((card, index) => {
+    cards.forEach((card) => {
+      const index = Math.max(0, displayOrder.indexOf(card.id));
       const row = Math.floor(index / columns);
       const column = index % columns;
       card.width = cardWidth;
@@ -303,7 +314,13 @@ export async function createPixiChoiceScene(
       card.button.style.top = `${card.baseY - cardHeight / 2}px`;
       card.button.style.width = `${cardWidth}px`;
       card.button.style.height = `${cardHeight}px`;
+      card.button.hidden = card.hidden;
+      card.container.alpha = card.hidden ? 0 : card.available ? 1 : 0.45;
     });
+    if (targetAnchorId) {
+      const anchor = cards.find((card) => card.id === targetAnchorId);
+      if (anchor) target.position.set(anchor.baseX, anchor.baseY);
+    }
   };
 
   app.renderer.on("resize", layout);
@@ -417,6 +434,85 @@ export async function createPixiChoiceScene(
       tween(260, (progress) => {
         target.alpha = from + (to - from) * progress;
       });
+    },
+    async moveTargetToOption(id) {
+      const card = byId(id);
+      if (!card) return;
+      targetAnchorId = id;
+      const fromX = target.x;
+      const fromY = target.y;
+      await new Promise<void>((resolve) => {
+        tween(520, (progress) => {
+          const eased = 1 - Math.pow(1 - progress, 3);
+          target.position.set(
+            fromX + (card.baseX - fromX) * eased,
+            fromY + (card.baseY - fromY) * eased,
+          );
+        }, resolve);
+      });
+    },
+    async reorderOptions(orderIds) {
+      if (
+        orderIds.length !== cards.length ||
+        new Set(orderIds).size !== cards.length ||
+        orderIds.some((id) => !byId(id))
+      ) {
+        return;
+      }
+      const slots = displayOrder.map((id) => {
+        const card = byId(id)!;
+        return { x: card.baseX, y: card.baseY };
+      });
+      const starts = new Map(
+        cards.map((card) => [
+          card.id,
+          { x: card.container.x, y: card.container.y },
+        ]),
+      );
+      displayOrder.splice(0, displayOrder.length, ...orderIds);
+      cards.forEach((card) => {
+        const index = displayOrder.indexOf(card.id);
+        const slot = slots[index];
+        if (!slot) return;
+        card.baseX = slot.x;
+        card.baseY = slot.y;
+      });
+      await new Promise<void>((resolve) => {
+        tween(620, (progress) => {
+          const eased = 1 - Math.pow(1 - progress, 3);
+          cards.forEach((card) => {
+            const start = starts.get(card.id);
+            if (!start) return;
+            card.container.position.set(
+              start.x + (card.baseX - start.x) * eased,
+              start.y + (card.baseY - start.y) * eased,
+            );
+            card.button.style.left = `${card.container.x - card.width / 2}px`;
+            card.button.style.top = `${card.container.y - card.height / 2}px`;
+          });
+          if (targetAnchorId) {
+            const anchor = byId(targetAnchorId);
+            if (anchor) target.position.copyFrom(anchor.container.position);
+          }
+        }, resolve);
+      });
+    },
+    hideOption(id) {
+      const card = byId(id);
+      if (!card) return;
+      card.hidden = true;
+      card.selected = true;
+      card.available = false;
+      card.container.alpha = 0;
+      card.button.disabled = true;
+      card.button.hidden = true;
+    },
+    setOptionEnabled(id, optionEnabled) {
+      const card = byId(id);
+      if (!card || card.hidden || card.selected) return;
+      card.available = optionEnabled;
+      card.button.disabled = !optionEnabled;
+      card.container.alpha = optionEnabled ? 1 : 0.45;
     },
     destroy() {
       if (destroyed) return;

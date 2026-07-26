@@ -75,7 +75,7 @@ npm run typecheck
 npm run build:web
 ```
 
-`npm test` regenerează și validează cele 1.030 de ancore, verifică politica offline/privacy, compilează nucleul TypeScript și rulează 22 de teste, inclusiv verificări pe sute de seed-uri.
+`npm test` regenerează și validează cele 1.030 de ancore, verifică politica offline/privacy, compilează nucleul TypeScript și rulează 23 de teste, inclusiv verificări pe sute de seed-uri.
 
 ## Ordinea de implementare
 

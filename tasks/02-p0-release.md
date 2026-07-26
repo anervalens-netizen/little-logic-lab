@@ -39,18 +39,25 @@ reutilizabile, după golden slice.
 - `listen-find` consumă toate cele 16 stage-uri prin rendererul `choice`, cu
   cerință audio locală, replay semantic și fără indiciu vizual al răspunsului;
 - `one-to-one-count` reutilizează drag/snap Pixi pentru corespondență unică,
-  inclusiv stage-ul complet cu trei prieteni;
-- `daily-order` rulează pe secvențiere Pixi comună și consumă atât pașii, cât
-  și distractorul din ladder;
+  consumă toate cele 19 stage-uri și paginează 20 de prieteni în același
+  context WebGL;
+- `daily-order` rulează pe secvențiere Pixi comună și consumă toate cele 14
+  stage-uri, până la șase pași, trei distractori, distanță cauzală și suport
+  verbal minim;
 - `real-color-hunt` reutilizează promptul Pixi fără a introduce scor pentru
-  activitatea deschisă din lumea reală;
+  activitatea deschisă și consumă toate cele 13 stage-uri, până la șase
+  misiuni, două reguli și 40 s de memorie;
 - `peek-and-find` reutilizează rendererul `choice`, ascunde modelul inclusiv
-  semantic și consumă stage-ul complet cu trei locații și întârziere;
+  semantic și consumă toate cele 22 stage-uri, cu nouă locații, până la 6 s
+  întârziere și transformări;
 - `wait-for-go` reutilizează promptul Pixi pentru toate cele 19 stage-uri,
   până la 16 semnale, cu delay, stimuli multipli și inversarea regulii;
+- `trace-road` folosește generator core verificat pe 100 seed-uri și tracking
+  nativ de pointer pe canvas pentru toate cele 17 stage-uri;
 - `sort-by-shape` și `sort-by-size` rulează cu `sort-by-color` pe batch-uri de
   maximum trei obiecte pe telefon și patru pe tabletă;
 - stage-ul maxim de 12 obiecte/4 coșuri este E2E, cu grid tactil de minimum
   96 px și exact un canvas;
-- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 28
-  baseline-uri vizuale pentru cele paisprezece scene Pixi.
+- toate cele 15 familii P0 folosesc acum Pixi, fără renderer DOM de prototip;
+- lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 30
+  baseline-uri vizuale deterministe pentru cele cincisprezece scene Pixi.

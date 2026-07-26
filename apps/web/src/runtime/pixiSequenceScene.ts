@@ -180,17 +180,30 @@ export async function createPixiSequenceScene(
     const width = app.screen.width;
     const height = app.screen.height;
     const gap = Math.max(14, Math.min(32, width * 0.035));
-    const maxColumns = Math.max(options.cards.length, options.slotCount);
+    const slotColumns = Math.min(
+      options.slotCount,
+      width < 600 ? 3 : 6,
+    );
+    const cardColumns = Math.min(options.cards.length, width < 600 ? 3 : 6);
+    const slotRows = Math.ceil(options.slotCount / slotColumns);
+    const cardRows = Math.ceil(options.cards.length / cardColumns);
+    const totalRows = slotRows + cardRows;
     const size = Math.max(
       96,
-      Math.min(180, (width - gap * (maxColumns + 1)) / maxColumns, height * 0.24),
+      Math.min(
+        180,
+        (width - gap * (Math.max(slotColumns, cardColumns) + 1)) /
+          Math.max(slotColumns, cardColumns),
+        (height * 0.86 - gap * (totalRows + 1)) / totalRows,
+      ),
     );
-    const slotTotal =
-      size * options.slotCount + gap * (options.slotCount - 1);
+    const slotTotal = size * slotColumns + gap * (slotColumns - 1);
     const slotStart = (width - slotTotal) / 2 + size / 2;
     slotPlates.forEach((entry, index) => {
-      entry.x = slotStart + index * (size + gap);
-      entry.y = height * 0.28;
+      const row = Math.floor(index / slotColumns);
+      const column = index % slotColumns;
+      entry.x = slotStart + column * (size + gap);
+      entry.y = height * 0.07 + row * (size + gap) + size / 2;
       entry.size = size;
       entry.slot.position.set(entry.x, entry.y);
       entry.plate
@@ -201,12 +214,16 @@ export async function createPixiSequenceScene(
       entry.number.style.fontSize = Math.max(28, size * 0.24);
     });
 
-    const cardTotal = size * cards.length + gap * (cards.length - 1);
+    const cardTotal = size * cardColumns + gap * (cardColumns - 1);
     const cardStart = (width - cardTotal) / 2 + size / 2;
+    const cardTop =
+      height * 0.07 + slotRows * (size + gap) + gap + size / 2;
     cards.forEach((card, index) => {
+      const row = Math.floor(index / cardColumns);
+      const column = index % cardColumns;
       card.size = size;
-      card.homeX = cardStart + index * (size + gap);
-      card.homeY = height * 0.73;
+      card.homeX = cardStart + column * (size + gap);
+      card.homeY = cardTop + row * (size + gap);
       const slot =
         card.slotIndex === null ? null : slotPlates[card.slotIndex] ?? null;
       const x = slot?.x ?? card.homeX;

@@ -2,7 +2,7 @@
  * „Vânătoarea de culori” — activitate deschisă, nepunctată, în camera reală.
  */
 
-import { createRng, chooseDistinct, type DifficultyVector } from "@core";
+import { createRng, shuffle, type DifficultyVector } from "@core";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { clear, wait } from "../ui/dom";
 import { confettiBurst } from "../ui/feedback";
@@ -14,6 +14,18 @@ function colorBadge(hex: string): string {
   return svg(`
     <circle cx="60" cy="60" r="44" fill="${hex}" stroke="rgba(74,63,53,0.15)" stroke-width="4"/>
     <circle cx="44" cy="42" r="12" fill="rgba(255,255,255,0.45)"/>
+  `);
+}
+
+function colorTaskBadge(colors: readonly { readonly hex: string }[]): string {
+  if (colors.length === 1) return colorBadge(colors[0]?.hex ?? "#F25C4C");
+  const first = colors[0]?.hex ?? "#F25C4C";
+  const second = colors[1]?.hex ?? "#4FA8E8";
+  return svg(`
+    <path d="M 60 16 A 44 44 0 0 0 60 104 Z" fill="${first}"/>
+    <path d="M 60 16 A 44 44 0 0 1 60 104 Z" fill="${second}"/>
+    <circle cx="60" cy="60" r="44" fill="none" stroke="rgba(74,63,53,0.18)" stroke-width="4"/>
+    <circle cx="44" cy="42" r="10" fill="rgba(255,255,255,0.42)"/>
   `);
 }
 
@@ -32,8 +44,21 @@ export const colorHuntGame: WebGame = {
     "Continuați vânătoarea: câte lucruri de aceeași culoare găsiți?",
   icon: () => colorBadge("#F25C4C"),
   bubbleColor: "#7FC86B",
-  axes: [{ name: "stepCount", values: [2, 3] }],
-  initialDifficulty: { stepCount: 2 },
+  axes: [
+    { name: "stepCount", values: [2, 3, 4, 5, 6] },
+    { name: "ruleCount", values: [1, 2] },
+    { name: "memoryDelaySec", values: [0, 3, 8, 15, 20, 40] },
+    {
+      name: "parentPromptSupport",
+      values: ["full", "brief", "optional"],
+    },
+  ],
+  initialDifficulty: {
+    stepCount: 2,
+    ruleCount: 1,
+    memoryDelaySec: 0,
+    parentPromptSupport: "full",
+  },
   scored: false,
 
   async play(
@@ -43,18 +68,31 @@ export const colorHuntGame: WebGame = {
   ): Promise<PlayResult> {
     const stepCount = Math.max(
       2,
-      Math.min(3, Number(difficulty["stepCount"] ?? 2)),
+      Math.min(6, Number(difficulty["stepCount"] ?? 2)),
     );
-    const colors = chooseDistinct(
-      LEARN_COLORS.slice(0, 4),
-      stepCount,
-      createRng(seed),
+    const ruleCount = Math.max(
+      1,
+      Math.min(2, Number(difficulty["ruleCount"] ?? 1)),
     );
+    const memoryDelaySec = Math.max(
+      0,
+      Math.min(40, Number(difficulty["memoryDelaySec"] ?? 0)),
+    );
+    const parentPromptSupport = String(
+      difficulty["parentPromptSupport"] ?? "full",
+    );
+    const palette = shuffle(LEARN_COLORS.slice(0, 4), createRng(seed));
+    const tasks = Array.from({ length: stepCount }, (_, index) => {
+      const first = palette[index % palette.length]!;
+      const second = palette[(index + 1) % palette.length]!;
+      return ruleCount === 1 ? [first] : [first, second];
+    });
     const { createPixiChoiceScene } = await import(
       "../runtime/pixiChoiceScene"
     );
 
-    for (const color of colors) {
+    for (let stepIndex = 0; stepIndex < tasks.length; stepIndex += 1) {
+      const colors = tasks[stepIndex]!;
       if (ctx.isCancelled()) break;
       clear(ctx.mount);
       let settled = false;
@@ -64,15 +102,26 @@ export const colorHuntGame: WebGame = {
       });
       let completionTimer: number | null = null;
       let cancelWatch: number | null = null;
+      const colorWords = colors.map((color) => color.label).join(" și ");
+      const spokenTask =
+        parentPromptSupport === "full"
+          ? `Căutați împreună ceva ${colorWords} în cameră!`
+          : parentPromptSupport === "brief"
+            ? `Găsește ceva ${colorWords}!`
+            : `Caută ${colorWords}!`;
 
       const scene = await createPixiChoiceScene(ctx.mount, {
-        targetSvg: colorBadge(color.hex),
-        targetLabel: `culoarea ${color.label}`,
+        targetSvg: colorTaskBadge(colors),
+        targetLabel:
+          colors.length === 1
+            ? `culoarea ${colorWords}`
+            : `culorile ${colorWords}`,
+        targetDescriptionFollowsVisibility: true,
         options: [
           {
             id: "found",
             svg: FOUND_BADGE,
-            label: `Am găsit ceva ${color.label}`,
+            label: `Am găsit ceva ${colorWords}`,
           },
         ],
         reducedMotion: ctx.reducedMotion,
@@ -87,10 +136,26 @@ export const colorHuntGame: WebGame = {
         },
       });
       ctx.onCleanup(scene.destroy);
+      scene.readyElement.dataset.sceneReady = "true";
+      scene.readyElement.dataset.stepCount = String(stepCount);
+      scene.readyElement.dataset.ruleCount = String(ruleCount);
+      scene.readyElement.dataset.memoryDelaySec = String(memoryDelaySec);
+      scene.readyElement.dataset.parentPromptSupport = parentPromptSupport;
+      scene.readyElement.dataset.stepIndex = String(stepIndex + 1);
+      speak(`${spokenTask} Apasă când ai găsit!`);
+      if (memoryDelaySec > 0) {
+        scene.setOptionEnabled("found", false);
+        await wait(ctx.reducedMotion ? 650 : 1_200);
+        scene.setTargetVisible(false);
+        speak("Ține minte și caută!");
+        if (!(await waitUntilReady(ctx, memoryDelaySec * 1_000))) {
+          scene.destroy();
+          break;
+        }
+        scene.setOptionEnabled("found", true);
+        speak("Acum poți arăta că ai găsit!");
+      }
       scene.readyElement.dataset.gameReady = "true";
-      speak(
-        `Găsește ceva ${color.label} în cameră! Apasă când ai găsit!`,
-      );
       cancelWatch = window.setInterval(() => {
         if (!ctx.isCancelled() || settled) return;
         settled = true;
@@ -116,3 +181,17 @@ export const colorHuntGame: WebGame = {
     };
   },
 };
+
+async function waitUntilReady(
+  ctx: GameContext,
+  durationMs: number,
+): Promise<boolean> {
+  let remaining = durationMs;
+  while (remaining > 0) {
+    if (ctx.isCancelled()) return false;
+    const slice = Math.min(200, remaining);
+    await wait(slice);
+    remaining -= slice;
+  }
+  return !ctx.isCancelled();
+}

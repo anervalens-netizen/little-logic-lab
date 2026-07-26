@@ -1,6 +1,11 @@
 /** „Dă câte unul” — fiecare prieten primește exact o gustare. */
 
-import { createRng, chooseOne, type DifficultyVector } from "@core";
+import {
+  createRng,
+  chooseOne,
+  shuffle,
+  type DifficultyVector,
+} from "@core";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { clear, wait } from "../ui/dom";
@@ -20,6 +25,24 @@ const TREATS = [
 ] as const;
 const COUNT_WORDS = ["unu", "doi", "trei", "patru"];
 
+type SymbolSupport = "none" | "paired" | "symbol" | "mixed";
+type PerceptualControl = "basic" | "controlled" | "strict";
+
+function withSymbolSupport(
+  artwork: string,
+  support: SymbolSupport,
+  index: number,
+): string {
+  const mode =
+    support === "mixed" ? (index % 2 === 0 ? "paired" : "symbol") : support;
+  if (mode === "none") return artwork;
+  const badge =
+    mode === "paired"
+      ? `<circle cx="96" cy="24" r="12" fill="#FFF3B8" stroke="#E8B23C" stroke-width="3"/><circle cx="96" cy="24" r="4" fill="#4A3F35"/>`
+      : `<circle cx="96" cy="24" r="14" fill="#FFF3B8" stroke="#E8B23C" stroke-width="3"/><text x="96" y="31" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" font-weight="800" fill="#4A3F35">1</text>`;
+  return artwork.replace("</svg>", `${badge}</svg>`);
+}
+
 export const oneToOneCountGame: WebGame = {
   id: "one-to-one-count",
   title: "Dă câte unul",
@@ -30,8 +53,24 @@ export const oneToOneCountGame: WebGame = {
     "La masă: dă fiecăruia câte o linguriță sau câte un șervețel!",
   icon: () => drawItem("cookie"),
   bubbleColor: "#FFA94D",
-  axes: [{ name: "maxQuantity", values: [1, 2, 3] }],
-  initialDifficulty: { maxQuantity: 2 },
+  axes: [
+    { name: "maxQuantity", values: [1, 2, 3, 4, 5, 8, 10, 15, 20] },
+    { name: "choiceCount", values: [2, 3, 4, 5, 6, 8] },
+    {
+      name: "symbolSupport",
+      values: ["none", "paired", "symbol", "mixed"],
+    },
+    {
+      name: "perceptualControl",
+      values: ["basic", "controlled", "strict"],
+    },
+  ],
+  initialDifficulty: {
+    maxQuantity: 1,
+    choiceCount: 2,
+    symbolSupport: "none",
+    perceptualControl: "basic",
+  },
   scored: true,
 
   async play(
@@ -39,19 +78,45 @@ export const oneToOneCountGame: WebGame = {
     difficulty: DifficultyVector,
     seed: string,
   ): Promise<PlayResult> {
-    const count = Math.max(
+    const total = Math.max(
       1,
-      Math.min(4, Number(difficulty["maxQuantity"] ?? 2)),
+      Math.min(20, Number(difficulty["maxQuantity"] ?? 1)),
     );
+    const choiceCount = Math.max(
+      2,
+      Math.min(8, Number(difficulty["choiceCount"] ?? 2)),
+    );
+    const symbolSupport = (
+      ["none", "paired", "symbol", "mixed"].includes(
+        String(difficulty["symbolSupport"]),
+      )
+        ? difficulty["symbolSupport"]
+        : "none"
+    ) as SymbolSupport;
+    const perceptualControl = (
+      ["basic", "controlled", "strict"].includes(
+        String(difficulty["perceptualControl"]),
+      )
+        ? difficulty["perceptualControl"]
+        : "basic"
+    ) as PerceptualControl;
     const rng = createRng(seed);
-    const receiver = chooseOne([...RECEIVERS], rng);
+    const receiverKinds = shuffle([...RECEIVERS], rng).slice(
+      0,
+      Math.min(choiceCount, RECEIVERS.length),
+    );
     const treat = chooseOne([...TREATS], rng);
+    const batchSize = Math.min(
+      window.innerWidth < 600 ? 3 : 4,
+      choiceCount,
+    );
+    const batchCount = Math.ceil(total / batchSize);
     const friendIds = Array.from(
-      { length: count },
+      { length: total },
       (_, index) => `friend-${index + 1}`,
     );
     const treatIds = Array.from(
-      { length: count },
+      { length: total },
       (_, index) => `treat-${index + 1}`,
     );
 
@@ -68,6 +133,7 @@ export const oneToOneCountGame: WebGame = {
     let simplifying = false;
     let cancelWatch: number | null = null;
     let completionTimer: number | null = null;
+    let readyElement: HTMLElement | null = null;
     let resolveResult: (result: PlayResult) => void = () => undefined;
     const result = new Promise<PlayResult>((resolve) => {
       resolveResult = resolve;
@@ -79,20 +145,44 @@ export const oneToOneCountGame: WebGame = {
       if (completionTimer !== null) window.clearTimeout(completionTimer);
       resolveResult(outcome);
     };
+    const updatePageMetadata = (pageIndex: number) => {
+      if (!readyElement) return;
+      readyElement.dataset.batchIndex = String(pageIndex + 1);
+      readyElement.dataset.batchCount = String(batchCount);
+      if (pageIndex > 0) {
+        const remaining = Math.max(0, total - pageIndex * batchSize);
+        speak(`Mai avem ${remaining} prieteni. Continuăm!`);
+      }
+    };
 
     const scene = await createPixiDragScene(ctx.mount, {
       items: treatIds.map((id, index) => ({
         id,
         svg: drawItem(treat),
         label: `gustarea ${index + 1}`,
+        rotation:
+          perceptualControl === "strict"
+            ? 0
+            : (index % 2 === 0 ? -1 : 1) *
+              (perceptualControl === "basic" ? 0.1 : 0.04),
       })),
-      targets: friendIds.map((id, index) => ({
-        id,
-        svg: drawItem(receiver),
-        label: `prietenul ${index + 1}`,
-      })),
+      targets: friendIds.map((id, index) => {
+        const receiver =
+          receiverKinds[index % receiverKinds.length] ?? "bear";
+        return {
+          id,
+          svg: withSymbolSupport(
+            drawItem(receiver),
+            symbolSupport,
+            index,
+          ),
+          label: `prietenul ${index + 1}`,
+        };
+      }),
       presentation: "holes",
       reducedMotion: ctx.reducedMotion,
+      pageSize: batchSize,
+      onPageChange: updatePageMetadata,
       onDrop(itemId, targetId) {
         if (!inputReady || settled || simplifying) return "ignore";
         if (served.has(targetId)) {
@@ -116,23 +206,27 @@ export const oneToOneCountGame: WebGame = {
         spokenCount += 1;
         sfxPlace();
         playItemVoice(treat);
-        speak(`${COUNT_WORDS[spokenCount - 1] ?? spokenCount}!`, { rate: 0.95 });
-        if (placed.size >= count) {
-          completionTimer = window.setTimeout(() => {
-            speak("Fiecare are câte unul! Bravo!");
-            finish({
-              completed: true,
-              correctFirstTry: support.wasFirstTryClean,
-              correctEventually: true,
-              hintsUsed: support.hintsUsed,
-              wrongAttempts: support.wrongAttempts,
-            });
-          }, ctx.reducedMotion ? 380 : 720);
+        speak(`${COUNT_WORDS[spokenCount - 1] ?? spokenCount}!`, {
+          rate: 0.95,
+        });
+        if (placed.size >= total) {
+          completionTimer = window.setTimeout(
+            () =>
+              finish({
+                completed: true,
+                correctFirstTry: support.wasFirstTryClean,
+                correctEventually: true,
+                hintsUsed: support.hintsUsed,
+                wrongAttempts: support.wrongAttempts,
+              }),
+            ctx.reducedMotion ? 240 : 560,
+          );
         }
         return "correct";
       },
     });
     ctx.onCleanup(scene.destroy);
+    readyElement = scene.readyElement;
 
     async function autoCompleteRemaining(): Promise<void> {
       speak("Hai să dăm împreună câte unul fiecăruia!");
@@ -147,7 +241,7 @@ export const oneToOneCountGame: WebGame = {
         placed.add(itemId);
         served.add(targetId);
         await scene.autoPlace(itemId, targetId);
-        await wait(ctx.reducedMotion ? 100 : 260);
+        await wait(ctx.reducedMotion ? 70 : 180);
       }
       finish({
         completed: true,
@@ -159,9 +253,9 @@ export const oneToOneCountGame: WebGame = {
     }
 
     speak(
-      `Avem ${COUNT_WORDS[count - 1] ?? count} prieteni! Dă fiecăruia câte unul!`,
+      `Avem ${total <= 4 ? COUNT_WORDS[total - 1] : total} prieteni! Dă fiecăruia câte unul!`,
     );
-    await wait(900);
+    await wait(700);
     if (ctx.isCancelled()) {
       scene.destroy();
       return {
@@ -175,6 +269,9 @@ export const oneToOneCountGame: WebGame = {
     }
     inputReady = true;
     scene.readyElement.dataset.gameReady = "true";
+    scene.readyElement.dataset.totalItems = String(total);
+    scene.readyElement.dataset.choiceCount = String(choiceCount);
+    updatePageMetadata(0);
     cancelWatch = window.setInterval(() => {
       if (!ctx.isCancelled()) return;
       finish({

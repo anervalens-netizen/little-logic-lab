@@ -35,6 +35,9 @@ export interface PixiDragSceneOptions {
   readonly targets: readonly PixiDropTarget[];
   readonly presentation: "bins" | "holes";
   readonly reducedMotion: boolean;
+  /** Paginare internă pentru mulțimi mari, fără recrearea contextului WebGL. */
+  readonly pageSize?: number;
+  readonly onPageChange?: (pageIndex: number, pageCount: number) => void;
   /** Core/runtime decide correctness; rendererul doar prezintă verdictul. */
   readonly onDrop: (itemId: string, targetId: string) => DropVerdict;
 }
@@ -152,6 +155,32 @@ export async function createPixiDragScene(
   let destroyed = false;
   let enabled = false;
   let selectedId: string | null = null;
+  const pageSize = Math.max(
+    1,
+    Math.min(
+      options.pageSize ?? Number.MAX_SAFE_INTEGER,
+      Math.max(options.items.length, options.targets.length, 1),
+    ),
+  );
+  const pageCount = Math.max(
+    1,
+    Math.ceil(Math.max(options.items.length, options.targets.length) / pageSize),
+  );
+  const [targetTextures, itemTextures] = await Promise.all([
+    Promise.all(
+      options.targets.map((definition) =>
+        definition.svg ? loadSvgTexture(definition.svg) : null,
+      ),
+    ),
+    Promise.all(
+      options.items.map((definition) => loadSvgTexture(definition.svg)),
+    ),
+  ]);
+  targetTextures.forEach((loaded) => {
+    if (loaded) releases.push(loaded.release);
+  });
+  itemTextures.forEach((loaded) => releases.push(loaded.release));
+  let activePage = 0;
   let active:
     | {
         item: ItemVisual;
@@ -163,13 +192,12 @@ export async function createPixiDragScene(
       }
     | null = null;
 
-  for (const definition of options.targets) {
+  for (const [index, definition] of options.targets.entries()) {
     const container = new Container();
     const plate = new Graphics();
     let sprite: Sprite | null = null;
-    if (definition.svg) {
-      const loaded = await loadSvgTexture(definition.svg);
-      releases.push(loaded.release);
+    const loaded = targetTextures[index];
+    if (loaded) {
       sprite = new Sprite(loaded.texture);
       sprite.anchor.set(0.5);
       sprite.alpha = definition.ghostAlpha ?? 1;
@@ -206,9 +234,9 @@ export async function createPixiDragScene(
     app.stage.addChild(container);
   }
 
-  for (const definition of options.items) {
-    const loaded = await loadSvgTexture(definition.svg);
-    releases.push(loaded.release);
+  for (const [index, definition] of options.items.entries()) {
+    const loaded = itemTextures[index];
+    if (!loaded) continue;
     const container = new Container();
     container.eventMode = "static";
     container.cursor = "grab";
@@ -275,16 +303,31 @@ export async function createPixiDragScene(
     });
   }
 
+  const activeRange = () => ({
+    start: activePage * pageSize,
+    end: (activePage + 1) * pageSize,
+  });
+  const activeItems = () => {
+    const { start, end } = activeRange();
+    return items.slice(start, end);
+  };
+  const activeTargets = () => {
+    const { start, end } = activeRange();
+    return targets.slice(start, end);
+  };
+
   const layout = () => {
     if (destroyed) return;
     const width = app.screen.width;
     const height = app.screen.height;
     app.stage.hitArea = new Rectangle(0, 0, width, height);
 
+    const visibleTargets = activeTargets();
+    const visibleItems = activeItems();
     const targetGap = Math.max(16, Math.min(40, width * 0.04));
-    const targetGrid = targets.length > 3 && width < 600;
-    const targetColumns = targetGrid ? 2 : targets.length;
-    const targetRows = Math.ceil(targets.length / targetColumns);
+    const targetGrid = visibleTargets.length > 3 && width < 600;
+    const targetColumns = targetGrid ? 2 : visibleTargets.length;
+    const targetRows = Math.ceil(visibleTargets.length / targetColumns);
     const targetRatio = options.presentation === "bins" ? 0.82 : 1;
     const targetAreaHeight = height * (targetGrid ? 0.54 : 0.34);
     const targetWidth = Math.min(
@@ -298,7 +341,13 @@ export async function createPixiDragScene(
     const targetTotal =
       targetWidth * targetColumns + targetGap * (targetColumns - 1);
     const targetStart = (width - targetTotal) / 2 + targetWidth / 2;
-    targets.forEach((target, index) => {
+    targets.forEach((target) => {
+      target.container.visible = false;
+      target.button.hidden = true;
+    });
+    visibleTargets.forEach((target, index) => {
+      target.container.visible = true;
+      target.button.hidden = false;
       const row = Math.floor(index / targetColumns);
       const column = index % targetColumns;
       target.x = targetStart + column * (targetWidth + targetGap);
@@ -331,13 +380,20 @@ export async function createPixiDragScene(
     const itemGap = Math.max(12, Math.min(28, width * 0.025));
     const itemSize = Math.min(
       150,
-      (width - itemGap * (items.length + 1)) / items.length,
+      (width - itemGap * (visibleItems.length + 1)) / visibleItems.length,
       height * 0.25,
     );
-    const itemTotal = itemSize * items.length + itemGap * (items.length - 1);
+    const itemTotal =
+      itemSize * visibleItems.length + itemGap * (visibleItems.length - 1);
     const itemStart = (width - itemTotal) / 2 + itemSize / 2;
     const itemY = height * (targetGrid ? 0.82 : 0.75);
-    items.forEach((item, index) => {
+    items.forEach((item) => {
+      item.container.visible = false;
+      item.button.hidden = true;
+    });
+    visibleItems.forEach((item, index) => {
+      item.container.visible = true;
+      item.button.hidden = false;
       item.size = itemSize;
       if (!item.placed) {
         item.homeX = itemStart + index * (itemSize + itemGap);
@@ -447,6 +503,15 @@ export async function createPixiDragScene(
     });
     item.container.rotation = 0;
     item.container.zIndex = options.presentation === "bins" ? 0 : 3;
+    const pageItems = activeItems();
+    if (
+      pageItems.every((candidate) => candidate.placed) &&
+      activePage + 1 < pageCount
+    ) {
+      activePage += 1;
+      layout();
+      options.onPageChange?.(activePage, pageCount);
+    }
   };
 
   function resolveDrop(item: ItemVisual, target: TargetVisual): void {
@@ -461,7 +526,7 @@ export async function createPixiDragScene(
 
   const nearestTarget = (x: number, y: number): TargetVisual | null => {
     let best: { target: TargetVisual; distance: number } | null = null;
-    for (const target of targets) {
+    for (const target of activeTargets()) {
       const dx = x - target.x;
       const dy = y - target.y;
       const distance = Math.hypot(dx, dy);
@@ -543,6 +608,13 @@ export async function createPixiDragScene(
       const item = items.find((candidate) => candidate.id === itemId);
       const target = targets.find((candidate) => candidate.id === targetId);
       if (!item || !target || item.placed) return;
+      const itemIndex = items.indexOf(item);
+      const itemPage = Math.floor(itemIndex / pageSize);
+      if (itemPage !== activePage) {
+        activePage = itemPage;
+        layout();
+        options.onPageChange?.(activePage, pageCount);
+      }
       await place(item, target);
     },
     destroy() {
