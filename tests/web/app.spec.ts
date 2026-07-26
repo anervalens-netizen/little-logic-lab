@@ -478,7 +478,7 @@ test("home, Parent Mode and Pixi semantics pass Axe", async ({ page }) => {
 test("Romanian voice is bundled and cached for offline use", async ({
   page,
   context,
-}) => {
+}, testInfo) => {
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
   await page.locator("body").click({ position: { x: 20, y: 20 } });
@@ -491,6 +491,18 @@ test("Romanian voice is bundled and cached for offline use", async ({
   });
 
   await context.setOffline(true);
+  if (testInfo.project.name !== "webkit-touch") {
+    const routedReleaseIdentity = await page.evaluate(async () => {
+      const response = await fetch("/release.json");
+      return {
+        ok: response.ok,
+        commit: ((await response.json()) as { commit: string }).commit,
+      };
+    });
+    expect(routedReleaseIdentity.ok).toBe(true);
+    expect(routedReleaseIdentity.commit).toMatch(/^[0-9a-f]{40}$/);
+  }
+
   const cachedRecording = await page.evaluate(async () => {
     let response: Response | undefined;
     for (const cacheName of await caches.keys()) {
@@ -515,6 +527,46 @@ test("Romanian voice is bundled and cached for offline use", async ({
   expect(cachedRecording.ok).toBe(true);
   expect(cachedRecording.contentType).toContain("audio");
   expect(cachedRecording.size).toBeGreaterThan(10_000);
+
+  const offlineReleaseIdentity = await page.evaluate(async () => {
+    const metadata = document.querySelector<HTMLMetaElement>(
+      'meta[name="logic-lab-release"]',
+    );
+    let response: Response | undefined;
+    for (const cacheName of await caches.keys()) {
+      const cache = await caches.open(cacheName);
+      const releaseRequest = (await cache.keys()).find(
+        (request) => new URL(request.url).pathname === "/release.json",
+      );
+      if (releaseRequest) response = await cache.match(releaseRequest);
+      if (response) break;
+    }
+    if (!response) {
+      return {
+        ok: false,
+        commit: "",
+        tree: "",
+        htmlCommit: metadata?.content,
+        htmlTree: metadata?.dataset.sourceTree,
+      };
+    }
+    const release = (await response.json()) as {
+      commit: string;
+      tree: string;
+    };
+    return {
+      ok: response.ok,
+      commit: release.commit,
+      tree: release.tree,
+      htmlCommit: metadata?.content,
+      htmlTree: metadata?.dataset.sourceTree,
+    };
+  });
+  expect(offlineReleaseIdentity.ok).toBe(true);
+  expect(offlineReleaseIdentity.commit).toMatch(/^[0-9a-f]{40}$/);
+  expect(offlineReleaseIdentity.tree).toMatch(/^[0-9a-f]{40}$/);
+  expect(offlineReleaseIdentity.htmlCommit).toBe(offlineReleaseIdentity.commit);
+  expect(offlineReleaseIdentity.htmlTree).toBe(offlineReleaseIdentity.tree);
 });
 
 test("Pixi exposes frame diagnostics and meets the input budget", async ({
