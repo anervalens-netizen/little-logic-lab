@@ -15,11 +15,11 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   replay, age gating, migrare și E2E sunt verificate.
 - R0 release: live la `https://logic-lab.astancu.eu/`; build verificat din `main`
   este servit static prin Cloudflare Tunnel + Caddy, cu CSP strict.
-- R1: automat complet; React deține shell-ul și Parent Mode, profilul este în
+- R1: automat complet; React deține shell-ul, Home și Parent Mode, profilul este în
   IndexedDB, iar catalogul + ordinea P0 generează manifestul compact și
   registry-ul TypeScript lazy. Cele 36 de ilustrații procedurale originale au
   manifest canonic, ID-uri tipizate și mapare completă renderer–asset.
-  Shell-ul inițial este 83,08 KiB gzip, sub bugetul de 100 KiB; toate cele 15
+  Shell-ul inițial este 83,06 KiB gzip, sub bugetul de 100 KiB; toate cele 15
   chunk-uri de joc sunt precached, iar scenele Pixi au lifecycle și overlay semantic.
   Exit-ul real rămâne condiționat de dispozitiv.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
@@ -40,7 +40,7 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   consumă toate cele 19 stage-uri, inclusiv semnale întârziate și schimbarea
   regulii. `trace-road` folosește generator determinist în core și tracking
   nativ de pointer pe canvas pentru toate cele 17 stage-uri. Toate cele 15
-  familii P0 sunt acum Pixi. 321 clipuri RO locale, Axe și 30 baseline-uri
+  familii P0 sunt acum Pixi. 321 clipuri RO locale, Axe și 32 baseline-uri
   vizuale cu seed și ceas fixe sunt integrate. Feedback-ul implicit descrie
   strategia/efortul, nu identitatea copilului. Lipsesc măsurarea pe
   dispozitiv, revizia umană a vocii și validarea observată.
@@ -52,6 +52,12 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   pierderi v1/v2/v3 și expune în Parent Mode contrast ridicat, ținte tactile de
   112 px și demonstrații 1,5× mai lente. Setările au efect în shell, overlay-ul
   Pixi și timpii explicativi, fără schimbarea dificultății.
+- R3 visual polish: Home a fost migrat din DOM imperativ în React și redesenat
+  responsive pentru un joc, toate cele 15 jocuri și landscape. Acțiunea
+  principală, Lumi și biblioteca formează acum o compoziție unitară, cu motion
+  controlat integral de Reduced Motion. Instrucțiunea dispare înainte de
+  control, astfel încât niciun reflow al shell-ului nu mai poate deplasa
+  canvasul în timpul unui drag.
 
 ## 1. Obiectiv
 

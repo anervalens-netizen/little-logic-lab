@@ -177,6 +177,7 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
       shell.setLumiMood("think");
       speak(game.instruction);
       await wait(demonstrationDelay(1400));
+      shell.hideBubble();
 
       const { result, cancelled } = await runGame(
         game,

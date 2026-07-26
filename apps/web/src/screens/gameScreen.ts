@@ -81,6 +81,10 @@ export function buildGameShell(opts: {
       }, 4500);
     },
     hideBubble() {
+      if (bubbleTimer !== null) {
+        clearTimeout(bubbleTimer);
+        bubbleTimer = null;
+      }
       bubble?.remove();
       bubble = null;
     },

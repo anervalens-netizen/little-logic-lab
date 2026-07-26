@@ -157,6 +157,275 @@ html[data-high-contrast="true"] .pixi-stage {
   background: linear-gradient(180deg, #ffd9a0 0%, #ffc4c4 55%, #fff3d9 100%);
 }
 
+/* ---------- Acasă ---------- */
+
+.home-screen {
+  isolation: isolate;
+}
+
+.home-scenery,
+.home-scenery > svg,
+.home-ambient-host {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.home-scenery {
+  z-index: 0;
+}
+
+.home-ambient-host {
+  z-index: 1;
+}
+
+.home-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  padding:
+    calc(14px + env(safe-area-inset-top))
+    18px
+    calc(18px + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.home-title {
+  color: var(--ink);
+  font-size: clamp(28px, 4.4vw, 40px);
+  font-weight: 800;
+  letter-spacing: 0.005em;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.68);
+}
+
+.home-parent-icon,
+.home-parent-icon svg {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+
+.home-hero {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 620px);
+  min-height: 122px;
+  margin: 0 auto;
+  padding: 6px 18px 10px;
+  gap: clamp(14px, 4vw, 36px);
+}
+
+.home-hero::before {
+  position: absolute;
+  z-index: -1;
+  inset: 14px 0 8px;
+  border: 3px solid rgba(255, 255, 255, 0.54);
+  border-radius: 44px;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.52),
+    rgba(255, 249, 238, 0.24)
+  );
+  box-shadow: 0 8px 24px rgba(74, 63, 53, 0.08);
+  content: "";
+  backdrop-filter: blur(4px);
+}
+
+.home-lumi {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(100px, 19vmin, 154px);
+}
+
+.home-lumi svg {
+  width: 100%;
+  height: auto;
+}
+
+.home-play-button {
+  flex: 1 1 260px;
+  max-width: 360px;
+  min-height: 96px;
+  padding-right: clamp(24px, 6vw, 44px);
+  padding-left: clamp(24px, 6vw, 44px);
+  gap: 16px;
+}
+
+.home-play-icon {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  padding: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.42);
+  place-items: center;
+}
+
+.home-play-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.home-rest-message {
+  max-width: 520px;
+  font-size: clamp(20px, 3.6vw, 30px);
+}
+
+.home-library {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: min(100%, 780px);
+  min-height: 0;
+  margin: 0 auto;
+}
+
+.home-library-title {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 12px;
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: clamp(17px, 2.5vw, 21px);
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.home-library-title::before,
+.home-library-title::after {
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(74, 63, 53, 0.12);
+  content: "";
+  flex: 1;
+}
+
+.home-game-grid {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 160px));
+  align-content: start;
+  justify-content: center;
+  min-height: 0;
+  padding: 12px 4px 20px;
+  gap: clamp(12px, 2.4vmin, 20px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-game-grid[data-game-count="1"] {
+  grid-template-columns: minmax(156px, min(48vw, 190px));
+  align-content: center;
+  padding-bottom: clamp(46px, 9vh, 96px);
+}
+
+.home-game-card {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 0.94;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  animation-delay: var(--home-delay, 0ms);
+  box-shadow:
+    0 7px 0 rgba(74, 63, 53, 0.11),
+    0 14px 30px rgba(74, 63, 53, 0.10);
+  will-change: transform;
+}
+
+.home-game-grid[data-game-count="1"] .home-game-card {
+  border-width: 6px;
+  box-shadow:
+    0 8px 0 rgba(74, 63, 53, 0.12),
+    0 18px 36px rgba(74, 63, 53, 0.12);
+}
+
+.home-game-art {
+  display: block;
+  flex: 1;
+  width: 82%;
+  min-height: 0;
+}
+
+.home-game-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.home-game-name {
+  color: var(--ink);
+  font-size: clamp(14px, 2vmin, 17px);
+  font-weight: 800;
+  line-height: 1.05;
+  text-align: center;
+}
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .home-content {
+    gap: 2px;
+    padding-top: calc(6px + env(safe-area-inset-top));
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .home-title {
+    font-size: 24px;
+  }
+
+  .home-hero {
+    min-height: 84px;
+    padding: 0 12px 2px;
+  }
+
+  .home-hero::before {
+    inset: 6px 0 4px;
+  }
+
+  .home-lumi {
+    width: 78px;
+  }
+
+  .home-play-button {
+    min-height: 72px;
+    padding: 10px 30px;
+    font-size: 26px;
+  }
+
+  .home-library-title {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .home-game-grid,
+  .home-game-grid[data-game-count="1"] {
+    grid-template-columns: repeat(auto-fit, minmax(112px, 132px));
+    align-content: start;
+    padding: 6px 4px;
+  }
+}
+
 /* ---------- Butoane mari ---------- */
 
 .btn-big {

@@ -181,6 +181,21 @@ test("child home is local-only and progressively unlocked", async ({ page }) => 
   expect(externalRequests).toEqual([]);
 });
 
+test("visual baseline: child home", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await enterHome(page);
+  await page.addStyleTag({
+    content:
+      "*,*::before,*::after{animation:none!important;transition:none!important;}",
+  });
+  await expect(page).toHaveScreenshot("child-home.png", {
+    animations: "disabled",
+    caret: "hide",
+    maxDiffPixels: 2,
+    scale: "css",
+  });
+});
+
 test("parent mode is React-owned and persists semantic settings", async ({
   page,
 }) => {
@@ -543,6 +558,14 @@ test("color sorting completes through the accessible Pixi input bridge", async (
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
     timeout: 8_000,
   });
+  await expect(page.locator(".speech-bubble")).toHaveCount(0);
+  const canvasBefore = await page.locator("canvas.pixi-stage").boundingBox();
+  expect(canvasBefore).not.toBeNull();
+  await page.waitForTimeout(2_500);
+  const canvasAfter = await page.locator("canvas.pixi-stage").boundingBox();
+  expect(canvasAfter).not.toBeNull();
+  expect(canvasAfter!.y).toBeCloseTo(canvasBefore!.y, 1);
+  expect(canvasAfter!.height).toBeCloseTo(canvasBefore!.height, 1);
 
   const items = page.locator("button.pixi-drag-item");
   await expect(items).toHaveCount(2);
