@@ -520,7 +520,24 @@ test("Romanian voice is bundled and cached for offline use", async ({
     const metadata = document.querySelector<HTMLMetaElement>(
       'meta[name="logic-lab-release"]',
     );
-    const response = await fetch("/release.json");
+    let response: Response | undefined;
+    for (const cacheName of await caches.keys()) {
+      const cache = await caches.open(cacheName);
+      const releaseRequest = (await cache.keys()).find(
+        (request) => new URL(request.url).pathname === "/release.json",
+      );
+      if (releaseRequest) response = await cache.match(releaseRequest);
+      if (response) break;
+    }
+    if (!response) {
+      return {
+        ok: false,
+        commit: "",
+        tree: "",
+        htmlCommit: metadata?.content,
+        htmlTree: metadata?.dataset.sourceTree,
+      };
+    }
     const release = (await response.json()) as {
       commit: string;
       tree: string;
