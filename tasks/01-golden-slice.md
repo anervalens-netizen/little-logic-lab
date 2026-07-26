@@ -37,11 +37,13 @@ rămâne blocat până la validările umane și pe dispozitiv.
 - tap plus runtime comun drag/snap magnetic;
 - overlay semantic pentru toate obiectele acționabile;
 - IndexedDB cu migrare v1/v2 și fallback;
-- manifest P0 compact generat din catalog/ladders;
+- manifest P0 și registry lazy tipizat, generate din catalog/ladders/ordinea
+  release, cu toate chunk-urile verificate în precache;
 - Parent Mode React și progresie limitată strict la stage-urile eligibile;
 - 324 clipuri RO locale, fără Web Speech sau request-uri audio externe;
 - Axe automat și 30 baseline-uri vizuale deterministe Chromium/WebKit;
 - telemetrie locală pentru frame p95, input latency și long tasks;
+- 81,85 KiB JS inițial gzip, sub bugetul de 100 KiB;
 - primul pass pentru toate cele trei jocuri și E2E Chromium/WebKit.
 
 Rămân deschise revizia auditivă umană, device performance, VoiceOver/TalkBack

@@ -10,7 +10,8 @@ import {
 import type { StoredProfile } from "../app/storage";
 import { exportProfileJson } from "../app/storage";
 import { registerScreenCleanup, showScreen } from "../app/router";
-import { allGames } from "../games/registry";
+import { loadAllGames } from "../generated/game-registry";
+import type { WebGame } from "../games/types";
 import { speak } from "../audio/speech";
 import { sfxTap } from "../audio/sfx";
 import { showHome } from "./home";
@@ -89,18 +90,18 @@ function SessionMinutes({
   );
 }
 
-function ParentScreen() {
+function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
   const profile = getProfile();
   const [settings, setSettings] = useState(profile.settings);
   const [deleting, setDeleting] = useState(false);
-  const games = useMemo(() => {
+  const progressGames = useMemo(() => {
     const seen = new Set<string>();
-    return allGames().filter((game) => {
+    return games.filter((game) => {
       if (seen.has(game.skillId)) return false;
       seen.add(game.skillId);
       return true;
     });
-  }, []);
+  }, [games]);
 
   const changeSettings = (patch: Partial<Settings>) => {
     updateSettings(patch);
@@ -130,7 +131,7 @@ function ParentScreen() {
       <div className="parent-panel">
         <section className="parent-card" aria-labelledby="parent-progress">
           <h2 id="parent-progress">Progres pe abilități</h2>
-          {games.map((game) => {
+          {progressGames.map((game) => {
             const mastery = profile.masteryBySkill[game.skillId];
             const mean = masteryMeanFor(game.skillId);
             const status = masteryStatus({
@@ -314,12 +315,13 @@ function ParentScreen() {
 }
 
 export async function showParentScreen(): Promise<void> {
+  const games = await loadAllGames();
   await showScreen(() => {
     const screen = document.createElement("div");
     screen.className = "bg-meadow";
     screen.dataset.screen = "parent";
     const root = createRoot(screen);
-    root.render(<ParentScreen />);
+    root.render(<ParentScreen games={games} />);
     registerScreenCleanup(screen, () => root.unmount());
     return screen;
   });

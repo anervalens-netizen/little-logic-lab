@@ -1,23 +1,6 @@
 import type { StoredProfile } from "./storage";
 import { isGameAgeEligible } from "./content";
-
-const P0_ORDER = [
-  "same-picture",
-  "sort-by-color",
-  "inset-puzzle",
-  "daily-order",
-  "one-to-one-count",
-  "shadow-match",
-  "peek-and-find",
-  "wait-for-go",
-  "listen-find",
-  "trace-road",
-  "emotion-match",
-  "sort-by-shape",
-  "sort-by-size",
-  "drag-and-fit",
-  "real-color-hunt",
-] as const;
+import { GAME_IDS } from "../generated/game-registry";
 
 export function unlockedGameIds(
   profile: StoredProfile,
@@ -25,7 +8,7 @@ export function unlockedGameIds(
 ): ReadonlySet<string> {
   const unlocked = new Set<string>();
 
-  for (const gameId of P0_ORDER) {
+  for (const gameId of GAME_IDS) {
     if (!isGameAgeEligible(gameId, profile.ageMonths)) continue;
     if (implementedIds.has(gameId)) unlocked.add(gameId);
 

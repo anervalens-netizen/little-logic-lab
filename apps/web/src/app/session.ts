@@ -5,7 +5,11 @@
 
 import { buildSessionPlan, defaultSessionGameCount, type GameCandidate } from "@core";
 import { getProfile, masteryMeanFor, recordSession } from "./appState";
-import { getGame, allGames } from "../games/registry";
+import {
+  GAME_IDS,
+  loadGame,
+  loadGames,
+} from "../generated/game-registry";
 import { runGame, cancelCurrentGame, resetCancelFlag, cancelFlagPending } from "../games/engine";
 import { buildGameShell } from "../screens/gameScreen";
 import { showScreen } from "./router";
@@ -21,11 +25,12 @@ import { unlockedGameIds } from "./unlocks";
 
 const SESSION_SECONDS_WARN = 0; // nu afișăm cronometru copilului
 
-function buildCandidates(): GameCandidate[] {
+async function buildCandidates(): Promise<GameCandidate[]> {
   const profile = getProfile();
-  const games = allGames();
-  const implementedIds = new Set(games.map((game) => game.id));
-  const unlocked = unlockedGameIds(profile, implementedIds);
+  const unlocked = unlockedGameIds(profile, new Set(GAME_IDS));
+  const games = await loadGames(
+    GAME_IDS.filter((gameId) => unlocked.has(gameId)),
+  );
   return games
     .filter(
       (game) =>
@@ -134,7 +139,7 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
   if (options.singleGameId !== undefined) {
     plan = [{ gameId: options.singleGameId }];
   } else {
-    const built = buildSessionPlan(buildCandidates(), {
+    const built = buildSessionPlan(await buildCandidates(), {
       seed: `session:${new Date().toISOString().slice(0, 10)}`,
       maxGames: defaultSessionGameCount(profile.ageMonths),
       includeHybrid: false,
@@ -147,7 +152,7 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
 
   for (const entry of plan) {
     if (Date.now() - start >= limitMs + SESSION_SECONDS_WARN) break;
-    const game = getGame(entry.gameId);
+    const game = await loadGame(entry.gameId);
     if (!game) continue;
 
     let playAnotherLevel = true;

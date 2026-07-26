@@ -38,8 +38,8 @@ export function isGameAgeEligible(gameId: string, ageMonths: number): boolean {
 }
 
 /**
- * Găsește ancora care corespunde vectorului efectiv al prototipului.
- * Până la migrarea completă, vectorul poate conține doar un subset de axe.
+ * Găsește ancora care corespunde vectorului efectiv al implementării.
+ * Migrările vechi pot furniza încă un subset de axe.
  */
 export function ladderStageFor(
   gameId: string,

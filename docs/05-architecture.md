@@ -51,9 +51,11 @@ packages/storage/
 packages/testing/
 ```
 
-Implementarea curentă are `apps/web`, `packages/core`, un manifest P0 generat
-și runtime-urile Pixi lazy-loaded în `apps/web/src/runtime`. Pachetele separate
-se extrag numai când al doilea consumator justifică granița.
+Implementarea curentă are `apps/web`, `packages/core`, un manifest P0 și un
+registry TypeScript generate din catalog + `content/p0-release.json`.
+Implementările jocurilor și runtime-urile Pixi sunt lazy-loaded; home încarcă
+numai jocurile deblocate, iar build-ul verifică precache-ul fiecărui chunk.
+Pachetele separate se extrag numai când al doilea consumator justifică granița.
 
 ## Game plugin contract
 
@@ -156,12 +158,14 @@ IndexedDB characteristics:
 ## Content pipeline
 
 1. Author or edit a game definition.
-2. Validate against JSON Schema.
-3. Validate age-band axes and guardrails.
-4. Generate deterministic preview levels.
-5. Run solvability/property tests.
-6. Review Romanian copy/audio.
-7. Bundle approved content with the app.
+2. Add the implementation to the release order when it becomes eligible.
+3. Generate the typed lazy registry and compact ladder manifest.
+4. Validate against JSON Schema.
+5. Validate age-band axes and guardrails.
+6. Generate deterministic preview levels.
+7. Run solvability/property tests.
+8. Review Romanian copy/audio.
+9. Bundle approved content and precache every lazy chunk.
 
 Content updates in v1 ship through normal app releases. Avoid remote configuration or OTA content until privacy implications are reviewed.
 

@@ -2,7 +2,7 @@
 
 import { el, svgEl } from "../ui/dom";
 import { showScreen } from "../app/router";
-import { allGames } from "../games/registry";
+import { GAME_IDS, loadGames } from "../generated/game-registry";
 import { drawLumi } from "../art/lumi";
 import { meadowScene } from "../art/scenery";
 import { openParentGate } from "../ui/gate";
@@ -23,6 +23,10 @@ let sessionRunning = false;
 
 export async function showHome(): Promise<void> {
   stopSpeaking();
+  const unlocked = unlockedGameIds(getProfile(), new Set(GAME_IDS));
+  const games = await loadGames(
+    GAME_IDS.filter((gameId) => unlocked.has(gameId)),
+  );
 
   await showScreen(() => {
     const screen = el("div", { className: "bg-meadow" });
@@ -88,13 +92,7 @@ export async function showHome(): Promise<void> {
     bubbles.style.cssText =
       "flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill, minmax(clamp(92px,17vmin,140px), 1fr));gap:clamp(10px,2vmin,18px);padding:6px 4px 10px;touch-action:pan-y;-webkit-overflow-scrolling:touch;";
 
-    const games = allGames();
-    const unlocked = unlockedGameIds(
-      getProfile(),
-      new Set(games.map((game) => game.id)),
-    );
-
-    for (const game of games.filter((candidate) => unlocked.has(candidate.id))) {
+    for (const game of games) {
       const bubble = el("button", { className: "choice-card pop-in", "aria-label": game.title });
       bubble.style.cssText = `aspect-ratio:1;background:${game.bubbleColor}26;border-color:${game.bubbleColor};animation-delay:${games.indexOf(game) * 40}ms;display:flex;flex-direction:column;gap:2px;padding:10px;`;
       const art = svgEl(game.icon());

@@ -34,7 +34,7 @@ const FOUND_BADGE = svg(`
   <path d="M 34 61 L 52 78 L 87 40" fill="none" stroke="#4E9A51" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
 `);
 
-export const colorHuntGame: WebGame = {
+export const realColorHuntGame: WebGame = {
   id: "real-color-hunt",
   title: "Vânătoarea de culori",
   skillId: "real_world_transfer",

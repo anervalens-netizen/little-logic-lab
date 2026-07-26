@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "gameIds": [
+    "same-picture",
+    "sort-by-color",
+    "inset-puzzle",
+    "daily-order",
+    "one-to-one-count",
+    "shadow-match",
+    "peek-and-find",
+    "wait-for-go",
+    "listen-find",
+    "trace-road",
+    "emotion-match",
+    "sort-by-shape",
+    "sort-by-size",
+    "drag-and-fit",
+    "real-color-hunt"
+  ]
+}

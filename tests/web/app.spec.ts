@@ -1610,7 +1610,7 @@ test("installed build reloads with the network disabled", async ({
   page,
   context,
 }, testInfo) => {
-  await page.goto("/");
+  await seedCleanProgress(page, P0_BEFORE_TRACE);
   const serviceWorkerState = await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
     const deadline = Date.now() + 8_000;
@@ -1652,5 +1652,14 @@ test("installed build reloads with the network disabled", async ({
   } else {
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+    await page.locator("body").click({ position: { x: 20, y: 20 } });
+    await expect(
+      page.locator('[data-screen="home"][data-screen-ready="true"]'),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Urmează drumul" }).click();
+    await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+      timeout: 8_000,
+    });
+    await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
   }
 });

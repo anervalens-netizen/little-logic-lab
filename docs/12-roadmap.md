@@ -2,7 +2,7 @@
 
 Status: activ
 
-Actualizat: 25 iulie 2026
+Actualizat: 26 iulie 2026
 Țintă: PWA premium, offline-first, pentru aproximativ 30–72 luni
 
 Acest document este sursa canonică pentru direcția produsului, ordinea
@@ -15,9 +15,11 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   replay, age gating, migrare și E2E sunt verificate.
 - R0 release: live la `https://logic-lab.astancu.eu/`; build verificat din `main`
   este servit static prin Cloudflare Tunnel + Caddy, cu CSP strict.
-- R1: activ; React deține shell-ul și Parent Mode, profilul este în IndexedDB,
-  catalogul P0 este compilat într-un manifest compact, iar scenele Pixi au
-  lifecycle și overlay semantic.
+- R1: automat complet; React deține shell-ul și Parent Mode, profilul este în
+  IndexedDB, iar catalogul + ordinea P0 generează manifestul compact și
+  registry-ul TypeScript lazy. Shell-ul inițial este 81,85 KiB gzip, toate
+  cele 15 chunk-uri de joc sunt precached, iar scenele Pixi au lifecycle și
+  overlay semantic. Exit-ul real rămâne condiționat de dispozitiv.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
   rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
   batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
@@ -73,10 +75,10 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 - vocea sintetică din browser cu audio românesc local, versionat;
 - service worker-ul cu cache versionat din manifestul build-ului;
 - testele temporare/brute-force cu teste Playwright versionate și aserțiuni;
+- registrul manual duplicat cu un loader TypeScript generat, lazy și cache-uit;
 
 ### De înlocuit controlat
 
-- registrul manual de implementări cu un loader tipizat din catalog și ladders;
 - ilustrațiile SVG generice cu un sistem artistic coerent și asset manifests.
 
 ### Probleme care blochează extinderea

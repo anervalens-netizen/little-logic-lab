@@ -59,11 +59,12 @@ packages/core/           logică TypeScript independentă de UI
 schemas/                 contracte JSON pentru conținut și date locale
 scripts/                 generare, validare, policy checks și preview
 tasks/                   pași de implementare gata pentru Codex
-apps/web/                prototipul web/PWA și viitorul shell React
+apps/web/                aplicația PWA React/Pixi, offline-first
 AGENTS.md                instrucțiuni autoritative pentru Codex
 ```
 
-**Aplicația web este jucabilă ca prototip:** vezi `apps/web/README.md`.
+**Aplicația PWA este live:** `https://logic-lab.astancu.eu/`; detalii locale în
+`apps/web/README.md`.
 Roadmap-ul canonic este `docs/12-roadmap.md`; stack-ul activ este în ADR 005.
 
 ## Verificare locală
@@ -75,7 +76,10 @@ npm run typecheck
 npm run build:web
 ```
 
-`npm test` regenerează și validează cele 1.030 de ancore, verifică politica offline/privacy, compilează nucleul TypeScript și rulează 23 de teste, inclusiv verificări pe sute de seed-uri.
+`npm test` regenerează și validează cele 1.030 de ancore și registry-ul P0,
+verifică politica offline/privacy, compilează nucleul TypeScript și rulează 23
+de teste, inclusiv verificări pe sute de seed-uri. `npm run build:web` impune
+shell JS sub 100 KiB gzip și verifică precache-ul tuturor chunk-urilor P0.
 
 ## Ordinea de implementare
 

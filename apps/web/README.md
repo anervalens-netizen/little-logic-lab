@@ -1,7 +1,7 @@
-# Minte în joacă — prototip web/PWA
+# Minte în joacă — PWA React/Pixi
 
-Baseline funcțional pentru migrarea la stack-ul din `docs/12-roadmap.md`.
-Nu este release candidate.
+Aplicația P0 este live la `https://logic-lab.astancu.eu/`. Producția servește
+build-ul static Vite prin Cloudflare Tunnel → Caddy; nu folosește un backend.
 
 ## Rulare locală
 
@@ -13,56 +13,40 @@ npm run build:web
 npm run preview --workspace @little-logic-lab/web
 ```
 
-Vite preview este numai pentru verificare locală. Producția țintă este
-Cloudflare Pages; nu rula preview-ul ca serviciu persistent.
+`preview` este numai pentru verificare locală. `npm run build:web` impune
+bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
 
-## Ce conține acum
+## Stare curentă
 
-- **14 prototipuri** din pachetul P0: potrivire imagini, umbre,
-  sortare după culoare/formă/mărime, puzzle cu forme, ordonarea rutinelor,
-  memorie vizuală, așteptarea semnalului, corespondență unu-la-unu,
-  ascultă-și-găsește, emoții, drumul spre casă, vânătoare de culori (hibrid).
-- **Sesiune adaptivă** (butonul JOACĂ): 3 jocuri alese de planificatorul din
-  `@core` (încălzire → creștere → noutate), 5 minute implicit.
-- **Dificultate adaptivă**: pornește conservator (2 opțiuni, o regulă) și
-  schimbă câte o singură axă, pe baza ultimelor rezultate (din `@core`).
-- **Mastery local** pe abilități (model beta din `@core`), vizibil părintelui.
-- **Voce în română** (Web Speech API) + efecte sonore generate (Web Audio).
-- **Poartă pentru adulți** (ține apăsat 3 secunde): progres, setări
-  (durata sesiunii, voce, muzică, mișcare redusă), export/ștergere date.
-- service worker cache-first prototip; update-ul versionat este restant în R0.
+- TypeScript 7 strict, React 19, PixiJS 8/WebGL și Vite 8;
+- 15/15 familii P0 funcționale, cu toate stage-urile ladder consumate;
+- registry TypeScript generat din catalog + ordinea P0, fără listă manuală;
+- jocurile și runtime-urile Pixi sunt chunk-uri lazy, precached pentru offline;
+- profil, replay, progres și setări în IndexedDB cu migrări/recovery;
+- 324 clipuri românești locale și efecte Web Audio, fără servicii remote;
+- overlay semantic, Reduced Motion, Axe și baseline-uri Chromium/WebKit;
+- PWA versionată, CSP strict și zero egress de gameplay.
 
 ## Structură
 
 ```text
 src/
-  main.ts            intrare și service worker prototip
-  styles.css         design system (paletă, butoane, animații, reduced motion)
-  app/               router, stare globală, persistență, orchestrare sesiune
-  audio/             context audio, voce ro-RO, efecte generate, muzică
-  art/               paletă, helperi SVG, Lumi (mascota), itemi, forme, fețe,
-                     rutine, decoruri — toată grafica e SVG desenată în cod
-  ui/                helperi DOM, feedback (confetti, laude), poarta adulților
-  games/             motor (engine), politica de suport, widget-uri,
-                     cele 14 jocuri ca module independente
-  screens/           splash, home, shell de joc, ecran părinte
-packages/core (import @core)
-                     nucleul pur TypeScript: generatoare, runtime-uri,
-                     mastery, dificultate, planificator sesiune
+  main.tsx           bootstrap React
+  app/               sesiuni, profil, IndexedDB, update PWA
+  generated/         manifest compact și registry lazy generate
+  games/             implementările P0 și engine-ul transversal
+  runtime/           scene Pixi reutilizabile
+  screens/           splash, home, joc și Parent Mode
+  audio/             manifest RO, playback local și efecte
+  art/               Lumi, scene și ilustrații SVG locale
+  ui/                input/feedback/parent gate
 ```
 
-## Limitări cunoscute
+## Porți rămase pentru pilot
 
-- registru și axe declarate manual; catalogul/ladders nu sunt încă runtime;
-- persistență `localStorage`, fără seed replay complet;
-- Web Speech depinde de dispozitiv;
-- E2E-urile vechi nu sunt versionate;
-- scenele DOM/CSS vor fi migrate incremental la React + PixiJS.
+- audiția celor 324 clipuri de un vorbitor nativ;
+- 60 FPS, input și lifecycle pe dispozitivul Android țintă;
+- verificare manuală TalkBack/VoiceOver;
+- observație copil–adult și remedierea blocajelor constatate.
 
-## Reguli păstrate
-
-- Nivelurile sunt deterministe (seed), mecanica pură vine din `@core`.
-- Fără citit necesar: instrucțiuni rostite + demonstrație vizuală (mânuță).
-- Fără pedeapsă: 1 greșeală → încurajare, 2 → indiciu, 3 → terminăm împreună.
-- Jocurile hibride (vânătoarea de culori) nu se punctează.
-- Nimic nu părăsește dispozitivul.
+Roadmap-ul canonic este `../../docs/12-roadmap.md`.
