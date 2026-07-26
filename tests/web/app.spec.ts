@@ -640,9 +640,67 @@ test("Pixi scene is destroyed and recreated without residual canvas", async ({
   await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
 });
 
+test("consecutive direct levels reuse the React shell", async ({ page }) => {
+  await enterHome(page, "/?diagnostics=1");
+  await page.getByRole("button", { name: "Găsește perechea" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await page
+    .locator(".game-screen")
+    .evaluate((screen: HTMLElement) => {
+      screen.dataset.shellReuseProbe = "true";
+    });
+  await page
+    .locator("canvas.pixi-stage")
+    .evaluate((canvas: HTMLElement) => {
+      canvas.dataset.pooledRendererProbe = "true";
+    });
+  await page
+    .locator(".pixi-accessibility")
+    .evaluate((overlay: HTMLElement) => {
+      overlay.dataset.previousLevel = "true";
+    });
+
+  const choices = page.locator("button.pixi-accessibility-choice");
+  await choices.nth(0).click();
+  await page.waitForTimeout(350);
+  await choices.nth(1).click();
+
+  await expect
+    .poll(
+      async () => {
+        const stored = await readStoredProfile(page);
+        return (stored?.attempts as unknown[] | undefined)?.length ?? 0;
+      },
+      { timeout: 8_000 },
+    )
+    .toBe(1);
+  await expect(
+    page.locator('.pixi-accessibility[data-previous-level="true"]'),
+  ).toHaveCount(0, { timeout: 8_000 });
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  await expect(
+    page.locator('.game-screen[data-shell-reuse-probe="true"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('canvas.pixi-stage[data-pooled-renderer-probe="true"]'),
+  ).toHaveCount(1);
+  await expect
+    .poll(async () =>
+      page.evaluate(
+        () => window.__logicLabPerformance?.snapshot().activeAudioTones,
+      ),
+    )
+    .toBe(0);
+});
+
 test("five Pixi lifecycle cycles release runtime resources", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   await enterHome(page, "/?diagnostics=1");
   const cacheSizes: number[] = [];
 

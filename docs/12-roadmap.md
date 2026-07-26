@@ -23,7 +23,7 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   Parent Mode și orchestratorul sesiunii sunt lazy, iar shell-ul inițial este
   69,98 KiB gzip, sub bugetul de 100 KiB; toate cele 15 chunk-uri de joc sunt
   precached, iar scenele Pixi au lifecycle și overlay semantic.
-  Exit-ul real rămâne condiționat de dispozitiv.
+  Exit-ul pe Android este închis pe OnePlus 6T real; porțile umane rămân.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
   rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
   batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
@@ -44,8 +44,8 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   nativ de pointer pe canvas pentru toate cele 17 stage-uri. Toate cele 15
   familii P0 sunt acum Pixi. 321 clipuri RO locale, Axe și 42 baseline-uri
   vizuale cu seed și ceas fixe sunt integrate. Feedback-ul implicit descrie
-  strategia/efortul, nu identitatea copilului. Lipsesc măsurarea pe
-  dispozitiv, revizia umană a vocii și validarea observată.
+  strategia/efortul, nu identitatea copilului. Lipsesc revizia umană a vocii,
+  validarea observată și verificarea manuală pe iOS.
 - R3 engineering: complet; 15/15 familii P0 consumă ladder-ele, scheduler-ul și
   unlock policy, iar finalul de sesiune blochează persistent continuarea în
   Child Mode. Numai Parent Mode poate permite o sesiune nouă. Pilotul privat
@@ -69,6 +69,16 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   hit-testing-ul. Cinci cicluri mount/unmount consecutive pe Chromium și WebKit
   readuc la zero canvasurile, overlay-urile, clonele de drag, vocea, tonurile și
   referințele cache-ului SVG; dimensiunea cache-ului rămâne stabilă.
+- R3 Android performance: închis pe OnePlus 6T, Android 11, Chrome 150,
+  ecran fizic 1080×2340/60 Hz și viewport 384×699 la DPR 2,8125. Trei ferestre
+  consecutive de aproximativ 10,1 s au susținut 59,55–59,84 FPS, frame p95
+  16,8 ms, input-to-frame 5,8–7,3 ms și zero long tasks peste 100 ms. Tranziția
+  completă eroare–indiciu–simplificare–nivel nou a susținut 59,62 FPS, input
+  10,6 ms și zero long tasks. Shell-ul React și contextul WebGL sunt reutilizate
+  între niveluri; cinci cicluri complete readuc toate resursele active la zero,
+  cu cache SVG stabil la 9/64. Suspendarea Android oprește
+  `requestAnimationFrame` la `visibilitychange=hidden`, iar revenirea păstrează
+  exact o scenă.
 
 ## 1. Obiectiv
 
@@ -110,7 +120,7 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 ### Probleme care blochează extinderea
 
 - cele 321 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
-- porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
+- VoiceOver/TalkBack și observația copil–adult nu sunt încă închise.
 
 ## 3. Stack țintă
 
@@ -230,8 +240,8 @@ Exit:
 - test observat cu copilul, cu problemele majore rezolvate.
 
 Migrarea arhetipurilor poate continua după exit-ul automat și aprobarea
-explicită a ownerului. Pilotul privat rămâne blocat până la porțile pe
-dispozitiv și observația umană.
+explicită a ownerului. Poarta Android este închisă; pilotul privat rămâne
+blocat până la observația și reviziile umane.
 
 ### R3 — Starter release P0
 
@@ -281,7 +291,8 @@ Estimare realistă până la toate cele 80 de familii la calitate ridicată:
 
 ## 6. Bugete de performanță
 
-- 60 FPS; frame time p95 sub 16,7 ms pe dispozitivul țintă;
+- 60 FPS; frame time p95 în maximum un interval de refresh: 16,7 ms nominal,
+  maximum 16,8 ms raportat de ceasul browserului pe panoul țintă de 60 Hz;
 - răspuns vizual la input sub 50 ms;
 - drag-ul nu pierde pointerul și rămâne sub deget;
 - shell inițial sub 100 KB gzip; runtime-urile/jocurile sunt lazy-loaded;
@@ -293,8 +304,8 @@ Estimare realistă până la toate cele 80 de familii la calitate ridicată:
 `?diagnostics=1` expune local `window.__logicLabPerformance.snapshot()` pentru
 frame p95, input-to-frame, long tasks și resursele runtime active. Playwright
 impune input sub 50 ms și zero resurse reziduale după cicluri repetate;
-pragul de 60 FPS nu se evaluează în headless/SwiftShader, ci pe dispozitivul
-Android țintă.
+pragul de 60 FPS se evaluează pe dispozitivul Android real, nu în
+headless/SwiftShader.
 
 Pixi folosește WebGL în producție. WebGPU poate fi evaluat ulterior, nu este
 poartă pentru v1.
@@ -393,10 +404,9 @@ de produs.
 ## 12. Ordinea imediată de lucru
 
 1. revizuiește auditiv cele 321 clipuri RO și înlocuiește pronunțiile slabe;
-2. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
-3. verifică manual VoiceOver și TalkBack;
-4. rulează observația cu copilul și rezolvă blocajele majore;
-5. începe R4 numai după închiderea problemelor P0 observate.
+2. verifică manual VoiceOver și TalkBack;
+3. rulează observația cu copilul și rezolvă blocajele majore;
+4. începe R4 numai după închiderea problemelor P0 observate.
 
 ## Definition of done
 

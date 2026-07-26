@@ -1,11 +1,15 @@
 import {
-  Application,
   Container,
   Graphics,
   Rectangle,
   Sprite,
+  Texture,
   type Ticker,
 } from "pixi.js";
+import {
+  acquirePixiApplication,
+  releasePixiApplication,
+} from "./pixiApplication";
 import { loadSvgTexture } from "./svgTexture";
 import {
   attachPixiPerformanceDiagnostics,
@@ -87,21 +91,7 @@ export async function createPixiChoiceScene(
   host: HTMLElement,
   options: PixiChoiceSceneOptions,
 ): Promise<PixiChoiceScene> {
-  const app = new Application();
-  await app.init({
-    resizeTo: host,
-    antialias: true,
-    autoDensity: true,
-    resolution: Math.min(window.devicePixelRatio || 1, 2),
-    backgroundAlpha: 0,
-    preference: "webgl",
-    powerPreference: "high-performance",
-  });
-
-  app.canvas.className = "pixi-stage";
-  app.canvas.setAttribute("aria-hidden", "true");
-  host.classList.add("pixi-host");
-  host.append(app.canvas);
+  const app = await acquirePixiApplication(host);
   const stopPerformanceDiagnostics = attachPixiPerformanceDiagnostics(
     app.ticker,
   );
@@ -140,7 +130,7 @@ export async function createPixiChoiceScene(
   releases.push(targetTexture.release);
   if (destroyed) {
     releases.forEach((release) => release());
-    app.destroy({ removeView: true }, true);
+    releasePixiApplication(host, app);
     throw new Error("Pixi scene destroyed while loading");
   }
 
@@ -380,23 +370,42 @@ export async function createPixiChoiceScene(
         card.container.rotation = 0;
       });
 
-      for (let index = 0; index < 10; index += 1) {
-        const sparkle = new Graphics()
-          .circle(0, 0, 5 + (index % 3))
-          .fill({ color: [0xffd35c, 0x7fc86b, 0x4fa8e8][index % 3] });
+      const sparkles = Array.from({ length: 10 }, (_, index) => {
+        const sparkle = new Sprite(Texture.WHITE);
+        const size = 10 + (index % 3) * 4;
+        sparkle.anchor.set(0.5);
+        sparkle.width = size;
+        sparkle.height = size;
+        sparkle.tint =
+          [0xffd35c, 0x7fc86b, 0x4fa8e8][index % 3] ?? 0xffd35c;
+        sparkle.rotation = Math.PI / 4;
         sparkle.position.copyFrom(card.container.position);
         app.stage.addChild(sparkle);
-        const angle = (Math.PI * 2 * index) / 10;
-        tween(700, (progress) => {
-          const distance = progress * Math.min(card.width * 0.72, 130);
+        return {
+          angle: (Math.PI * 2 * index) / 10,
+          sparkle,
+        };
+      });
+      let sparkleElapsed = 0;
+      const animateSparkles = (ticker: Ticker) => {
+        sparkleElapsed += ticker.deltaMS;
+        const progress = Math.min(1, sparkleElapsed / 700);
+        const distance = progress * Math.min(card.width * 0.72, 130);
+        for (const { angle, sparkle } of sparkles) {
           sparkle.position.set(
             card.baseX + Math.cos(angle) * distance,
             card.baseY + Math.sin(angle) * distance,
           );
           sparkle.alpha = 1 - progress;
           sparkle.scale.set(1 - progress * 0.5);
-        }, () => sparkle.destroy());
-      }
+        }
+        if (progress < 1) return;
+        app.ticker.remove(animateSparkles);
+        tickerCallbacks.delete(animateSparkles);
+        sparkles.forEach(({ sparkle }) => sparkle.destroy());
+      };
+      tickerCallbacks.add(animateSparkles);
+      app.ticker.add(animateSparkles);
     },
     markIncorrect(id) {
       const card = byId(id);
@@ -523,9 +532,8 @@ export async function createPixiChoiceScene(
       tickerCallbacks.clear();
       stopPerformanceDiagnostics();
       accessibility.remove();
-      app.destroy({ removeView: true }, { children: true });
+      releasePixiApplication(host, app);
       releases.forEach((release) => release());
-      host.classList.remove("pixi-host");
     },
   };
 }

@@ -104,20 +104,19 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
     if (!game) continue;
 
     let playAnotherLevel = true;
-    let firstLevelOfGame = true;
+    let quit = false;
+    const shell = buildGameShell({
+      onHome: () => {
+        quit = true;
+        cancelCurrentGame();
+      },
+      showProgress: options.singleGameId === undefined,
+    });
+    shell.setProgress(gamesPlayed, plan.length);
+    await showScreen(() => shell.screen);
 
     while (playAnotherLevel && Date.now() - start < limitMs) {
-      let quit = false;
-      const shell = buildGameShell({
-        onHome: () => {
-          quit = true;
-          cancelCurrentGame();
-        },
-        showProgress: options.singleGameId === undefined,
-      });
       shell.setProgress(gamesPlayed, plan.length);
-
-      await showScreen(() => shell.screen);
 
       // Instrucțiune + demonstrație vizuală (fără citit).
       shell.showBubble(game.instruction);
@@ -150,12 +149,10 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
       // După primul nivel terminat frumos, trecem la jocul următor;
       // în modul „un singur joc", continuăm niveluri până la limita de timp.
       playAnotherLevel = options.singleGameId !== undefined && result.completed;
-      firstLevelOfGame = false;
 
       if (!playAnotherLevel && profile.settings.coPlayPrompts && result.completed) {
         await showCoPlayCard(game.coPlayPrompt);
       }
-      if (firstLevelOfGame) break;
       if (cancelFlagPending()) {
         stopSpeaking();
         await showHome();

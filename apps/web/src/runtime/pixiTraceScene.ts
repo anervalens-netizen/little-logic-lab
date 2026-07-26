@@ -1,5 +1,4 @@
 import {
-  Application,
   Container,
   Graphics,
   Rectangle,
@@ -11,6 +10,10 @@ import type {
   TracePathWidth,
   TracePoint,
 } from "@core";
+import {
+  acquirePixiApplication,
+  releasePixiApplication,
+} from "./pixiApplication";
 import { loadSvgTexture } from "./svgTexture";
 import {
   attachPixiPerformanceDiagnostics,
@@ -75,21 +78,8 @@ export async function createPixiTraceScene(
   if (options.points.length < 2) {
     throw new Error("A trace scene needs at least two points.");
   }
-  const app = new Application();
-  await app.init({
-    resizeTo: host,
-    antialias: true,
-    autoDensity: true,
-    resolution: Math.min(window.devicePixelRatio || 1, 2),
-    backgroundAlpha: 0,
-    preference: "webgl",
-    powerPreference: "high-performance",
-  });
-  app.canvas.className = "pixi-stage";
-  app.canvas.setAttribute("aria-hidden", "true");
+  const app = await acquirePixiApplication(host);
   app.canvas.style.touchAction = "none";
-  host.classList.add("pixi-host");
-  host.append(app.canvas);
   const stopPerformanceDiagnostics = attachPixiPerformanceDiagnostics(
     app.ticker,
   );
@@ -400,9 +390,8 @@ export async function createPixiTraceScene(
       tickerCallbacks.clear();
       stopPerformanceDiagnostics();
       accessibility.remove();
-      app.destroy({ removeView: true }, { children: true });
+      releasePixiApplication(host, app);
       releases.forEach((release) => release());
-      host.classList.remove("pixi-host");
     },
   };
 }

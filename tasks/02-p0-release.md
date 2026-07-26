@@ -1,6 +1,6 @@
 # Task 02 — Starter release P0
 
-Status: automat complet; revizia audio și porțile umane/device rămân externe
+Status: automat și Android complet; revizia audio și porțile umane rămân externe
 
 ## Goal
 
@@ -59,6 +59,8 @@ reutilizabile, după golden slice.
 - stage-ul maxim de 12 obiecte/4 coșuri este E2E, cu grid tactil de minimum
   96 px și exact un canvas;
 - toate cele 15 familii P0 folosesc acum Pixi, fără renderer DOM de prototip;
+- nivelurile consecutive reutilizează shell-ul React și contextul WebGL, fără
+  recreare GPU sau long tasks peste 100 ms în tranziție;
 - finalul sesiunii persistă un lock local; Child Mode nu mai expune continuarea,
   iar Parent Mode este singura cale de a permite o sesiune nouă;
 - lifecycle-ul păstrează exact un canvas, iar Chromium/WebKit au E2E și 30

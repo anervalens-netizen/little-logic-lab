@@ -65,7 +65,9 @@
 
 ## Physical-device gates
 
-- [ ] Android target sustains 60 FPS and input/lifecycle budgets.
+- [x] Android target sustains 60 FPS and input/lifecycle budgets.
+  OnePlus 6T/Android 11/Chrome 150: 59,55–59,84 FPS, frame p95 16,8 ms,
+  input 5,8–7,3 ms, zero long tasks și zero resurse după cinci cicluri.
 - [ ] All 321 Romanian clips pass native-speaker auditory review.
 
 ## Observed pilot

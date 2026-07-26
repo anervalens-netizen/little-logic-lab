@@ -47,5 +47,6 @@ All items in `docs/15-release-checklist.md` are either passed or explicitly docu
   verificate automat;
 - Axe, matrice Chromium/WebKit touch/desktop și baseline-uri vizuale.
 
-Rămân explicit blocate de accesul fizic: VoiceOver/TalkBack manual, auditul
-auditiv nativ, măsurarea pe dispozitivul Android țintă și observația copil–adult.
+Rămân explicit blocate de validarea umană: VoiceOver/TalkBack manual, auditul
+auditiv nativ și observația copil–adult. Măsurarea Android este închisă pe
+OnePlus 6T real.

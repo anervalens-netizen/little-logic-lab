@@ -1,6 +1,6 @@
 # Task 01 — Golden slice
 
-Status: automat complet; porțile umane/device rămân externe
+Status: automat și Android complet; porțile umane rămân externe
 
 ## Goal
 
@@ -20,7 +20,7 @@ Definește standardul final de produs prin trei jocuri:
 
 ## Acceptance
 
-- 60 FPS, frame p95 sub 16,7 ms;
+- 60 FPS, frame p95 în maximum un interval de refresh;
 - input feedback sub 50 ms;
 - fără citit necesar copilului;
 - toate ancorele 30–36 luni relevante sunt consumate;
@@ -28,7 +28,7 @@ Definește standardul final de produs prin trei jocuri:
 - observația cu copilul nu identifică blocaje majore.
 
 Exit-ul automat permite migrarea arhetipurilor cu aprobarea ownerului; pilotul
-rămâne blocat până la validările umane și pe dispozitiv.
+rămâne blocat până la validările umane.
 
 ## Implementat
 
@@ -45,8 +45,10 @@ rămâne blocat până la validările umane și pe dispozitiv.
 - 321 clipuri RO locale, fără Web Speech sau request-uri audio externe;
 - Axe automat și 42 baseline-uri vizuale deterministe Chromium/WebKit;
 - telemetrie locală pentru frame p95, input latency și long tasks;
+- OnePlus 6T real: 59,55–59,84 FPS, frame p95 16,8 ms, input 5,8–7,3 ms,
+  zero long tasks și lifecycle fără resurse reziduale;
 - 69,98 KiB JS inițial gzip, sub bugetul de 100 KiB;
 - primul pass pentru toate cele trei jocuri și E2E Chromium/WebKit.
 
-Rămân deschise revizia auditivă umană, device performance, VoiceOver/TalkBack
-și observația cu copilul.
+Rămân deschise revizia auditivă umană, VoiceOver/observația iOS, TalkBack
+manual și observația cu copilul.

@@ -5,6 +5,7 @@
  */
 
 import { getAudioContext, getMaster } from "./audio";
+import { beginAudioTone } from "../runtime/resourceDiagnostics";
 
 interface Note {
   f0: number;
@@ -25,14 +26,16 @@ function play(notes: Note[]): void {
     const durS = n.dur / 1000;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    let lfo: OscillatorNode | null = null;
+    let lfoGain: GainNode | null = null;
     osc.type = n.type ?? "sine";
     osc.frequency.setValueAtTime(Math.max(1, n.f0), t0);
     if (n.f1 !== undefined && n.f1 !== n.f0) {
       osc.frequency.exponentialRampToValueAtTime(Math.max(1, n.f1), t0 + durS);
     }
     if (n.vib) {
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
+      lfo = ctx.createOscillator();
+      lfoGain = ctx.createGain();
       lfo.frequency.value = 9;
       lfoGain.gain.value = n.vib;
       lfo.connect(lfoGain).connect(osc.frequency);
@@ -44,8 +47,25 @@ function play(notes: Note[]): void {
     gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.025);
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + durS);
     osc.connect(gain).connect(master);
-    osc.start(t0);
-    osc.stop(t0 + durS + 0.05);
+    const releaseDiagnostic = beginAudioTone();
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
+      osc.disconnect();
+      gain.disconnect();
+      lfo?.disconnect();
+      lfoGain?.disconnect();
+      releaseDiagnostic();
+    };
+    osc.addEventListener("ended", release, { once: true });
+    try {
+      osc.start(t0);
+      osc.stop(t0 + durS + 0.05);
+    } catch (error) {
+      release();
+      throw error;
+    }
   }
 }
 
@@ -72,8 +92,24 @@ function noise(durMs: number, vol: number, filterFreq: number, at = 0): void {
   gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.03);
   gain.gain.exponentialRampToValueAtTime(0.0001, t0 + durMs / 1000);
   src.connect(filter).connect(gain).connect(master);
-  src.start(t0);
-  src.stop(t0 + durMs / 1000 + 0.05);
+  const releaseDiagnostic = beginAudioTone();
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    src.disconnect();
+    filter.disconnect();
+    gain.disconnect();
+    releaseDiagnostic();
+  };
+  src.addEventListener("ended", release, { once: true });
+  try {
+    src.start(t0);
+    src.stop(t0 + durMs / 1000 + 0.05);
+  } catch (error) {
+    release();
+    throw error;
+  }
 }
 
 /** Sunetul specific fiecărui item. Volum mic, caracter blând. */

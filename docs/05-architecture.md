@@ -126,6 +126,11 @@ Use PixiJS with the production WebGL renderer for:
 Keep an accessible DOM overlay for every actionable canvas object. Do not
 sacrifice VoiceOver/TalkBack for visual convenience.
 
+Nivelurile consecutive din același joc reutilizează un singur shell React și
+un singur `Application` Pixi/WebGL per host. Fiecare scenă își elimină copiii,
+listenerii, ticker callbacks și lease-urile la final; contextul GPU este distrus
+definitiv când shell-ul părăsește ecranul.
+
 ## State management
 
 Prefer small explicit stores:

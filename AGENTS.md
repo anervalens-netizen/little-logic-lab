@@ -64,14 +64,13 @@ product and device gates. Record exact dependency versions in ADR 005.
 
 ## Current delivery order
 
-The automated P0 implementation is complete. Close the physical-device and
-human gates before R4:
+The automated P0 implementation and Android performance gate are complete.
+Close the remaining human gates before R4:
 
 1. native Romanian audio review;
-2. Android FPS/input/lifecycle measurement;
-3. manual VoiceOver/TalkBack traversal;
-4. parent-supervised child observation and remediation;
-5. P1 expansion through existing archetypes only after P0 findings are closed.
+2. manual VoiceOver/TalkBack traversal;
+3. parent-supervised child observation and remediation;
+4. P1 expansion through existing archetypes only after P0 findings are closed.
 
 Canonical status and acceptance criteria are in `docs/12-roadmap.md`.
 

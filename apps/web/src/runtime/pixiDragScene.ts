@@ -1,5 +1,4 @@
 import {
-  Application,
   Container,
   FederatedPointerEvent,
   Graphics,
@@ -7,6 +6,10 @@ import {
   Sprite,
   type Ticker,
 } from "pixi.js";
+import {
+  acquirePixiApplication,
+  releasePixiApplication,
+} from "./pixiApplication";
 import { loadSvgTexture } from "./svgTexture";
 import {
   attachPixiPerformanceDiagnostics,
@@ -116,21 +119,7 @@ export async function createPixiDragScene(
   host: HTMLElement,
   options: PixiDragSceneOptions,
 ): Promise<PixiDragScene> {
-  const app = new Application();
-  await app.init({
-    resizeTo: host,
-    antialias: true,
-    autoDensity: true,
-    resolution: Math.min(window.devicePixelRatio || 1, 2),
-    backgroundAlpha: 0,
-    preference: "webgl",
-    powerPreference: "high-performance",
-  });
-
-  app.canvas.className = "pixi-stage";
-  app.canvas.setAttribute("aria-hidden", "true");
-  host.classList.add("pixi-host");
-  host.append(app.canvas);
+  const app = await acquirePixiApplication(host);
   const stopPerformanceDiagnostics = attachPixiPerformanceDiagnostics(
     app.ticker,
   );
@@ -626,9 +615,8 @@ export async function createPixiDragScene(
       tickerCallbacks.clear();
       stopPerformanceDiagnostics();
       accessibility.remove();
-      app.destroy({ removeView: true }, { children: true });
+      releasePixiApplication(host, app);
       releases.forEach((release) => release());
-      host.classList.remove("pixi-host");
     },
   };
 }

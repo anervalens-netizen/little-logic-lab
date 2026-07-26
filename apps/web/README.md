@@ -55,8 +55,11 @@ src/
 ## Porți rămase pentru pilot
 
 - audiția celor 321 clipuri de un vorbitor nativ;
-- 60 FPS, input și lifecycle pe dispozitivul Android țintă;
 - verificare manuală TalkBack/VoiceOver;
 - observație copil–adult și remedierea blocajelor constatate.
+
+Poarta Android este închisă pe OnePlus 6T/Android 11/Chrome 150:
+59,55–59,84 FPS, frame p95 16,8 ms, input 5,8–7,3 ms, zero long tasks și
+zero resurse active după cinci cicluri.
 
 Roadmap-ul canonic este `../../docs/12-roadmap.md`.

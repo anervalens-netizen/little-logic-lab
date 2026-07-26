@@ -15,6 +15,7 @@ import { meadowScene } from "../art/scenery";
 import { attachAmbient } from "../ui/ambient";
 import { speak } from "../audio/speech";
 import { registerScreenCleanup } from "../app/router";
+import { destroyPixiApplication } from "../runtime/pixiApplication";
 
 export interface GameShell {
   readonly screen: HTMLElement;
@@ -212,7 +213,10 @@ export function buildGameShell(opts: {
   });
   const controller = controllerRef.current;
   if (!controller) throw new Error("Game shell failed to mount");
-  registerScreenCleanup(screen, () => root.unmount());
+  registerScreenCleanup(screen, () => {
+    destroyPixiApplication(controller.mount);
+    root.unmount();
+  });
 
   return {
     screen,
