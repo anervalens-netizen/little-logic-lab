@@ -13,12 +13,13 @@ import {
 import { runGame, cancelCurrentGame, resetCancelFlag, cancelFlagPending } from "../games/engine";
 import { buildGameShell } from "../screens/gameScreen";
 import { showScreen } from "./router";
-import { el, svgEl, wait } from "../ui/dom";
+import { wait } from "../ui/dom";
 import { speak, stopSpeaking } from "../audio/speech";
-import { sfxSessionEnd } from "../audio/sfx";
-import { drawLumi } from "../art/lumi";
-import { nightScene } from "../art/scenery";
 import { showHome } from "../screens/home";
+import {
+  showCoPlayCard,
+  showSessionEndCard,
+} from "../screens/sessionCards";
 import { applyPendingUpdate } from "./update";
 import { isGameAgeEligible } from "./content";
 import { unlockedGameIds } from "./unlocks";
@@ -55,73 +56,19 @@ async function buildCandidates(): Promise<GameCandidate[]> {
     });
 }
 
-/** Card de co-play / transfer în lumea reală, după un joc. */
-async function showCoPlayCard(prompt: string): Promise<void> {
-  const screen = el("div", { className: "bg-sunset" });
-  screen.style.cssText = "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:24px;";
-
-  const lumiArt = svgEl(drawLumi("happy", 120));
-  lumiArt.classList.add("lll-float");
-  const card = el("div", { className: "speech-bubble" });
-  card.style.fontSize = "clamp(24px,4.6vw,36px)";
-  card.append(prompt);
-
-  const btn = el("button", { className: "btn-big green" }, "Am făcut-o!");
-  screen.append(lumiArt, card, btn);
-
-  let resolveFn: () => void = () => undefined;
-  const done = new Promise<void>((resolve) => {
-    resolveFn = resolve;
-  });
-  btn.addEventListener("click", () => resolveFn());
-
-  await showScreen(() => screen);
-  speak(prompt);
-  await done;
-}
-
 /** Ecranul de final de sesiune: Lumi doarme, calm, fără stimulente. */
 async function showSessionEnd(
   sessionId: string,
   startedAtMs: number,
   gamesPlayed: number,
 ): Promise<void> {
-  const screen = el("div", { className: "bg-night" });
-  screen.style.cssText = "display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:24px;";
-
-  const sceneHolder = el("div", {});
-  sceneHolder.style.cssText = "position:absolute;inset:0;pointer-events:none;";
-  const scene = svgEl(nightScene());
-  scene.style.cssText = "position:absolute;inset:0;";
-  sceneHolder.append(scene);
-
-  const lumiWrap = el("div", { className: "lumi sleepy" });
-  lumiWrap.append(svgEl(drawLumi("sleepy", 150)));
-  lumiWrap.style.zIndex = "2";
-
-  const text = el("div", { className: "speech-bubble" }, "Gata pentru azi! Lumi se odihnește. Ne jucăm iar mai târziu!");
-  text.style.zIndex = "2";
-
-  const btn = el("button", { className: "btn-big blue" }, "Înapoi acasă");
-  btn.style.zIndex = "2";
-
-  screen.append(sceneHolder, lumiWrap, text, btn);
-
-  let resolveFn: () => void = () => undefined;
-  const done = new Promise<void>((resolve) => {
-    resolveFn = resolve;
+  await showSessionEndCard(() => {
+    const elapsedMinutes = Math.max(
+      0.1,
+      Math.round(((Date.now() - startedAtMs) / 60_000) * 10) / 10,
+    );
+    recordSession(sessionId, elapsedMinutes, gamesPlayed);
   });
-  btn.addEventListener("click", () => resolveFn());
-
-  await showScreen(() => screen);
-  sfxSessionEnd();
-  speak("Gata pentru azi! Ai lucrat cu răbdare. Lumi se odihnește acum.");
-  const elapsedMinutes = Math.max(
-    0.1,
-    Math.round(((Date.now() - startedAtMs) / 60_000) * 10) / 10,
-  );
-  recordSession(sessionId, elapsedMinutes, gamesPlayed);
-  await done;
 }
 
 export interface SessionOptions {

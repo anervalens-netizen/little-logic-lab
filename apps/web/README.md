@@ -18,8 +18,8 @@ bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
 
 ## Stare curentă
 
-- TypeScript 7 strict, React 19 pentru Home/shell/Parent Mode, PixiJS 8/WebGL
-  pentru scene și Vite 8;
+- TypeScript 7 strict, React 19 pentru Splash/Home/tranziții/shell/Parent Mode,
+  PixiJS 8/WebGL pentru scene și Vite 8;
 - 15/15 familii P0 funcționale, cu toate stage-urile ladder consumate;
 - registry TypeScript generat din catalog + ordinea P0, fără listă manuală;
 - 36 ilustrații procedurale originale, cu metadate canonice și ID-uri tipizate;
@@ -32,7 +32,7 @@ bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
 - overlay semantic, Reduced Motion, contrast ridicat, ținte de 112 px,
   demonstrații 1,5× mai lente, Axe și baseline-uri Chromium/WebKit;
 - PWA versionată, CSP strict și zero egress de gameplay.
-- shell inițial 83,06 KiB JS gzip, sub bugetul de 100 KiB.
+- shell inițial 82,99 KiB JS gzip, sub bugetul de 100 KiB.
 
 ## Structură
 

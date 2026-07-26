@@ -157,6 +157,326 @@ html[data-high-contrast="true"] .pixi-stage {
   background: linear-gradient(180deg, #ffd9a0 0%, #ffc4c4 55%, #fff3d9 100%);
 }
 
+/* ---------- Intrare și tranziții de sesiune ---------- */
+
+.splash-screen,
+.session-card-screen {
+  isolation: isolate;
+}
+
+.splash-interaction {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  cursor: pointer;
+  place-items: center;
+}
+
+.splash-scenery,
+.splash-scenery > svg,
+.splash-ambient-host,
+.session-card-scenery,
+.session-card-scenery > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.splash-scenery,
+.session-card-scenery {
+  z-index: 0;
+}
+
+.splash-ambient-host {
+  z-index: 1;
+}
+
+.splash-content,
+.session-card-content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  padding:
+    calc(20px + env(safe-area-inset-top))
+    18px
+    calc(24px + env(safe-area-inset-bottom));
+  place-items: center;
+}
+
+.splash-brand-card,
+.session-card-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 620px);
+  border: 3px solid rgba(255, 255, 255, 0.62);
+  border-radius: clamp(36px, 9vw, 58px);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.58),
+      rgba(255, 251, 241, 0.28)
+    );
+  box-shadow:
+    0 12px 0 rgba(74, 63, 53, 0.08),
+    0 28px 60px rgba(74, 63, 53, 0.11);
+  backdrop-filter: blur(7px);
+}
+
+.splash-brand-card {
+  flex-direction: column;
+  min-height: min(700px, calc(100vh - 44px));
+  padding: clamp(28px, 5vh, 52px) clamp(18px, 6vw, 44px);
+  gap: clamp(12px, 2.4vh, 22px);
+  overflow: hidden;
+  text-align: center;
+}
+
+.splash-brand-card::after {
+  position: absolute;
+  z-index: -1;
+  right: -80px;
+  bottom: -110px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(255, 211, 92, 0.16);
+  content: "";
+}
+
+.splash-lumi-halo {
+  position: absolute;
+  z-index: -1;
+  top: clamp(24px, 5vh, 52px);
+  left: 50%;
+  width: clamp(190px, 54vw, 260px);
+  aspect-ratio: 1;
+  border: 3px solid rgba(255, 255, 255, 0.56);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 243, 201, 0.92),
+      rgba(255, 211, 92, 0.12) 68%,
+      transparent 70%
+    );
+  transform: translateX(-50%);
+}
+
+.splash-lumi {
+  display: block;
+  width: clamp(166px, 44vw, 220px);
+}
+
+.splash-lumi svg,
+.session-card-lumi svg,
+.splash-start-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.splash-title {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-size: clamp(38px, 10vw, 68px);
+  font-weight: 850;
+  letter-spacing: 0.005em;
+  line-height: 0.96;
+  text-wrap: balance;
+  text-shadow: 0 4px 0 rgba(255, 255, 255, 0.68);
+}
+
+.splash-subtitle {
+  max-width: 440px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(18px, 4.8vw, 25px);
+  font-weight: 700;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.splash-start-button {
+  width: min(100%, 440px);
+  min-height: 92px;
+  margin-top: clamp(4px, 1.5vh, 12px);
+  padding-right: clamp(18px, 5vw, 34px);
+  padding-left: clamp(18px, 5vw, 34px);
+  gap: 12px;
+  font-size: clamp(20px, 5.7vw, 29px);
+  white-space: nowrap;
+}
+
+.splash-start-icon {
+  display: block;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.session-card-panel {
+  flex-direction: column;
+  min-height: min(610px, calc(100vh - 52px));
+  padding: clamp(28px, 6vh, 54px) clamp(22px, 7vw, 56px);
+  gap: clamp(18px, 3vh, 28px);
+  text-align: center;
+}
+
+.session-card-panel--sunset {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.64),
+      rgba(255, 243, 217, 0.32)
+    );
+}
+
+.session-card-panel--night {
+  border-color: rgba(255, 255, 255, 0.46);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(48, 57, 116, 0.78),
+      rgba(78, 90, 158, 0.5)
+    );
+  box-shadow:
+    0 12px 0 rgba(29, 32, 74, 0.2),
+    0 28px 60px rgba(20, 24, 65, 0.24);
+}
+
+.session-card-lumi {
+  display: block;
+  flex: 0 0 auto;
+  width: clamp(136px, 39vw, 188px);
+}
+
+.session-card-lumi--sleepy {
+  width: clamp(156px, 44vw, 210px);
+}
+
+.session-card-message {
+  width: min(100%, 520px);
+  margin: 0;
+  font-size: clamp(22px, 5.4vw, 34px);
+  line-height: 1.2;
+}
+
+.session-card-title {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: clamp(29px, 7vw, 42px);
+  line-height: 1;
+}
+
+.session-card-message p {
+  margin: 0;
+}
+
+.session-card-button {
+  width: min(100%, 380px);
+  min-height: 86px;
+}
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .splash-content,
+  .session-card-content {
+    padding:
+      calc(10px + env(safe-area-inset-top))
+      18px
+      calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .splash-brand-card {
+    display: grid;
+    grid-template:
+      "lumi title" auto
+      "lumi subtitle" auto
+      "lumi action" auto
+      / minmax(150px, 0.7fr) minmax(340px, 1.3fr);
+    width: min(100%, 780px);
+    min-height: 0;
+    padding: 22px 34px;
+    gap: 10px 30px;
+    text-align: left;
+  }
+
+  .splash-lumi-halo {
+    top: 50%;
+    left: 19%;
+    width: 190px;
+    transform: translate(-50%, -50%);
+  }
+
+  .splash-lumi {
+    grid-area: lumi;
+    justify-self: center;
+    width: 170px;
+  }
+
+  .splash-title {
+    grid-area: title;
+    align-self: end;
+    font-size: clamp(38px, 6.2vw, 58px);
+  }
+
+  .splash-subtitle {
+    grid-area: subtitle;
+    font-size: 18px;
+  }
+
+  .splash-start-button {
+    grid-area: action;
+    align-self: start;
+    min-height: 72px;
+    margin: 0;
+    font-size: 23px;
+  }
+
+  .session-card-panel {
+    display: grid;
+    grid-template:
+      "lumi message" auto
+      "lumi action" auto
+      / minmax(150px, 0.72fr) minmax(360px, 1.28fr);
+    width: min(100%, 800px);
+    min-height: 0;
+    padding: 24px 38px;
+    gap: 18px 30px;
+  }
+
+  .session-card-lumi,
+  .session-card-lumi--sleepy {
+    grid-area: lumi;
+    justify-self: center;
+    width: 160px;
+  }
+
+  .session-card-message {
+    grid-area: message;
+    align-self: end;
+    font-size: 22px;
+  }
+
+  .session-card-button {
+    grid-area: action;
+    align-self: start;
+    justify-self: center;
+    min-height: 72px;
+  }
+}
+
 /* ---------- Acasă ---------- */
 
 .home-screen {

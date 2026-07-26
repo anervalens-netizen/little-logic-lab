@@ -138,7 +138,9 @@ async function placeVisiblePixiSortItems(
 async function enterHome(page: Page, path = "/"): Promise<void> {
   await page.goto(path);
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
-  await page.locator("body").click({ position: { x: 20, y: 20 } });
+  await page
+    .getByRole("button", { name: "Atinge și joacă-te!" })
+    .click();
   await expect(
     page.locator('[data-screen="home"][data-screen-ready="true"]'),
   ).toBeVisible();
@@ -179,6 +181,24 @@ test("child home is local-only and progressively unlocked", async ({ page }) => 
     page.getByRole("button", { name: "Găsește perechea" }),
   ).toBeVisible();
   expect(externalRequests).toEqual([]);
+});
+
+test("visual baseline: splash", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(
+    page.locator('[data-screen="splash"][data-screen-ready="true"]'),
+  ).toBeVisible();
+  await page.addStyleTag({
+    content:
+      "*,*::before,*::after{animation:none!important;transition:none!important;}",
+  });
+  await expect(page).toHaveScreenshot("splash.png", {
+    animations: "disabled",
+    caret: "hide",
+    scale: "css",
+  });
+  await expectNoAutomaticAccessibilityViolations(page);
 });
 
 test("visual baseline: child home", async ({ page }) => {
@@ -325,6 +345,16 @@ test("session limit locks child play until Parent Mode allows a new session", as
       .click();
   }
   await expect(coPlayDone).toBeVisible({ timeout: 8_000 });
+  await page.addStyleTag({
+    content:
+      "*,*::before,*::after{animation:none!important;transition:none!important;}",
+  });
+  await expect(page).toHaveScreenshot("co-play-card.png", {
+    animations: "disabled",
+    caret: "hide",
+    scale: "css",
+  });
+  await expectNoAutomaticAccessibilityViolations(page);
   await page.evaluate(() => {
     const afterLimit = Date.now() + 4 * 60_000;
     Date.now = () => afterLimit;
@@ -332,6 +362,12 @@ test("session limit locks child play until Parent Mode allows a new session", as
   await coPlayDone.click();
 
   await expect(page.getByText("Gata pentru azi!", { exact: false })).toBeVisible();
+  await expect(page).toHaveScreenshot("session-end.png", {
+    animations: "disabled",
+    caret: "hide",
+    scale: "css",
+  });
+  await expectNoAutomaticAccessibilityViolations(page);
   await expect
     .poll(async () => (await readStoredProfile(page))?.sessionLocked)
     .toBe(true);
