@@ -16,6 +16,24 @@ npm run preview --workspace @little-logic-lab/web
 `preview` este numai pentru verificare locală. `npm run build:web` impune
 bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
 
+## Livrare statică
+
+Serviciul Astra rulează cu `UMask=0077`, deci un build creat de Manager poate
+avea moduri private chiar dacă artefactele sunt corecte. Pe hostul Caddy,
+staging-ul se normalizează înainte de publicare, iar `rsync` impune aceleași
+moduri în destinație:
+
+```bash
+find "$STAGING" -type d -exec chmod 0755 {} +
+find "$STAGING" -type f -exec chmod 0644 {} +
+rsync -a --chmod=D755,F644 --delete-delay --delay-updates \
+  "$STAGING/" /opt/websites/logic-lab/dist/
+docker exec unihub-caddy test -r /srv/logic-lab/index.html
+```
+
+După publicare se verifică `/release.json` prin URL-ul public. Un răspuns `403`
+nu se atribuie Cloudflare înainte de verificarea permisiunilor din container.
+
 ## Stare curentă
 
 - TypeScript 7 strict, React 19 pentru Splash/Home/tranziții/shell/Parent Mode,
