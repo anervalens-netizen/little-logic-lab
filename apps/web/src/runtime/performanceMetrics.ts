@@ -1,4 +1,5 @@
 import type { Ticker } from "pixi.js";
+import { resourceDiagnostics } from "./resourceDiagnostics";
 
 interface PerformanceSnapshot {
   readonly frameSamples: number;
@@ -6,6 +7,14 @@ interface PerformanceSnapshot {
   readonly inputSamples: number;
   readonly inputP95Ms: number;
   readonly longTasksOver100Ms: number;
+  readonly activePixiCanvases: number;
+  readonly activeAccessibilityLayers: number;
+  readonly activeDragClones: number;
+  readonly activeAudioTones: number;
+  readonly activeVoiceElements: number;
+  readonly svgTextureCacheEntries: number;
+  readonly activeSvgTextureReferences: number;
+  readonly maxIdleSvgTextureEntries: number;
 }
 
 interface PerformanceDiagnostics {
@@ -39,13 +48,29 @@ function percentile95(samples: readonly number[]): number {
 
 if (enabled) {
   window.__logicLabPerformance = {
-    snapshot: () => ({
-      frameSamples: frameTimes.length,
-      frameP95Ms: percentile95(frameTimes),
-      inputSamples: inputTimes.length,
-      inputP95Ms: percentile95(inputTimes),
-      longTasksOver100Ms,
-    }),
+    snapshot: () => {
+      const resources = resourceDiagnostics();
+      return {
+        frameSamples: frameTimes.length,
+        frameP95Ms: percentile95(frameTimes),
+        inputSamples: inputTimes.length,
+        inputP95Ms: percentile95(inputTimes),
+        longTasksOver100Ms,
+        activePixiCanvases:
+          document.querySelectorAll("canvas.pixi-stage").length,
+        activeAccessibilityLayers: document.querySelectorAll(
+          [
+            ".pixi-accessibility",
+            ".pixi-drag-accessibility",
+            ".pixi-sequence-accessibility",
+            ".pixi-trace-accessibility",
+          ].join(","),
+        ).length,
+        activeDragClones:
+          document.querySelectorAll(".lll-drag-clone").length,
+        ...resources,
+      };
+    },
     reset: () => {
       frameTimes.length = 0;
       inputTimes.length = 0;

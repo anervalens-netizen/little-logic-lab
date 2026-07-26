@@ -1,5 +1,9 @@
 import "pixi.js/unsafe-eval";
 import { Texture } from "pixi.js";
+import {
+  beginSvgTextureReference,
+  setSvgTextureCacheState,
+} from "./resourceDiagnostics";
 
 interface CachedTexture {
   readonly texture: Texture;
@@ -10,6 +14,11 @@ interface CachedTexture {
 
 const MAX_IDLE_TEXTURES = 64;
 const cache = new Map<string, Promise<CachedTexture>>();
+setSvgTextureCacheState(0, MAX_IDLE_TEXTURES);
+
+function updateCacheDiagnostics(): void {
+  setSvgTextureCacheState(cache.size, MAX_IDLE_TEXTURES);
+}
 
 async function rasterize(svg: string): Promise<CachedTexture> {
   const standaloneSvg = svg.includes('xmlns="http://www.w3.org/2000/svg"')
@@ -66,6 +75,7 @@ function evictIdleTextures(): void {
       const current = cache.get(candidate.key);
       if (!current) continue;
       cache.delete(candidate.key);
+      updateCacheDiagnostics();
       candidate.entry.texture.destroy();
       candidate.entry.canvas.width = 1;
       candidate.entry.canvas.height = 1;
@@ -82,10 +92,15 @@ export async function loadSvgTexture(svg: string): Promise<{
   if (!pending) {
     pending = rasterize(svg);
     cache.set(svg, pending);
-    void pending.catch(() => cache.delete(svg));
+    updateCacheDiagnostics();
+    void pending.catch(() => {
+      cache.delete(svg);
+      updateCacheDiagnostics();
+    });
   }
   const entry = await pending;
   entry.references += 1;
+  const releaseDiagnostic = beginSvgTextureReference();
   entry.lastUsed = performance.now();
   let released = false;
   return {
@@ -94,6 +109,7 @@ export async function loadSvgTexture(svg: string): Promise<{
       if (released) return;
       released = true;
       entry.references = Math.max(0, entry.references - 1);
+      releaseDiagnostic();
       entry.lastUsed = performance.now();
       evictIdleTextures();
     },

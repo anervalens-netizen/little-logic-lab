@@ -21,7 +21,7 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   registry-ul TypeScript lazy. Cele 36 de ilustrații procedurale originale au
   manifest canonic, ID-uri tipizate și mapare completă renderer–asset.
   Parent Mode și orchestratorul sesiunii sunt lazy, iar shell-ul inițial este
-  69,68 KiB gzip, sub bugetul de 100 KiB; toate cele 15 chunk-uri de joc sunt
+  69,98 KiB gzip, sub bugetul de 100 KiB; toate cele 15 chunk-uri de joc sunt
   precached, iar scenele Pixi au lifecycle și overlay semantic.
   Exit-ul real rămâne condiționat de dispozitiv.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
@@ -66,7 +66,9 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   layout telefon/tabletă și acces direct la reactivarea sesiunii. Shell-ul comun
   al jocurilor este React, cu timere și cleanup legate de lifecycle, replay
   semantic pe Lumi și controale statice ale căror animații nu afectează
-  hit-testing-ul.
+  hit-testing-ul. Cinci cicluri mount/unmount consecutive pe Chromium și WebKit
+  readuc la zero canvasurile, overlay-urile, clonele de drag, vocea, tonurile și
+  referințele cache-ului SVG; dimensiunea cache-ului rămâne stabilă.
 
 ## 1. Obiectiv
 
@@ -289,7 +291,8 @@ Estimare realistă până la toate cele 80 de familii la calitate ridicată:
 - start offline cald sub o secundă pe tableta țintă.
 
 `?diagnostics=1` expune local `window.__logicLabPerformance.snapshot()` pentru
-frame p95, input-to-frame și long tasks. Playwright impune input sub 50 ms;
+frame p95, input-to-frame, long tasks și resursele runtime active. Playwright
+impune input sub 50 ms și zero resurse reziduale după cicluri repetate;
 pragul de 60 FPS nu se evaluează în headless/SwiftShader, ci pe dispozitivul
 Android țintă.
 

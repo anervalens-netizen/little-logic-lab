@@ -1,6 +1,7 @@
 /** Voce RO locală, versionată și disponibilă offline. */
 
 import manifest from "./ro-RO-v1.json";
+import { setActiveVoiceElements } from "../runtime/resourceDiagnostics";
 
 let voiceEnabled = true;
 let activeAudio: HTMLAudioElement | null = null;
@@ -59,6 +60,7 @@ export function speak(text: string, options: SpeakOptions = {}): void {
 
   const audio = new Audio(source);
   activeAudio = audio;
+  setActiveVoiceElements(1);
   audio.preload = "auto";
   audio.playbackRate = options.rate ?? 1;
   audio.preservesPitch = true;
@@ -67,7 +69,10 @@ export function speak(text: string, options: SpeakOptions = {}): void {
   const finish = () => {
     if (settled) return;
     settled = true;
-    if (activeAudio === audio) activeAudio = null;
+    if (activeAudio === audio) {
+      activeAudio = null;
+      setActiveVoiceElements(0);
+    }
     options.onEnd?.();
   };
   audio.addEventListener("ended", finish, { once: true });
@@ -81,4 +86,5 @@ export function stopSpeaking(): void {
   activeAudio.removeAttribute("src");
   activeAudio.load();
   activeAudio = null;
+  setActiveVoiceElements(0);
 }

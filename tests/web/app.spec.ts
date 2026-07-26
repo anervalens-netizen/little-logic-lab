@@ -640,6 +640,56 @@ test("Pixi scene is destroyed and recreated without residual canvas", async ({
   await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
 });
 
+test("five Pixi lifecycle cycles release runtime resources", async ({
+  page,
+}) => {
+  await enterHome(page, "/?diagnostics=1");
+  const cacheSizes: number[] = [];
+
+  for (let cycle = 0; cycle < 5; cycle += 1) {
+    await page.getByRole("button", { name: "Găsește perechea" }).click();
+    await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+      timeout: 8_000,
+    });
+
+    const active = await page.evaluate(() =>
+      window.__logicLabPerformance?.snapshot(),
+    );
+    expect(active).toBeDefined();
+    expect(active!.activePixiCanvases).toBe(1);
+    expect(active!.activeAccessibilityLayers).toBe(1);
+    expect(active!.activeSvgTextureReferences).toBeGreaterThan(0);
+    expect(active!.svgTextureCacheEntries).toBeLessThanOrEqual(
+      active!.maxIdleSvgTextureEntries,
+    );
+
+    await page.getByRole("button", { name: "Înapoi acasă" }).click();
+    await expect(
+      page.locator('[data-screen="home"][data-screen-ready="true"]'),
+    ).toBeVisible();
+    await expect
+      .poll(async () =>
+        page.evaluate(() => window.__logicLabPerformance?.snapshot()),
+      )
+      .toMatchObject({
+        activePixiCanvases: 0,
+        activeAccessibilityLayers: 0,
+        activeDragClones: 0,
+        activeAudioTones: 0,
+        activeVoiceElements: 0,
+        activeSvgTextureReferences: 0,
+      });
+
+    const released = await page.evaluate(() =>
+      window.__logicLabPerformance?.snapshot(),
+    );
+    expect(released).toBeDefined();
+    cacheSizes.push(released!.svgTextureCacheEntries);
+  }
+
+  expect(new Set(cacheSizes).size).toBe(1);
+});
+
 test("color sorting completes through the accessible Pixi input bridge", async ({
   page,
 }, testInfo) => {

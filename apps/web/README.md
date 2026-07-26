@@ -33,7 +33,9 @@ bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
   demonstrații 1,5× mai lente, Axe și baseline-uri Chromium/WebKit;
 - PWA versionată, CSP strict și zero egress de gameplay.
 - Parent Mode și orchestratorul sesiunii sunt chunk-uri lazy, precached;
-- shell inițial 69,68 KiB JS gzip, sub bugetul de 100 KiB.
+- diagnostics verifică cinci cicluri consecutive fără canvas, overlay, clone,
+  voce, tonuri sau lease-uri SVG reziduale;
+- shell inițial 69,98 KiB JS gzip, sub bugetul de 100 KiB.
 
 ## Structură
 

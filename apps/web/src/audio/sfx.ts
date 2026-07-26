@@ -4,6 +4,7 @@
  */
 
 import { getAudioContext, getMaster } from "./audio";
+import { beginAudioTone } from "../runtime/resourceDiagnostics";
 
 function tone(
   freqStart: number,
@@ -28,8 +29,23 @@ function tone(
   gain.gain.exponentialRampToValueAtTime(volume, t0 + 0.02);
   gain.gain.exponentialRampToValueAtTime(0.0001, t0 + durationMs / 1000);
   osc.connect(gain).connect(master);
-  osc.start(t0);
-  osc.stop(t0 + durationMs / 1000 + 0.05);
+  const releaseDiagnostic = beginAudioTone();
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    osc.disconnect();
+    gain.disconnect();
+    releaseDiagnostic();
+  };
+  osc.addEventListener("ended", release, { once: true });
+  try {
+    osc.start(t0);
+    osc.stop(t0 + durationMs / 1000 + 0.05);
+  } catch (error) {
+    release();
+    throw error;
+  }
 }
 
 /** Atingere obișnuită — „pop" scurt și rotund. */
