@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
@@ -16,6 +17,8 @@ type ReleaseIdentity = Readonly<{
   commit: string;
   tree: string;
   committedAt: string;
+  lockfileSha256: string;
+  nodeVersion: string;
 }>;
 
 const git = (...arguments_: string[]): string =>
@@ -42,9 +45,27 @@ function releaseIdentityPlugin(): Plugin {
         );
       }
 
+      const environmentFiles = [
+        ".env",
+        ".env.local",
+        ".env.production",
+        ".env.production.local",
+      ].filter((name) => existsSync(new URL(`../../${name}`, import.meta.url)));
+      const viteEnvironment = Object.keys(process.env).filter((name) =>
+        name.startsWith("VITE_"),
+      );
+      if (environmentFiles.length > 0 || viteEnvironment.length > 0) {
+        throw new Error(
+          `Release builds forbid untracked Vite inputs; files=${environmentFiles.join(",") || "none"}, variables=${viteEnvironment.join(",") || "none"}`,
+        );
+      }
+
       const packageMetadata = JSON.parse(
         readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
       ) as { version: string };
+      const lockfile = readFileSync(
+        new URL("../../package-lock.json", import.meta.url),
+      );
       identity = {
         schemaVersion: 1,
         application: "little-logic-lab",
@@ -52,6 +73,8 @@ function releaseIdentityPlugin(): Plugin {
         commit: git("rev-parse", "--verify", "HEAD"),
         tree: git("rev-parse", "HEAD^{tree}"),
         committedAt: git("show", "-s", "--format=%cI", "HEAD"),
+        lockfileSha256: createHash("sha256").update(lockfile).digest("hex"),
+        nodeVersion: process.versions.node,
       };
     },
     transformIndexHtml() {

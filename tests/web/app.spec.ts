@@ -478,7 +478,7 @@ test("home, Parent Mode and Pixi semantics pass Axe", async ({ page }) => {
 test("Romanian voice is bundled and cached for offline use", async ({
   page,
   context,
-}) => {
+}, testInfo) => {
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
   await page.locator("body").click({ position: { x: 20, y: 20 } });
@@ -491,6 +491,18 @@ test("Romanian voice is bundled and cached for offline use", async ({
   });
 
   await context.setOffline(true);
+  if (testInfo.project.name !== "webkit-touch") {
+    const routedReleaseIdentity = await page.evaluate(async () => {
+      const response = await fetch("/release.json");
+      return {
+        ok: response.ok,
+        commit: ((await response.json()) as { commit: string }).commit,
+      };
+    });
+    expect(routedReleaseIdentity.ok).toBe(true);
+    expect(routedReleaseIdentity.commit).toMatch(/^[0-9a-f]{40}$/);
+  }
+
   const cachedRecording = await page.evaluate(async () => {
     let response: Response | undefined;
     for (const cacheName of await caches.keys()) {
