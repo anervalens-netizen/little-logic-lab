@@ -74,6 +74,26 @@ for (const file of sourceFiles) {
   }
 }
 
+const prohibitedChildCopy = [
+  /Ce deștept ești!?/i,
+  /Ești cel mai deștept!?/i,
+  /Ai fost minunat!?/i,
+];
+const productCopyFiles = sourceRoots
+  .filter((directory) => fs.existsSync(directory))
+  .flatMap(walk)
+  .filter((file) => /\.(?:json|[cm]?[jt]sx?)$/.test(file));
+for (const file of productCopyFiles) {
+  const source = fs.readFileSync(file, "utf8");
+  for (const pattern of prohibitedChildCopy) {
+    if (pattern.test(source)) {
+      errors.push(
+        `${path.relative(root, file)}: identity praise violates child feedback policy`,
+      );
+    }
+  }
+}
+
 if (errors.length > 0) {
   console.error(`Product policy check failed with ${errors.length} error(s):`);
   for (const error of errors) console.error(`- ${error}`);

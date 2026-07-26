@@ -14,6 +14,7 @@ import { speak } from "../audio/speech";
 import { sfxTap } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { drawItem } from "../art/items";
+import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 export const traceRoadGame: WebGame = {
   id: "trace-road",
@@ -143,7 +144,7 @@ export const traceRoadGame: WebGame = {
       level.payload.points.length,
     );
     speak("Urmează drumul cu degetul și du iepurașul acasă!");
-    await wait(ctx.reducedMotion ? 350 : 700);
+    await wait(demonstrationDelay(ctx.reducedMotion ? 350 : 700));
     if (ctx.isCancelled()) {
       scene.destroy();
       return {

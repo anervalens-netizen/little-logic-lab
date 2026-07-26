@@ -6,6 +6,7 @@ import { SupportTracker } from "./support";
 import { clear, wait } from "../ui/dom";
 import { speak } from "../audio/speech";
 import { sfxPlace } from "../audio/sfx";
+import { demonstrationDelay } from "../ui/accessibilityPreferences";
 import {
   drawRoutine,
   ROUTINE_CHAINS,
@@ -202,7 +203,7 @@ export const dailyOrderGame: WebGame = {
     } else if (verbalSupport === "brief") {
       speak("Ce facem întâi?");
     }
-    await wait(800);
+    await wait(demonstrationDelay(800));
     if (ctx.isCancelled()) {
       scene.destroy();
       return {

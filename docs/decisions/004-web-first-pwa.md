@@ -34,10 +34,11 @@ pur `@little-logic-lab/core` prin aliasul `@core`.
   în cod prin `request.url.startsWith(self.location.origin)`). Toate celelalte
   reguli ale verificatorului rămân active și pentru `sw.js`.
 
-- Prototipul folosește `localStorage`; produsul țintă folosește IndexedDB.
+- Persistența de produs folosește IndexedDB cu migrări versionate și fallback
+  local; prototipul `localStorage` a fost eliminat.
 - Haptics nu există pe web; feedback-ul este vizual + audio.
-- Vocea română depinde de vocile instalate pe dispozitiv; dacă lipsesc,
-  instrucțiunile rămân demonstrate vizual (cititul nu e niciodată necesar).
+- Vocea română este livrată local printr-un manifest audio versionat;
+  instrucțiunile au echivalent vizual.
 - O aplicație nativă separată este amânată până după validarea release-ului P0.
 - Regulile non-negociabile din `AGENTS.md` se aplică neschimbat: fără cont,
   reclame, analytics, cloud, cameră, microfon, locație, push, mecanici
@@ -46,4 +47,4 @@ pur `@little-logic-lab/core` prin aliasul `@core`.
   câte o axă; sesiunea se încheie calm la limită.
 
 Verificările curente și porțile țintă sunt documentate în
-`PROJECT_STATUS.md` și `docs/12-roadmap.md`.
+`docs/12-roadmap.md`.

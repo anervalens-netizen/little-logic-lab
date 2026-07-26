@@ -9,8 +9,8 @@ through plugins. TypeScript 7 is the workspace compiler.
 The system is offline-first and has no runtime backend in v1.
 
 Topologia publică actuală este Cloudflare Tunnel → Caddy static →
-`/opt/websites/logic-lab/dist`; Cloudflare Pages rămâne ținta de hosting
-administrat, fără schimbări în artefactul PWA.
+`/opt/websites/logic-lab/dist`; Cloudflare Pages rămâne opțional, fără schimbări
+în artefactul PWA.
 
 ## Layering
 
@@ -140,7 +140,7 @@ Modelul R1 curent:
 
 ```text
 IndexedDB: minte-in-joaca / profiles
-  current          -> snapshot schema v3 + session lock
+  current          -> snapshot schema v4 + session lock + accessibility
   recovery-latest  -> ultimul payload invalid, păstrat pentru recovery
 ```
 
@@ -148,7 +148,7 @@ IndexedDB characteristics:
 
 - stare sincronă în memorie și scrieri IndexedDB serializate;
 - migrare automată din `localStorage` v1/v2, apoi eliminarea cheilor vechi;
-- migrare fără pierderi din snapshot-ul IndexedDB v2 la v3;
+- migrare fără pierderi din snapshot-urile IndexedDB v2/v3 la v4;
 - fallback local numai când IndexedDB nu este disponibil;
 - schema migrations are versioned and tested;
 - delete/export from parent mode;
@@ -157,6 +157,8 @@ IndexedDB characteristics:
 - no exact date of birth required; birth month/year is optional and local.
 - o sesiune încheiată setează persistent `sessionLocked`; numai Parent Mode îl
   poate elimina pentru a permite o sesiune nouă.
+- setările v4 persistă Reduced Motion, contrast ridicat, ținte
+  `large`/`extra_large` și demonstrații `normal`/`slow`.
 
 ## Content pipeline
 
@@ -195,7 +197,7 @@ Content updates in v1 ship through normal app releases. Avoid remote configurati
 - Bundled Romanian audio plus Web Audio.
 - JSON Schema/Zod at boundaries.
 - Node/Vitest/property tests and Playwright for critical flows.
-- Vite 8 and Cloudflare Pages for static delivery.
+- Vite 8, Cloudflare Tunnel and Caddy for static delivery.
 
 Exact versions and rationale are in ADR 005.
 

@@ -46,7 +46,8 @@ The product is web/PWA-first. The canonical stack and delivery order are in
 - Bundled Romanian recordings and Web Audio for child-facing audio.
 - Generated, revisioned service-worker precaching.
 - Vitest/property tests and committed Playwright tests.
-- Static Cloudflare Pages deployment; no runtime backend.
+- Static deployment through Cloudflare Tunnel + Caddy; Cloudflare Pages remains
+  an optional managed target. No runtime backend.
 
 Do not add a second native application until the P0 web/PWA release passes its
 product and device gates. Record exact dependency versions in ADR 005.
@@ -63,22 +64,16 @@ product and device gates. Record exact dependency versions in ADR 005.
 
 ## Current delivery order
 
-Stabilize the existing web prototype, then rebuild the golden slice
-(`same-picture`, `sort-by-color`, `inset-puzzle`) at production quality before
-adding or migrating more games:
+The automated P0 implementation is complete. Close the physical-device and
+human gates before R4:
 
-- parent creates a local profile or chooses anonymous default;
-- child sees a visual/audio demonstration;
-- level is generated from a seed;
-- 2–3 large choices;
-- specific feedback and one hint;
-- local attempt event;
-- mastery update;
-- short real-world transfer prompt;
-- session ends cleanly at the configured limit.
+1. native Romanian audio review;
+2. Android FPS/input/lifecycle measurement;
+3. manual VoiceOver/TalkBack traversal;
+4. parent-supervised child observation and remediation;
+5. P1 expansion through existing archetypes only after P0 findings are closed.
 
-Acceptance criteria are in `tasks/01-golden-slice.md` and
-`docs/12-roadmap.md`.
+Canonical status and acceptance criteria are in `docs/12-roadmap.md`.
 
 ## Quality gate
 

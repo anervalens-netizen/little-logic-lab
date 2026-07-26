@@ -21,6 +21,7 @@ import { playItemVoice } from "../audio/voices";
 import { makeDraggable } from "../ui/dragdrop";
 import { speak } from "../audio/speech";
 import type { PixiDragScene } from "../runtime/pixiDragScene";
+import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 export interface SortItemVisual {
   readonly id: string;
@@ -122,7 +123,7 @@ export function createSortGame(spec: SortGameSpec): WebGame {
       ctx.mount.append(layout);
 
       speak(spec.instruction);
-      await wait(900);
+      await wait(demonstrationDelay(900));
 
       let selectedItemId: string | null = null;
 
@@ -486,7 +487,7 @@ async function playPixiSortRound(
   });
   const initialScene = await showBatch(0, false);
   speak(spec.instruction);
-  await wait(900);
+  await wait(demonstrationDelay(900));
   if (ctx.isCancelled()) return abortedSort();
   inputReady = true;
   if (initialScene) initialScene.readyElement.dataset.gameReady = "true";

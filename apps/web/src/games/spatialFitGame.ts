@@ -8,6 +8,7 @@ import { clear, wait } from "../ui/dom";
 import { speak } from "../audio/speech";
 import { sfxPlace } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
+import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 export interface SpatialFitPiece {
   readonly id: string;
@@ -206,7 +207,7 @@ async function playSpatialFitBatch(
   }
 
   speak(speech.instruction);
-  await wait(900);
+  await wait(demonstrationDelay(900));
   if (ctx.isCancelled()) {
     scene.destroy();
     return {

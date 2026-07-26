@@ -22,7 +22,8 @@ Minimum setup:
 - Romanian/English;
 - audio and music;
 - reduced motion/high contrast;
-- session limit: 5, 7, 10 or 15 minutes;
+- large/extra-large targets and normal/slower demonstrations;
+- session limit: 3, 5 or 7 minutes;
 - co-play prompts on/off;
 - motor accommodation: large targets, generous drag, trace assistance.
 

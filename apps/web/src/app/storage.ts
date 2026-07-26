@@ -7,7 +7,8 @@ const DATABASE_VERSION = 1;
 const PROFILE_STORE = "profiles";
 const CURRENT_PROFILE_KEY = "current";
 const RECOVERY_PROFILE_KEY = "recovery-latest";
-const FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v3";
+const FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v4";
+const V3_FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v3";
 const V2_FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v2";
 const V2_STORAGE_KEY = "minte-in-joaca/v2";
 const LEGACY_STORAGE_KEY = "minte-in-joaca/v1";
@@ -52,7 +53,7 @@ export interface StoredSession {
 }
 
 export interface StoredProfile {
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly createdAtLocal: string;
   readonly ageMonths: number;
   readonly sessionLocked: boolean;
@@ -61,6 +62,9 @@ export interface StoredProfile {
     musicEnabled: boolean;
     voiceEnabled: boolean;
     reducedMotion: boolean;
+    highContrast: boolean;
+    targetSize: "large" | "extra_large";
+    demonstrationSpeed: "normal" | "slow";
     sessionMinutes: 3 | 5 | 7;
     coPlayPrompts: boolean;
   };
@@ -73,8 +77,19 @@ export interface StoredProfile {
   readonly sessions: readonly StoredSession[];
 }
 
-type StoredProfileV2 = Omit<
+type StoredProfileV3 = Omit<
   StoredProfile,
+  "schemaVersion" | "settings"
+> & {
+  readonly schemaVersion: 3;
+  readonly settings: Omit<
+    StoredProfile["settings"],
+    "highContrast" | "targetSize" | "demonstrationSpeed"
+  >;
+};
+
+type StoredProfileV2 = Omit<
+  StoredProfileV3,
   "schemaVersion" | "sessionLocked"
 > & {
   readonly schemaVersion: 2;
@@ -96,7 +111,7 @@ interface LegacyProfile {
   readonly schemaVersion: 1;
   readonly createdAtLocal: string;
   readonly ageMonths: number;
-  readonly settings: StoredProfile["settings"];
+  readonly settings: StoredProfileV3["settings"];
   readonly masteryBySkill: StoredProfile["masteryBySkill"];
   readonly progressByGame: Record<
     string,
@@ -112,7 +127,7 @@ interface LegacyProfile {
 
 export function defaultProfile(ageMonths = 31): StoredProfile {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     createdAtLocal: new Date().toISOString(),
     ageMonths,
     sessionLocked: false,
@@ -121,6 +136,9 @@ export function defaultProfile(ageMonths = 31): StoredProfile {
       musicEnabled: false,
       voiceEnabled: true,
       reducedMotion: true,
+      highContrast: false,
+      targetSize: "large",
+      demonstrationSpeed: "normal",
       sessionMinutes: 5,
       coPlayPrompts: true,
     },
@@ -150,12 +168,68 @@ function isStoredProfile(value: unknown): value is StoredProfile {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Partial<StoredProfile>;
   return (
+    candidate.schemaVersion === 4 &&
+    typeof candidate.createdAtLocal === "string" &&
+    typeof candidate.ageMonths === "number" &&
+    typeof candidate.sessionLocked === "boolean" &&
+    isCurrentSettings(candidate.settings) &&
+    typeof candidate.masteryBySkill === "object" &&
+    candidate.masteryBySkill !== null &&
+    typeof candidate.progressByGame === "object" &&
+    candidate.progressByGame !== null &&
+    Array.isArray(candidate.attempts) &&
+    Array.isArray(candidate.sessions)
+  );
+}
+
+function isCurrentSettings(
+  value: unknown,
+): value is StoredProfile["settings"] {
+  if (typeof value !== "object" || value === null) return false;
+  const settings = value as Partial<StoredProfile["settings"]>;
+  return (
+    typeof settings.audioEnabled === "boolean" &&
+    typeof settings.musicEnabled === "boolean" &&
+    typeof settings.voiceEnabled === "boolean" &&
+    typeof settings.reducedMotion === "boolean" &&
+    typeof settings.highContrast === "boolean" &&
+    (settings.targetSize === "large" ||
+      settings.targetSize === "extra_large") &&
+    (settings.demonstrationSpeed === "normal" ||
+      settings.demonstrationSpeed === "slow") &&
+    (settings.sessionMinutes === 3 ||
+      settings.sessionMinutes === 5 ||
+      settings.sessionMinutes === 7) &&
+    typeof settings.coPlayPrompts === "boolean"
+  );
+}
+
+function isPreviousSettings(
+  value: unknown,
+): value is StoredProfileV3["settings"] {
+  if (typeof value !== "object" || value === null) return false;
+  const settings = value as Partial<StoredProfileV3["settings"]>;
+  return (
+    typeof settings.audioEnabled === "boolean" &&
+    typeof settings.musicEnabled === "boolean" &&
+    typeof settings.voiceEnabled === "boolean" &&
+    typeof settings.reducedMotion === "boolean" &&
+    (settings.sessionMinutes === 3 ||
+      settings.sessionMinutes === 5 ||
+      settings.sessionMinutes === 7) &&
+    typeof settings.coPlayPrompts === "boolean"
+  );
+}
+
+function isStoredProfileV3(value: unknown): value is StoredProfileV3 {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Partial<StoredProfileV3>;
+  return (
     candidate.schemaVersion === 3 &&
     typeof candidate.createdAtLocal === "string" &&
     typeof candidate.ageMonths === "number" &&
     typeof candidate.sessionLocked === "boolean" &&
-    typeof candidate.settings === "object" &&
-    candidate.settings !== null &&
+    isPreviousSettings(candidate.settings) &&
     typeof candidate.masteryBySkill === "object" &&
     candidate.masteryBySkill !== null &&
     typeof candidate.progressByGame === "object" &&
@@ -172,8 +246,7 @@ function isStoredProfileV2(value: unknown): value is StoredProfileV2 {
     candidate.schemaVersion === 2 &&
     typeof candidate.createdAtLocal === "string" &&
     typeof candidate.ageMonths === "number" &&
-    typeof candidate.settings === "object" &&
-    candidate.settings !== null &&
+    isPreviousSettings(candidate.settings) &&
     typeof candidate.masteryBySkill === "object" &&
     candidate.masteryBySkill !== null &&
     typeof candidate.progressByGame === "object" &&
@@ -186,8 +259,28 @@ function isStoredProfileV2(value: unknown): value is StoredProfileV2 {
 function migrateV2(profile: StoredProfileV2): StoredProfile {
   return {
     ...profile,
-    schemaVersion: 3,
+    schemaVersion: 4,
     sessionLocked: false,
+    settings: withAccessibilityDefaults(profile.settings),
+  };
+}
+
+function migrateV3(profile: StoredProfileV3): StoredProfile {
+  return {
+    ...profile,
+    schemaVersion: 4,
+    settings: withAccessibilityDefaults(profile.settings),
+  };
+}
+
+function withAccessibilityDefaults(
+  settings: StoredProfileV3["settings"],
+): StoredProfile["settings"] {
+  return {
+    ...settings,
+    highContrast: false,
+    targetSize: "large",
+    demonstrationSpeed: "normal",
   };
 }
 
@@ -197,6 +290,7 @@ function readLocalMigrationCandidate(): StoredProfile | null {
     if (current) {
       const parsed: unknown = JSON.parse(current);
       if (isStoredProfile(parsed)) return parsed;
+      if (isStoredProfileV3(parsed)) return migrateV3(parsed);
       if (isStoredProfileV2(parsed)) return migrateV2(parsed);
     }
 
@@ -220,6 +314,12 @@ export async function loadProfile(): Promise<StoredProfile> {
     const db = await database();
     const stored = await db.get(PROFILE_STORE, CURRENT_PROFILE_KEY);
     if (isStoredProfile(stored)) return stored;
+    if (isStoredProfileV3(stored)) {
+      const migrated = migrateV3(stored);
+      await db.put(PROFILE_STORE, migrated, CURRENT_PROFILE_KEY);
+      localStorage.removeItem(V3_FALLBACK_STORAGE_KEY);
+      return migrated;
+    }
     if (isStoredProfileV2(stored)) {
       const migrated = migrateV2(stored);
       await db.put(PROFILE_STORE, migrated, CURRENT_PROFILE_KEY);
@@ -235,6 +335,7 @@ export async function loadProfile(): Promise<StoredProfile> {
       await db.put(PROFILE_STORE, migrated, CURRENT_PROFILE_KEY);
       clearMigratedLocalStorage();
       localStorage.removeItem(FALLBACK_STORAGE_KEY);
+      localStorage.removeItem(V3_FALLBACK_STORAGE_KEY);
       localStorage.removeItem(V2_FALLBACK_STORAGE_KEY);
       return migrated;
     }
@@ -246,6 +347,16 @@ export async function loadProfile(): Promise<StoredProfile> {
         await db.put(PROFILE_STORE, parsed, CURRENT_PROFILE_KEY);
         localStorage.removeItem(FALLBACK_STORAGE_KEY);
         return parsed;
+      }
+    }
+    const v3Fallback = localStorage.getItem(V3_FALLBACK_STORAGE_KEY);
+    if (v3Fallback) {
+      const parsed: unknown = JSON.parse(v3Fallback);
+      if (isStoredProfileV3(parsed)) {
+        const migrated = migrateV3(parsed);
+        await db.put(PROFILE_STORE, migrated, CURRENT_PROFILE_KEY);
+        localStorage.removeItem(V3_FALLBACK_STORAGE_KEY);
+        return migrated;
       }
     }
     const v2Fallback = localStorage.getItem(V2_FALLBACK_STORAGE_KEY);
@@ -268,6 +379,10 @@ export async function loadProfile(): Promise<StoredProfile> {
         localStorage.getItem(FALLBACK_STORAGE_KEY) ?? "null",
       );
       if (isStoredProfile(fallback)) return fallback;
+      const v3Fallback: unknown = JSON.parse(
+        localStorage.getItem(V3_FALLBACK_STORAGE_KEY) ?? "null",
+      );
+      if (isStoredProfileV3(v3Fallback)) return migrateV3(v3Fallback);
       const v2Fallback: unknown = JSON.parse(
         localStorage.getItem(V2_FALLBACK_STORAGE_KEY) ?? "null",
       );
@@ -307,6 +422,7 @@ export async function wipeProfile(): Promise<void> {
     // Fallback-ul local este șters mai jos.
   }
   localStorage.removeItem(FALLBACK_STORAGE_KEY);
+  localStorage.removeItem(V3_FALLBACK_STORAGE_KEY);
   localStorage.removeItem(V2_FALLBACK_STORAGE_KEY);
   clearMigratedLocalStorage();
 }
@@ -336,9 +452,12 @@ function migrateLegacy(profile: LegacyProfile): StoredProfile {
 
   return {
     ...profile,
-    schemaVersion: 3,
+    schemaVersion: 4,
     sessionLocked: false,
-    settings: { ...profile.settings, reducedMotion: profile.settings.reducedMotion ?? true },
+    settings: withAccessibilityDefaults({
+      ...profile.settings,
+      reducedMotion: profile.settings.reducedMotion ?? true,
+    }),
     progressByGame,
     attempts: profile.attempts.map(migrateAttempt),
     sessions: profile.sessions.map((session, index) => ({

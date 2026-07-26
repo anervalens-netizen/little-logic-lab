@@ -3,6 +3,7 @@
 import { el, svgEl, wait } from "./dom";
 import { sfxSuccess, sfxWin, sfxGentleNo, sfxHint } from "../audio/sfx";
 import { speak } from "../audio/speech";
+import { demonstrationDelay } from "./accessibilityPreferences";
 
 const CONFETTI_COLORS = ["#F25C4C", "#FFD35C", "#7FC86B", "#4FA8E8", "#9B8CF2", "#FF9EC6"];
 
@@ -14,8 +15,6 @@ export function setMotionReduced(value: boolean): void {
 export function isMotionReduced(): boolean {
   return motionReduced;
 }
-
-const PRAISES = ["Bravo!", "Ai reușit!", "Minunat!", "Super!", "Ce deștept ești!"];
 
 export function confettiBurst(container: HTMLElement, count = 36): void {
   if (motionReduced) return;
@@ -54,7 +53,11 @@ export async function praise(
   container: HTMLElement,
   opts: { text?: string; voice?: boolean; win?: boolean } = {},
 ): Promise<void> {
-  const text = opts.text ?? PRAISES[Math.floor(Math.random() * PRAISES.length)] ?? "Bravo!";
+  const text =
+    opts.text ??
+    (opts.win
+      ? "Ai găsit soluția din prima!"
+      : "Ai continuat cu răbdare și ai reușit!");
   const overlay = el("div", { className: "praise-overlay" });
   overlay.append(el("div", { className: "praise-text" }, text));
   container.append(overlay);
@@ -168,6 +171,6 @@ export async function demoTap(
   hand.style.top = `${tRect.top - cRect.top + tRect.height / 2 - 10}px`;
   hand.style.opacity = "1";
   hand.classList.add("tapping");
-  await wait(opts.holdMs ?? 1100);
+  await wait(demonstrationDelay(opts.holdMs ?? 1100));
   hand.classList.remove("tapping");
 }

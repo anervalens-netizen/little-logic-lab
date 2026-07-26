@@ -19,9 +19,9 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   IndexedDB, iar catalogul + ordinea P0 generează manifestul compact și
   registry-ul TypeScript lazy. Cele 36 de ilustrații procedurale originale au
   manifest canonic, ID-uri tipizate și mapare completă renderer–asset.
-  Shell-ul inițial este 82,32 KiB gzip, toate cele 15 chunk-uri de joc sunt
-  precached, iar scenele Pixi au lifecycle și overlay semantic. Exit-ul real
-  rămâne condiționat de dispozitiv.
+  Shell-ul inițial este 83,08 KiB gzip, sub bugetul de 100 KiB; toate cele 15
+  chunk-uri de joc sunt precached, iar scenele Pixi au lifecycle și overlay semantic.
+  Exit-ul real rămâne condiționat de dispozitiv.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
   rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
   batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
@@ -40,13 +40,18 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   consumă toate cele 19 stage-uri, inclusiv semnale întârziate și schimbarea
   regulii. `trace-road` folosește generator determinist în core și tracking
   nativ de pointer pe canvas pentru toate cele 17 stage-uri. Toate cele 15
-  familii P0 sunt acum Pixi. 324 clipuri RO locale, Axe și 30 baseline-uri
-  vizuale cu seed și ceas fixe sunt integrate. Lipsesc măsurarea pe
+  familii P0 sunt acum Pixi. 321 clipuri RO locale, Axe și 30 baseline-uri
+  vizuale cu seed și ceas fixe sunt integrate. Feedback-ul implicit descrie
+  strategia/efortul, nu identitatea copilului. Lipsesc măsurarea pe
   dispozitiv, revizia umană a vocii și validarea observată.
 - R3 engineering: complet; 15/15 familii P0 consumă ladder-ele, scheduler-ul și
   unlock policy, iar finalul de sesiune blochează persistent continuarea în
   Child Mode. Numai Parent Mode poate permite o sesiune nouă. Pilotul privat
   rămâne condiționat de porțile externe de mai sus.
+- R3 accessibility automation: complet; profilul local v4 migrează fără
+  pierderi v1/v2/v3 și expune în Parent Mode contrast ridicat, ținte tactile de
+  112 px și demonstrații 1,5× mai lente. Setările au efect în shell, overlay-ul
+  Pixi și timpii explicativi, fără schimbarea dificultății.
 
 ## 1. Obiectiv
 
@@ -87,7 +92,7 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 
 ### Probleme care blochează extinderea
 
-- cele 324 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
+- cele 321 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
 - porțile reale de FPS, VoiceOver/TalkBack și device QA nu sunt încă închise.
 
 ## 3. Stack țintă
@@ -223,6 +228,8 @@ dispozitiv și observația umană.
 - testează ecrane mici/mari, audio off, Reduce Motion și offline.
 - după încheiere, ascunde toate intrările de joc până când un adult permite o
   sesiune nouă din Parent Mode.
+- persistă în profil v4 contrastul ridicat, țintele extra-mari și viteza
+  demonstrațiilor; păstrează migrarea fără pierderi din v1/v2/v3.
 
 Exit:
 
@@ -349,7 +356,7 @@ E2E verifică comportament observabil și rezultate, nu doar lipsa excepțiilor.
 
 ## 11. Livrare Cloudflare
 
-Ținta de hosting administrat rămâne Cloudflare Pages:
+Livrarea canonică actuală este Cloudflare Tunnel → Caddy static:
 
 - build din commitul verificat;
 - output `apps/web/dist`;
@@ -357,19 +364,17 @@ E2E verifică comportament observabil și rezultate, nu doar lipsa excepțiilor.
 - assets hash-uite și cache immutable;
 - HTML/service worker cu strategie de update sigură;
 - CSP fără endpoint-uri externe;
-- preview deployments separate de producție.
+- artefact sincronizat în `/opt/websites/logic-lab/dist`.
 
 Nu folosim Vite preview ca serviciu de producție și nu rulăm produsul pe
 `dell-standby`.
 
-Deployment-ul public curent este tot static și respectă aceleași reguli, dar
-folosește infrastructura existentă Cloudflare Tunnel → Caddy →
-`/opt/websites/logic-lab/dist`. Migrarea la Pages nu blochează produsul și se
-face când autentificarea Wrangler/Pages este disponibilă.
+Cloudflare Pages rămâne o opțiune administrată, nu o dependență și nu o poartă
+de produs.
 
 ## 12. Ordinea imediată de lucru
 
-1. revizuiește auditiv cele 324 clipuri RO și înlocuiește pronunțiile slabe;
+1. revizuiește auditiv cele 321 clipuri RO și înlocuiește pronunțiile slabe;
 2. măsoară FPS/input/lifecycle pe dispozitivul Android țintă;
 3. verifică manual VoiceOver și TalkBack;
 4. rulează observația cu copilul și rezolvă blocajele majore;

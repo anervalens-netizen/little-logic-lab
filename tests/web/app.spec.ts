@@ -216,6 +216,75 @@ test("parent mode is React-owned and persists semantic settings", async ({
   await expect(page.locator(".parent-panel")).toHaveCount(0);
 });
 
+test("Parent accessibility preferences change contrast, target size and demo timing", async ({
+  page,
+}) => {
+  await enterHome(page);
+  await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+  await page
+    .getByRole("button", { name: "Ține apăsat 3 secunde" })
+    .dispatchEvent("pointerdown");
+  await expect(
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 5_000 });
+
+  await page.getByRole("switch", { name: "Contrast ridicat" }).click();
+  await page
+    .getByRole("switch", { name: "Ținte tactile extra-mari" })
+    .click();
+  await page
+    .getByRole("switch", { name: "Demonstrații mai lente" })
+    .click();
+
+  await expect
+    .poll(async () => {
+      const stored = await readStoredProfile(page);
+      return stored?.settings;
+    })
+    .toMatchObject({
+      highContrast: true,
+      targetSize: "extra_large",
+      demonstrationSpeed: "slow",
+    });
+  const applied = await page.evaluate(() => ({
+    contrast: document.documentElement.dataset.highContrast,
+    targetSize: document.documentElement.dataset.targetSize,
+    speed: document.documentElement.dataset.demonstrationSpeed,
+    tapMinimum: getComputedStyle(document.documentElement)
+      .getPropertyValue("--tap-min")
+      .trim(),
+    ink: getComputedStyle(document.documentElement)
+      .getPropertyValue("--ink")
+      .trim(),
+  }));
+  expect(applied).toEqual({
+    contrast: "true",
+    targetSize: "extra_large",
+    speed: "slow",
+    tapMinimum: "112px",
+    ink: "#211a14",
+  });
+  await expectNoAutomaticAccessibilityViolations(page);
+
+  await page.getByRole("button", { name: "Înapoi" }).click();
+  const startedAt = await page.evaluate(() => performance.now());
+  await page.getByRole("button", { name: "Găsește perechea" }).click();
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 8_000,
+  });
+  const readyAfterMs =
+    (await page.evaluate(() => performance.now())) - startedAt;
+  expect(readyAfterMs).toBeGreaterThanOrEqual(3_600);
+  await expect(page.locator(".pixi-accessibility-choice").first()).toHaveCSS(
+    "min-width",
+    "112px",
+  );
+  await expect(page.locator("canvas.pixi-stage")).toHaveCSS(
+    "filter",
+    "contrast(1.16) saturate(0.92)",
+  );
+});
+
 test("session limit locks child play until Parent Mode allows a new session", async ({
   page,
 }) => {
@@ -1670,14 +1739,19 @@ test("legacy local profile migrates without losing progress", async ({ page }) =
   };
 
   expect(result.current).toMatchObject({
-    schemaVersion: 3,
+    schemaVersion: 4,
     ageMonths: 31,
     sessionLocked: false,
+    settings: {
+      highContrast: false,
+      targetSize: "large",
+      demonstrationSpeed: "normal",
+    },
   });
   expect(result.legacy).toBeNull();
 });
 
-test("IndexedDB v2 profile migrates to the session-lock schema", async ({
+test("IndexedDB v2 profile migrates to the current accessibility schema", async ({
   page,
 }) => {
   await enterHome(page);
@@ -1697,6 +1771,10 @@ test("IndexedDB v2 profile migrates to the session-lock schema", async ({
             profile.schemaVersion = 2;
             profile.ageMonths = 47;
             delete profile.sessionLocked;
+            const settings = profile.settings as Record<string, unknown>;
+            delete settings.highContrast;
+            delete settings.targetSize;
+            delete settings.demonstrationSpeed;
             store.put(profile, "current");
           };
           transaction.oncomplete = () => {
@@ -1713,9 +1791,63 @@ test("IndexedDB v2 profile migrates to the session-lock schema", async ({
   await expect
     .poll(async () => await readStoredProfile(page))
     .toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       ageMonths: 47,
       sessionLocked: false,
+      settings: {
+        highContrast: false,
+        targetSize: "large",
+        demonstrationSpeed: "normal",
+      },
+    });
+});
+
+test("IndexedDB v3 session lock survives the accessibility migration", async ({
+  page,
+}) => {
+  await enterHome(page);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open("minte-in-joaca");
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          const transaction = db.transaction("profiles", "readwrite");
+          const store = transaction.objectStore("profiles");
+          const get = store.get("current");
+          get.onerror = () => reject(get.error);
+          get.onsuccess = () => {
+            const profile = get.result as Record<string, unknown>;
+            profile.schemaVersion = 3;
+            profile.sessionLocked = true;
+            const settings = profile.settings as Record<string, unknown>;
+            delete settings.highContrast;
+            delete settings.targetSize;
+            delete settings.demonstrationSpeed;
+            store.put(profile, "current");
+          };
+          transaction.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          transaction.onerror = () => reject(transaction.error);
+        };
+      }),
+  );
+
+  await page.reload();
+  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect
+    .poll(async () => await readStoredProfile(page))
+    .toMatchObject({
+      schemaVersion: 4,
+      sessionLocked: true,
+      settings: {
+        highContrast: false,
+        targetSize: "large",
+        demonstrationSpeed: "normal",
+      },
     });
 });
 

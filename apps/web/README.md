@@ -24,10 +24,14 @@ bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
 - 36 ilustrații procedurale originale, cu metadate canonice și ID-uri tipizate;
 - jocurile și runtime-urile Pixi sunt chunk-uri lazy, precached pentru offline;
 - profil, replay, progres și setări în IndexedDB cu migrări/recovery;
-- snapshot local v3 și blocare calmă după sesiune, deblocată numai din Parent Mode;
-- 324 clipuri românești locale și efecte Web Audio, fără servicii remote;
-- overlay semantic, Reduced Motion, Axe și baseline-uri Chromium/WebKit;
+- snapshot local v4, migrări v1/v2/v3 și blocare calmă după sesiune,
+  deblocată numai din Parent Mode;
+- 321 clipuri românești locale, cu feedback despre strategie/efort, și efecte
+  Web Audio, fără servicii remote;
+- overlay semantic, Reduced Motion, contrast ridicat, ținte de 112 px,
+  demonstrații 1,5× mai lente, Axe și baseline-uri Chromium/WebKit;
 - PWA versionată, CSP strict și zero egress de gameplay.
+- shell inițial 83,08 KiB JS gzip, sub bugetul de 100 KiB.
 
 ## Structură
 
@@ -46,7 +50,7 @@ src/
 
 ## Porți rămase pentru pilot
 
-- audiția celor 324 clipuri de un vorbitor nativ;
+- audiția celor 321 clipuri de un vorbitor nativ;
 - 60 FPS, input și lifecycle pe dispozitivul Android țintă;
 - verificare manuală TalkBack/VoiceOver;
 - observație copil–adult și remedierea blocajelor constatate.

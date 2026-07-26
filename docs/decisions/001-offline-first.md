@@ -8,7 +8,9 @@ The target user is under six. Accounts, telemetry, advertising identifiers and r
 
 ## Decision
 
-V1 has no runtime backend, account, cloud sync, remote configuration, advertising, attribution or third-party analytics. Progress stays in local SQLite. Export is initiated by the parent.
+V1 has no runtime backend, account, cloud sync, remote configuration,
+advertising, attribution or third-party analytics. Progress stays in browser
+IndexedDB. Export is initiated by the parent.
 
 ## Consequences
 

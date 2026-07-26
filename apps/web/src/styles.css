@@ -50,6 +50,19 @@
   --font: "Baloo 2", "Comic Sans MS", "Chalkboard SE", "Segoe UI Rounded", system-ui, sans-serif;
 }
 
+html[data-target-size="extra_large"] {
+  --tap-min: 112px;
+}
+
+html[data-high-contrast="true"] {
+  --ink: #211a14;
+  --ink-soft: #4f4338;
+  --paper: #ffffff;
+  --cream: #fffdf6;
+  --shadow-soft: 0 7px 0 rgba(33, 26, 20, 0.24);
+  --shadow-lift: 0 12px 28px rgba(33, 26, 20, 0.28);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -88,6 +101,23 @@ button {
   background: none;
   cursor: pointer;
   color: inherit;
+}
+
+button:focus-visible {
+  outline: 6px solid var(--blue-deep);
+  outline-offset: 5px;
+}
+
+html[data-high-contrast="true"] .btn-big,
+html[data-high-contrast="true"] .btn-icon,
+html[data-high-contrast="true"] .choice-card,
+html[data-high-contrast="true"] .speech-bubble,
+html[data-high-contrast="true"] .parent-card {
+  border-color: rgba(33, 26, 20, 0.42);
+}
+
+html[data-high-contrast="true"] .pixi-stage {
+  filter: contrast(1.16) saturate(0.92);
 }
 
 /* ---------- Ecrane și tranziții ---------- */

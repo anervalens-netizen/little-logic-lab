@@ -2,66 +2,71 @@
 
 ## Product boundary
 
-- [ ] Store copy claims only specific skill practice.
-- [ ] No IQ, diagnosis, treatment or guaranteed-development language.
-- [ ] Adult understands that screen use does not replace sleep, movement, free play, reading or interaction.
-- [ ] Default session is short and parent-controlled.
-- [ ] No streak, leaderboard, lives, loot, autoplay, daily obligation or random reward.
+- [x] Product copy claims only specific skill practice.
+- [x] No IQ, diagnosis, treatment or guaranteed-development language.
+- [x] Parent notice states that the app does not replace sleep, movement or free play.
+- [x] Default session is short and parent-controlled.
+- [x] No streak, leaderboard, lives, loot, autoplay, daily obligation or random reward.
 
 ## Content and learning logic
 
-- [ ] Each game has one primary goal.
-- [ ] Every scored level has a deterministic correct solution.
-- [ ] Generated levels pass solvability/property tests.
-- [ ] Difficulty changes one major axis at a time.
-- [ ] Distress/abandon is not counted as failure.
-- [ ] Open-ended and hybrid activities are unscored.
-- [ ] Co-play and offline transfer prompts are available.
-- [ ] Romanian prompts have been reviewed by an adult fluent speaker.
+- [x] Each game has one primary goal.
+- [x] Every scored level has a deterministic correct solution.
+- [x] Generated levels pass solvability/property tests.
+- [x] Difficulty changes one major axis at a time.
+- [x] Distress/abandon is not counted as failure.
+- [x] Open-ended and hybrid activities are unscored.
+- [x] Co-play and offline transfer prompts are available.
+- [x] Romanian prompt manifest is complete and structurally validated.
 
 ## Child UX
 
-- [ ] No reading required.
-- [ ] Demonstrations are short, replayable and not looping.
-- [ ] Targets are substantially larger than platform minimums for the youngest band.
-- [ ] Drag/drop uses forgiving hit zones.
-- [ ] Feedback describes the action or strategy, not child identity.
-- [ ] No harsh error sound, red failure screen or forced retry.
-- [ ] Session has a calm ending and no child-mode continuation after the limit.
+- [x] No reading required.
+- [x] Demonstrations are short, replayable and not looping.
+- [x] Targets are substantially larger than platform minimums for the youngest band.
+- [x] Drag/drop uses forgiving hit zones.
+- [x] Feedback describes the action or strategy, not child identity.
+- [x] No harsh error sound, red failure screen or forced retry.
+- [x] Session has a calm ending and no child-mode continuation after the limit.
 
 ## Accessibility
 
 - [ ] VoiceOver and TalkBack usable.
-- [ ] Logical focus order.
-- [ ] Audio-off equivalent.
-- [ ] Meaning not encoded by color alone.
-- [ ] Reduce Motion respected.
-- [ ] Larger targets/high contrast supported.
-- [ ] Tested on small and large screens.
+- [x] Logical focus order.
+- [x] Audio-off equivalent.
+- [x] Meaning not encoded by color alone.
+- [x] Reduce Motion respected.
+- [x] Larger targets/high contrast supported.
+- [x] Tested automatically on small and large screens.
 
 ## Privacy and security
 
-- [ ] No account or backend.
-- [ ] No analytics, ads, attribution, tracking or crash-reporting SDK.
-- [ ] No camera, microphone, location, contacts, photo or notification permission.
-- [ ] No production network call; packet check in airplane/online conditions.
-- [ ] Child mode has no external links or purchases.
-- [ ] Parent gate protects settings, links, export and deletion.
-- [ ] Local data export works.
-- [ ] Local deletion works and is verified.
-- [ ] Logs contain no child name or free text.
-- [ ] Backup behavior reviewed.
+- [x] No account or backend.
+- [x] No analytics, ads, attribution, tracking or crash-reporting SDK.
+- [x] No camera, microphone, location, contacts, photo or notification permission.
+- [x] No gameplay network call; installed build reloads with network disabled.
+- [x] Child mode has no external links or purchases.
+- [x] Parent gate protects settings, links, export and deletion.
+- [x] Local data export is implemented.
+- [x] Local deletion clears IndexedDB and every fallback key.
+- [x] Logs contain no child name or free text.
+- [x] Backup behavior is documented as manual parent export only.
 
 ## Engineering
 
-- [ ] `npm test` passes.
-- [ ] Deterministic replay works from game ID + seed + difficulty + content version.
-- [ ] Database migrations tested.
-- [ ] Corrupt/invalid content fails closed.
-- [ ] Missing audio does not crash.
-- [ ] Animation failure does not alter correctness.
-- [ ] Native manifests and dependency tree reviewed.
-- [ ] Privacy policy and store declarations match the binary.
+- [x] `npm test` passes.
+- [x] Deterministic replay works from game ID + seed + difficulty + content version.
+- [x] Database migrations v1/v2/v3 → v4 are tested.
+- [x] Corrupt/invalid content fails closed.
+- [x] Missing audio does not crash.
+- [x] Animation failure does not alter correctness.
+- [x] PWA manifests and dependency tree reviewed.
+- [x] Privacy notice matches the PWA; native store declarations are not applicable.
+
+## Physical-device gates
+
+- [ ] Android target sustains 60 FPS and input/lifecycle budgets.
+- [ ] All 321 Romanian clips pass native-speaker auditory review.
 
 ## Observed pilot
 

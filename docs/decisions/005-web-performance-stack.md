@@ -22,7 +22,8 @@ semantic UI, local-only storage and reliable offline updates.
 - Revisioned PWA precaching generated from the production build.
 - Node/property tests plus Playwright `1.62.0`.
 - `vite-plugin-pwa` `1.3.0` for Workbox-generated revisioned precaching.
-- Cloudflare Pages static delivery at `logic-lab.astancu.eu`.
+- Cloudflare Tunnel + Caddy static delivery at `logic-lab.astancu.eu`;
+  Cloudflare Pages remains optional.
 
 Aceste versiuni au trecut spike-ul R1 de lifecycle, WebGL, IndexedDB,
 Chromium/WebKit touch și offline. Upgrade-urile rămân intenționate și

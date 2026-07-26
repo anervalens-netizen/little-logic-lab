@@ -1,6 +1,6 @@
 # Task 01 — Golden slice
 
-Status: activ
+Status: automat complet; porțile umane/device rămân externe
 
 ## Goal
 
@@ -36,16 +36,16 @@ rămâne blocat până la validările umane și pe dispozitiv.
 - lifecycle cu cleanup verificat prin distrugere/recreare;
 - tap plus runtime comun drag/snap magnetic;
 - overlay semantic pentru toate obiectele acționabile;
-- IndexedDB cu migrare v1/v2 și fallback;
+- IndexedDB profil v4 cu migrare v1/v2/v3 și fallback;
 - manifest P0 și registry lazy tipizat, generate din catalog/ladders/ordinea
   release, cu toate chunk-urile verificate în precache;
 - manifest canonic pentru 36 ilustrații procedurale originale, cu maparea
   renderer–asset verificată static și fără pachet placeholder;
 - Parent Mode React și progresie limitată strict la stage-urile eligibile;
-- 324 clipuri RO locale, fără Web Speech sau request-uri audio externe;
+- 321 clipuri RO locale, fără Web Speech sau request-uri audio externe;
 - Axe automat și 30 baseline-uri vizuale deterministe Chromium/WebKit;
 - telemetrie locală pentru frame p95, input latency și long tasks;
-- 82,32 KiB JS inițial gzip, sub bugetul de 100 KiB;
+- 83,08 KiB JS inițial gzip, sub bugetul de 100 KiB;
 - primul pass pentru toate cele trei jocuri și E2E Chromium/WebKit.
 
 Rămân deschise revizia auditivă umană, device performance, VoiceOver/TalkBack

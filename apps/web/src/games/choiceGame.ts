@@ -20,6 +20,7 @@ import { el, clear, wait } from "../ui/dom";
 import { markCorrect, showHintGlow, danceItem, particlesAt, jelly } from "../ui/feedback";
 import { playItemVoice } from "../audio/voices";
 import { speak } from "../audio/speech";
+import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 export interface ChoiceRound {
   /** SVG-ul țintei (modelul); null pentru jocuri doar audio. */
@@ -123,7 +124,7 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
 
       // Anunț + scurtă demonstrație: mânuța atinge ținta, apoi copilul alege.
       speak(round.roundSpeech);
-      await wait(1300);
+      await wait(demonstrationDelay(1300));
       if (ctx.isCancelled()) return aborted();
 
       const correctCard = cards.get(round.correctId);
@@ -325,10 +326,10 @@ async function playPixiRound(
   ctx.onCleanup(scene.destroy);
 
   speak(round.roundSpeech);
-  await wait(900);
+  await wait(demonstrationDelay(900));
   if (ctx.isCancelled()) return aborted();
   if (!ctx.reducedMotion) scene.emphasize(round.correctId);
-  await wait(400);
+  await wait(demonstrationDelay(400));
   if (ctx.isCancelled()) return aborted();
   inputReady = true;
   scene.readyElement.dataset.gameReady = "true";

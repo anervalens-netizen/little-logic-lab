@@ -1,19 +1,21 @@
 {
-  "schemaVersion": 1,
-  "profileId": "local-example-profile",
-  "ageMonthsAtSetup": 31,
-  "ageBand": "A30_36",
+  "schemaVersion": 4,
   "createdAtLocal": "2026-07-24T12:00:00+03:00",
+  "ageMonths": 31,
+  "sessionLocked": false,
   "settings": {
-    "sessionMinutes": 5,
     "audioEnabled": true,
     "musicEnabled": false,
-    "hapticsEnabled": false,
+    "voiceEnabled": true,
     "reducedMotion": true,
     "highContrast": false,
     "targetSize": "extra_large",
     "demonstrationSpeed": "slow",
+    "sessionMinutes": 5,
     "coPlayPrompts": true
   },
-  "mastery": {}
+  "masteryBySkill": {},
+  "progressByGame": {},
+  "attempts": [],
+  "sessions": []
 }

@@ -86,7 +86,7 @@ Expected:
 
 - audio playback: no permission;
 - haptics: no permission;
-- local SQLite: no permission.
+- browser IndexedDB: no permission.
 
 Disallowed unless architecture is formally changed:
 

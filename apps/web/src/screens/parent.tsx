@@ -274,6 +274,40 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
           />
         </section>
 
+        <section
+          className="parent-card"
+          aria-labelledby="parent-accessibility"
+        >
+          <h2 id="parent-accessibility">Accesibilitate vizuală și motorie</h2>
+          <ToggleRow
+            label="Contrast ridicat"
+            value={settings.highContrast}
+            onChange={(highContrast) => changeSettings({ highContrast })}
+          />
+          <ToggleRow
+            label="Ținte tactile extra-mari"
+            value={settings.targetSize === "extra_large"}
+            onChange={(extraLarge) =>
+              changeSettings({
+                targetSize: extraLarge ? "extra_large" : "large",
+              })
+            }
+          />
+          <ToggleRow
+            label="Demonstrații mai lente"
+            value={settings.demonstrationSpeed === "slow"}
+            onChange={(slow) =>
+              changeSettings({
+                demonstrationSpeed: slow ? "slow" : "normal",
+              })
+            }
+          />
+          <p style={{ color: "#4F4338", fontSize: 14, marginTop: 8 }}>
+            Aceste opțiuni măresc zonele de atingere și timpul explicațiilor,
+            fără să schimbe dificultatea logică.
+          </p>
+        </section>
+
         <section className="parent-card" aria-labelledby="parent-data">
           <h2 id="parent-data">Date locale</h2>
           <p

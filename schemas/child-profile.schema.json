@@ -17,7 +17,7 @@
     "sessions"
   ],
   "properties": {
-    "schemaVersion": { "const": 3 },
+    "schemaVersion": { "const": 4 },
     "createdAtLocal": { "type": "string", "format": "date-time" },
     "ageMonths": {
       "type": "integer",
@@ -37,6 +37,9 @@
         "musicEnabled",
         "voiceEnabled",
         "reducedMotion",
+        "highContrast",
+        "targetSize",
+        "demonstrationSpeed",
         "sessionMinutes",
         "coPlayPrompts"
       ],
@@ -45,6 +48,9 @@
         "musicEnabled": { "type": "boolean" },
         "voiceEnabled": { "type": "boolean" },
         "reducedMotion": { "type": "boolean" },
+        "highContrast": { "type": "boolean" },
+        "targetSize": { "enum": ["large", "extra_large"] },
+        "demonstrationSpeed": { "enum": ["normal", "slow"] },
         "sessionMinutes": { "type": "integer", "enum": [3, 5, 7] },
         "coPlayPrompts": { "type": "boolean" }
       }

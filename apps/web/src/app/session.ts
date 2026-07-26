@@ -22,6 +22,7 @@ import { showHome } from "../screens/home";
 import { applyPendingUpdate } from "./update";
 import { isGameAgeEligible } from "./content";
 import { unlockedGameIds } from "./unlocks";
+import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 const SESSION_SECONDS_WARN = 0; // nu afișăm cronometru copilului
 
@@ -114,7 +115,7 @@ async function showSessionEnd(
 
   await showScreen(() => screen);
   sfxSessionEnd();
-  speak("Gata pentru azi! Ai fost minunat. Lumi se odihnește acum.");
+  speak("Gata pentru azi! Ai lucrat cu răbdare. Lumi se odihnește acum.");
   const elapsedMinutes = Math.max(
     0.1,
     Math.round(((Date.now() - startedAtMs) / 60_000) * 10) / 10,
@@ -175,7 +176,7 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
       shell.showBubble(game.instruction);
       shell.setLumiMood("think");
       speak(game.instruction);
-      await wait(1400);
+      await wait(demonstrationDelay(1400));
 
       const { result, cancelled } = await runGame(
         game,

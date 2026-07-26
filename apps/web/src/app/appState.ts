@@ -6,6 +6,7 @@ import { setAudioEnabled } from "../audio/audio";
 import { setVoiceEnabled } from "../audio/speech";
 import { setMotionReduced } from "../ui/feedback";
 import { startMusic, stopMusic } from "../audio/music";
+import { applyAccessibilityPreferences } from "../ui/accessibilityPreferences";
 import {
   createMastery,
   updateMastery,
@@ -62,6 +63,11 @@ export function applySettings(): void {
     profile.settings.reducedMotion ||
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   setMotionReduced(reduce);
+  applyAccessibilityPreferences({
+    highContrast: profile.settings.highContrast,
+    targetSize: profile.settings.targetSize,
+    speed: profile.settings.demonstrationSpeed,
+  });
   if (profile.settings.musicEnabled && profile.settings.audioEnabled) startMusic();
   else stopMusic();
 }

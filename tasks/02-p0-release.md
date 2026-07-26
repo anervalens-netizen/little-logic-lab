@@ -1,6 +1,6 @@
 # Task 02 — Starter release P0
 
-Status: activ
+Status: automat complet; revizia audio și porțile umane/device rămân externe
 
 ## Goal
 

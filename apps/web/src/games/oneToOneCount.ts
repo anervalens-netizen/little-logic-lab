@@ -13,6 +13,7 @@ import { speak } from "../audio/speech";
 import { sfxPlace } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { drawItem } from "../art/items";
+import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 const RECEIVERS = ["bear", "rabbit", "cat", "dog", "pig", "frog"] as const;
 const TREATS = [
@@ -255,7 +256,7 @@ export const oneToOneCountGame: WebGame = {
     speak(
       `Avem ${total <= 4 ? COUNT_WORDS[total - 1] : total} prieteni! Dă fiecăruia câte unul!`,
     );
-    await wait(700);
+    await wait(demonstrationDelay(700));
     if (ctx.isCancelled()) {
       scene.destroy();
       return {
