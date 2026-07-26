@@ -368,6 +368,8 @@ test("session limit locks child play until Parent Mode allows a new session", as
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
     timeout: 8_000,
   });
+  const sessionDots = page.locator(".session-dots:not(.is-hidden) .dot");
+  expect(await sessionDots.count()).toBeGreaterThan(0);
 
   const choices = page.locator(".choice-row .choice-card");
   await expect(choices).toHaveCount(2);
@@ -615,12 +617,21 @@ test("Pixi scene is destroyed and recreated without residual canvas", async ({
     timeout: 8_000,
   });
   await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
+  await expect(page.locator(".session-dots")).toHaveClass(/is-hidden/);
+  const replay = page.getByRole("button", { name: "Ascultă din nou" });
+  await expect(replay).toBeVisible();
+  const replayBox = await replay.boundingBox();
+  expect(replayBox?.width).toBeGreaterThanOrEqual(72);
+  expect(replayBox?.height).toBeGreaterThanOrEqual(72);
+  await replay.click();
+  await expect(replay).toHaveClass(/is-replaying/);
 
   await page.getByRole("button", { name: "Înapoi acasă" }).click();
   await expect(
     page.locator('[data-screen="home"][data-screen-ready="true"]'),
   ).toBeVisible();
   await expect(page.locator("canvas.pixi-stage")).toHaveCount(0);
+  await expect(page.locator(".game-screen")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Găsește perechea" }).click();
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({

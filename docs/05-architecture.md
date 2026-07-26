@@ -110,6 +110,7 @@ Use React/DOM for:
 
 - navigation;
 - buttons;
+- shell-ul comun al jocurilor și lifecycle-ul controalelor;
 - parent mode;
 - textual settings;
 - accessibility semantics;

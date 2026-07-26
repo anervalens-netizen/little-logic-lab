@@ -21,7 +21,7 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   registry-ul TypeScript lazy. Cele 36 de ilustrații procedurale originale au
   manifest canonic, ID-uri tipizate și mapare completă renderer–asset.
   Parent Mode și orchestratorul sesiunii sunt lazy, iar shell-ul inițial este
-  69,67 KiB gzip, sub bugetul de 100 KiB; toate cele 15 chunk-uri de joc sunt
+  69,68 KiB gzip, sub bugetul de 100 KiB; toate cele 15 chunk-uri de joc sunt
   precached, iar scenele Pixi au lifecycle și overlay semantic.
   Exit-ul real rămâne condiționat de dispozitiv.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
@@ -63,7 +63,10 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   folosesc aceeași ierarhie vizuală responsive și trec Axe + baseline-uri
   Chromium/WebKit; Splash este verificat separat și în landscape 844×390.
   Parent Mode are acum Rezumat/Setări/Date, progres bazat numai pe dovezi,
-  layout telefon/tabletă și acces direct la reactivarea sesiunii.
+  layout telefon/tabletă și acces direct la reactivarea sesiunii. Shell-ul comun
+  al jocurilor este React, cu timere și cleanup legate de lifecycle, replay
+  semantic pe Lumi și controale statice ale căror animații nu afectează
+  hit-testing-ul.
 
 ## 1. Obiectiv
 
