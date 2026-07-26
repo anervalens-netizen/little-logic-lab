@@ -8,7 +8,7 @@
     "modalityCount": 1,
     "recallMode": "direct_replay"
   },
-  "contentPack": "sample-items",
+  "contentPack": "p0-items",
   "successRule": {
     "kind": "ordered_sequence"
   },

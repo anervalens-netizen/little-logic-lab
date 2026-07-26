@@ -17,9 +17,11 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   este servit static prin Cloudflare Tunnel + Caddy, cu CSP strict.
 - R1: automat complet; React deține shell-ul și Parent Mode, profilul este în
   IndexedDB, iar catalogul + ordinea P0 generează manifestul compact și
-  registry-ul TypeScript lazy. Shell-ul inițial este 81,85 KiB gzip, toate
-  cele 15 chunk-uri de joc sunt precached, iar scenele Pixi au lifecycle și
-  overlay semantic. Exit-ul real rămâne condiționat de dispozitiv.
+  registry-ul TypeScript lazy. Cele 36 de ilustrații procedurale originale au
+  manifest canonic, ID-uri tipizate și mapare completă renderer–asset.
+  Shell-ul inițial este 81,85 KiB gzip, toate cele 15 chunk-uri de joc sunt
+  precached, iar scenele Pixi au lifecycle și overlay semantic. Exit-ul real
+  rămâne condiționat de dispozitiv.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
   rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
   batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
@@ -76,10 +78,8 @@ Rămân obligatorii toate limitele de privacy, siguranță și non-dependență 
 - service worker-ul cu cache versionat din manifestul build-ului;
 - testele temporare/brute-force cu teste Playwright versionate și aserțiuni;
 - registrul manual duplicat cu un loader TypeScript generat, lazy și cache-uit;
-
-### De înlocuit controlat
-
-- ilustrațiile SVG generice cu un sistem artistic coerent și asset manifests.
+- metadatele `sample-items`/`placeholder/*` cu manifestul canonic `p0-items`,
+  generare TypeScript și biblioteca procedurală originală în stil unitar.
 
 ### Probleme care blochează extinderea
 

@@ -159,7 +159,8 @@ IndexedDB characteristics:
 
 1. Author or edit a game definition.
 2. Add the implementation to the release order when it becomes eligible.
-3. Generate the typed lazy registry and compact ladder manifest.
+3. Generate the typed lazy registry, compact ladder manifest and typed item
+   manifest from `content/themes/p0-items.json`.
 4. Validate against JSON Schema.
 5. Validate age-band axes and guardrails.
 6. Generate deterministic preview levels.
@@ -172,6 +173,10 @@ Content updates in v1 ship through normal app releases. Avoid remote configurati
 ## Audio and assets
 
 - Bundle all child-facing assets.
+- `content/themes/p0-items.json` is the source of truth for the 36 procedural
+  item IDs, Romanian labels, categories, colors and recoloring capability.
+- `apps/web/src/art/items.ts` owns drawing functions only; TypeScript requires
+  one renderer for every generated item ID.
 - Prefer recorded Romanian narration by a consistent adult voice.
 - Keep prompts short and replayable.
 - Use asset manifests with stable IDs.

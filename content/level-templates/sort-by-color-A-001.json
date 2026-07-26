@@ -8,7 +8,7 @@
     "ruleCount": 1,
     "ruleCueVisibility": "always"
   },
-  "contentPack": "sample-items",
+  "contentPack": "p0-items",
   "successRule": {
     "kind": "all_sorted"
   },

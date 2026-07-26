@@ -21,6 +21,7 @@ bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
 - TypeScript 7 strict, React 19, PixiJS 8/WebGL și Vite 8;
 - 15/15 familii P0 funcționale, cu toate stage-urile ladder consumate;
 - registry TypeScript generat din catalog + ordinea P0, fără listă manuală;
+- 36 ilustrații procedurale originale, cu metadate canonice și ID-uri tipizate;
 - jocurile și runtime-urile Pixi sunt chunk-uri lazy, precached pentru offline;
 - profil, replay, progres și setări în IndexedDB cu migrări/recovery;
 - 324 clipuri românești locale și efecte Web Audio, fără servicii remote;
@@ -33,12 +34,12 @@ bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
 src/
   main.tsx           bootstrap React
   app/               sesiuni, profil, IndexedDB, update PWA
-  generated/         manifest compact și registry lazy generate
+  generated/         content, asset manifest și registry lazy generate
   games/             implementările P0 și engine-ul transversal
   runtime/           scene Pixi reutilizabile
   screens/           splash, home, joc și Parent Mode
   audio/             manifest RO, playback local și efecte
-  art/               Lumi, scene și ilustrații SVG locale
+  art/               Lumi, scene și renderere SVG procedurale locale
   ui/                input/feedback/parent gate
 ```
 

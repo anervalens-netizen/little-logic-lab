@@ -76,10 +76,11 @@ npm run typecheck
 npm run build:web
 ```
 
-`npm test` regenerează și validează cele 1.030 de ancore și registry-ul P0,
-verifică politica offline/privacy, compilează nucleul TypeScript și rulează 23
-de teste, inclusiv verificări pe sute de seed-uri. `npm run build:web` impune
-shell JS sub 100 KiB gzip și verifică precache-ul tuturor chunk-urilor P0.
+`npm test` regenerează și validează cele 1.030 de ancore, registry-ul P0 și
+manifestul celor 36 de ilustrații procedurale, verifică politica
+offline/privacy, compilează nucleul TypeScript și rulează 23 de teste, inclusiv
+verificări pe sute de seed-uri. `npm run build:web` impune shell JS sub 100 KiB
+gzip și verifică precache-ul tuturor chunk-urilor P0.
 
 ## Ordinea de implementare
 

@@ -8,7 +8,7 @@
     "signalDelayMs": 500,
     "ruleComplexity": 1
   },
-  "contentPack": "sample-items",
+  "contentPack": "p0-items",
   "successRule": {
     "kind": "ordered_sequence"
   },

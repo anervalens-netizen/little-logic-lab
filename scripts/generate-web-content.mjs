@@ -12,6 +12,9 @@ const ladders = JSON.parse(
 const release = JSON.parse(
   fs.readFileSync(path.join(root, "content/p0-release.json"), "utf8"),
 );
+const itemPack = JSON.parse(
+  fs.readFileSync(path.join(root, "content/themes/p0-items.json"), "utf8"),
+);
 
 const p0Ids = new Set(
   catalog.games
@@ -148,6 +151,41 @@ export function loadAllGames(): Promise<readonly WebGame[]> {
 }
 `;
 fs.writeFileSync(registryOutput, registry);
+
+const itemMetadata = itemPack.items.map(
+  ({ id, assetKey, label, labelDef, category, defaultColor, recolorable }) => ({
+    id,
+    assetKey,
+    label,
+    labelDef,
+    category,
+    defaultColor,
+    recolorable,
+  }),
+);
+const itemManifestOutput = path.join(
+  root,
+  "apps/web/src/generated/item-manifest.ts",
+);
+const itemManifest = `/** Generat din content/themes/p0-items.json; nu edita manual. */
+
+export const ITEM_PACK = ${JSON.stringify(
+  {
+    id: itemPack.id,
+    version: itemPack.version,
+    renderer: itemPack.renderer,
+  },
+  null,
+  2,
+)} as const;
+
+export const ITEM_METADATA = ${JSON.stringify(itemMetadata, null, 2)} as const;
+
+export type ItemMetadata = (typeof ITEM_METADATA)[number];
+export type ItemId = ItemMetadata["id"];
+export type ItemCategory = ItemMetadata["category"];
+`;
+fs.writeFileSync(itemManifestOutput, itemManifest);
 console.log(
-  `Generated compact web manifest and lazy registry for ${manifest.games.length} P0 games.`,
+  `Generated compact web manifest, lazy registry and ${itemMetadata.length}-item art manifest.`,
 );

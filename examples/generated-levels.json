@@ -10,13 +10,13 @@
         "distractorSimilarity": 1
       },
       "payload": {
-        "targetId": "sun-yellow",
+        "targetId": "sun",
         "choiceIds": [
-          "leaf-green",
-          "sun-yellow",
-          "elephant"
+          "tree",
+          "sun",
+          "cow"
         ],
-        "correctChoiceId": "sun-yellow"
+        "correctChoiceId": "sun"
       }
     },
     {
@@ -31,24 +31,24 @@
       "payload": {
         "attribute": "color",
         "bins": [
-          "gray",
-          "green"
+          "red",
+          "blue"
         ],
         "itemIds": [
-          "boat-green",
-          "leaf-green",
-          "pillow-green",
-          "pear-green",
-          "elephant",
-          "kite-green"
+          "fish-blue",
+          "car-blue",
+          "car-red",
+          "bird-red",
+          "fish-red",
+          "butterfly-red"
         ],
         "correctBinByItemId": {
-          "boat-green": "green",
-          "leaf-green": "green",
-          "pillow-green": "green",
-          "pear-green": "green",
-          "elephant": "gray",
-          "kite-green": "green"
+          "fish-blue": "blue",
+          "car-blue": "blue",
+          "car-red": "red",
+          "bird-red": "red",
+          "fish-red": "red",
+          "butterfly-red": "red"
         }
       }
     },
@@ -62,9 +62,9 @@
       },
       "payload": {
         "sequence": [
-          "fish",
+          "duck",
           "dog",
-          "duck"
+          "rabbit"
         ]
       }
     },
@@ -80,42 +80,42 @@
         "trials": [
           {
             "index": 0,
-            "stimulusId": "cloud-blue",
+            "stimulusId": "cloud",
             "expectedAction": "wait"
           },
           {
             "index": 1,
-            "stimulusId": "sun-yellow",
+            "stimulusId": "sun",
             "expectedAction": "tap"
           },
           {
             "index": 2,
-            "stimulusId": "sun-yellow",
+            "stimulusId": "sun",
             "expectedAction": "tap"
           },
           {
             "index": 3,
-            "stimulusId": "sun-yellow",
+            "stimulusId": "sun",
             "expectedAction": "tap"
           },
           {
             "index": 4,
-            "stimulusId": "sun-yellow",
+            "stimulusId": "sun",
             "expectedAction": "tap"
           },
           {
             "index": 5,
-            "stimulusId": "cloud-blue",
+            "stimulusId": "cloud",
             "expectedAction": "wait"
           },
           {
             "index": 6,
-            "stimulusId": "cloud-blue",
+            "stimulusId": "cloud",
             "expectedAction": "wait"
           },
           {
             "index": 7,
-            "stimulusId": "sun-yellow",
+            "stimulusId": "sun",
             "expectedAction": "tap"
           }
         ]
@@ -132,15 +132,15 @@
       },
       "payload": {
         "visibleSequence": [
+          "rabbit",
+          "rabbit",
           "duck",
+          "rabbit",
+          "rabbit",
           "duck",
-          "fish",
-          "duck",
-          "duck",
-          "fish",
           null
         ],
-        "answer": "duck",
+        "answer": "rabbit",
         "missingIndex": 6,
         "family": "AAB"
       }

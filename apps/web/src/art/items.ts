@@ -6,11 +6,18 @@
 
 import { svg, cuteFace, INK } from "./svg";
 import { shade, tint } from "./palette";
+import {
+  ITEM_METADATA,
+  type ItemCategory,
+  type ItemId,
+} from "../generated/item-manifest";
 
-export type ItemCategory = "animal" | "vehicle" | "food" | "object" | "nature";
+export type { ItemCategory, ItemId };
 
 export interface ItemDef {
-  readonly id: string;
+  readonly id: ItemId;
+  /** Cheie stabilă din manifestul de asset-uri. */
+  readonly assetKey: `procedural/items/${string}`;
   /** Forma de bază: „pisică". */
   readonly label: string;
   /** Forma cu articol hotărât: „pisica" — pentru „Atinge pisica!". */
@@ -528,49 +535,57 @@ function drawCloud(color = "#FFFFFF"): string {
 
 /* ---------------- Registru ---------------- */
 
-export const ITEMS: readonly ItemDef[] = [
-  { id: "cat", label: "pisică", labelDef: "pisica", category: "animal", color: "#F5A95C", recolorable: false, draw: drawCat },
-  { id: "dog", label: "câine", labelDef: "câinele", category: "animal", color: "#C89B6D", recolorable: false, draw: drawDog },
-  { id: "rabbit", label: "iepure", labelDef: "iepurele", category: "animal", color: "#FFFFFF", recolorable: false, draw: drawRabbit },
-  { id: "duck", label: "rață", labelDef: "rața", category: "animal", color: "#FFD35C", recolorable: false, draw: drawDuck },
-  { id: "fish", label: "pește", labelDef: "peștele", category: "animal", color: "#4FA8E8", recolorable: true, draw: drawFish },
-  { id: "elephant", label: "elefant", labelDef: "elefantul", category: "animal", color: "#B9C3E8", recolorable: false, draw: drawElephant },
-  { id: "frog", label: "broască", labelDef: "broasca", category: "animal", color: "#7FC86B", recolorable: false, draw: drawFrog },
-  { id: "bear", label: "urs", labelDef: "ursul", category: "animal", color: "#A67B5B", recolorable: false, draw: drawBear },
-  { id: "bird", label: "pasăre", labelDef: "pasărea", category: "animal", color: "#4FA8E8", recolorable: true, draw: drawBird },
-  { id: "butterfly", label: "fluture", labelDef: "fluturele", category: "animal", color: "#FF9EC6", recolorable: true, draw: drawButterfly },
-  { id: "bee", label: "albină", labelDef: "albina", category: "animal", color: "#FFD35C", recolorable: false, draw: drawBee },
-  { id: "pig", label: "porc", labelDef: "porcul", category: "animal", color: "#FFB6C9", recolorable: false, draw: drawPig },
-  { id: "cow", label: "vacă", labelDef: "vaca", category: "animal", color: "#FFFFFF", recolorable: false, draw: drawCow },
-  { id: "lion", label: "leu", labelDef: "leul", category: "animal", color: "#F5B85C", recolorable: false, draw: drawLion },
-  { id: "mouse", label: "șoricel", labelDef: "șoricelul", category: "animal", color: "#C9C4CC", recolorable: false, draw: drawMouse },
-  { id: "owl", label: "bufniță", labelDef: "bufnița", category: "animal", color: "#B08BD8", recolorable: false, draw: drawOwl },
-  { id: "car", label: "mașină", labelDef: "mașina", category: "vehicle", color: "#F25C4C", recolorable: true, draw: drawCar },
-  { id: "bus", label: "autobuz", labelDef: "autobuzul", category: "vehicle", color: "#FFD35C", recolorable: true, draw: drawBus },
-  { id: "train", label: "tren", labelDef: "trenul", category: "vehicle", color: "#4FA8E8", recolorable: true, draw: drawTrain },
-  { id: "boat", label: "barcă", labelDef: "barca", category: "vehicle", color: "#7FC86B", recolorable: false, draw: drawBoat },
-  { id: "plane", label: "avion", labelDef: "avionul", category: "vehicle", color: "#9B8CF2", recolorable: false, draw: drawPlane },
-  { id: "rocket", label: "rachetă", labelDef: "racheta", category: "vehicle", color: "#F25C4C", recolorable: false, draw: drawRocket },
-  { id: "apple", label: "măr", labelDef: "mărul", category: "food", color: "#F25C4C", recolorable: true, draw: drawApple },
-  { id: "banana", label: "banană", labelDef: "banana", category: "food", color: "#FFD35C", recolorable: false, draw: drawBanana },
-  { id: "cookie", label: "biscuite", labelDef: "biscuitele", category: "food", color: "#C89B6D", recolorable: false, draw: drawCookie },
-  { id: "strawberry", label: "căpșună", labelDef: "căpșuna", category: "food", color: "#F25C4C", recolorable: false, draw: drawStrawberry },
-  { id: "carrot", label: "morcov", labelDef: "morcovul", category: "food", color: "#FFA94D", recolorable: false, draw: drawCarrot },
-  { id: "cupcake", label: "brioșă", labelDef: "brioșa", category: "food", color: "#FF9EC6", recolorable: false, draw: drawCupcake },
-  { id: "ball", label: "minge", labelDef: "mingea", category: "object", color: "#F25C4C", recolorable: true, draw: drawBall },
-  { id: "balloon", label: "balon", labelDef: "balonul", category: "object", color: "#F25C4C", recolorable: true, draw: drawBalloon },
-  { id: "flower", label: "floare", labelDef: "floarea", category: "nature", color: "#FF9EC6", recolorable: true, draw: drawFlower },
-  { id: "tree", label: "copac", labelDef: "copacul", category: "nature", color: "#7FC86B", recolorable: false, draw: drawTree },
-  { id: "house", label: "casă", labelDef: "casa", category: "object", color: "#FFA94D", recolorable: false, draw: drawHouse },
-  { id: "sun", label: "soare", labelDef: "soarele", category: "nature", color: "#FFD35C", recolorable: false, draw: drawSun },
-  { id: "moon", label: "lună", labelDef: "luna", category: "nature", color: "#FFE9A8", recolorable: false, draw: drawMoon },
-  { id: "cloud", label: "nor", labelDef: "norul", category: "nature", color: "#FFFFFF", recolorable: false, draw: drawCloud },
-];
+const DRAW_BY_ID = {
+  cat: drawCat,
+  dog: drawDog,
+  rabbit: drawRabbit,
+  duck: drawDuck,
+  fish: drawFish,
+  elephant: drawElephant,
+  frog: drawFrog,
+  bear: drawBear,
+  bird: drawBird,
+  butterfly: drawButterfly,
+  bee: drawBee,
+  pig: drawPig,
+  cow: drawCow,
+  lion: drawLion,
+  mouse: drawMouse,
+  owl: drawOwl,
+  car: drawCar,
+  bus: drawBus,
+  train: drawTrain,
+  boat: drawBoat,
+  plane: drawPlane,
+  rocket: drawRocket,
+  apple: drawApple,
+  banana: drawBanana,
+  cookie: drawCookie,
+  strawberry: drawStrawberry,
+  carrot: drawCarrot,
+  cupcake: drawCupcake,
+  ball: drawBall,
+  balloon: drawBalloon,
+  flower: drawFlower,
+  tree: drawTree,
+  house: drawHouse,
+  sun: drawSun,
+  moon: drawMoon,
+  cloud: drawCloud,
+} satisfies Record<ItemId, (color?: string) => string>;
 
-const byId = new Map(ITEMS.map((item) => [item.id, item]));
+export const ITEMS: readonly ItemDef[] = ITEM_METADATA.map(
+  ({ defaultColor, ...item }) => ({
+    ...item,
+    color: defaultColor,
+    draw: DRAW_BY_ID[item.id],
+  }),
+);
+
+const byId = new Map<ItemId, ItemDef>(ITEMS.map((item) => [item.id, item]));
 
 export function getItem(id: string): ItemDef {
-  const found = byId.get(id);
+  const found = byId.get(id as ItemId);
   if (!found) throw new Error(`Unknown item: ${id}`);
   return found;
 }

@@ -11,11 +11,14 @@ const laddersPath = path.join(root, "content", "level-ladders.json");
 const laddersDoc = JSON.parse(fs.readFileSync(laddersPath, "utf8"));
 const curriculumPath = path.join(root, "content", "curriculum-map.json");
 const curriculumDoc = JSON.parse(fs.readFileSync(curriculumPath, "utf8"));
+const itemPackPath = path.join(root, "content", "themes", "p0-items.json");
+const itemPack = JSON.parse(fs.readFileSync(itemPackPath, "utf8"));
 
 const errors = [];
 const ids = new Set();
 const validBands = new Set(["A30_36", "B36_48", "C48_60", "D60_72"]);
 const validPriorities = new Set(["P0", "P1", "P2", "P3"]);
+const validItemCategories = new Set(["animal", "vehicle", "food", "object", "nature"]);
 
 for (const game of catalog.games ?? []) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(game.id ?? "")) {
@@ -51,13 +54,53 @@ for (const game of catalog.games ?? []) {
 }
 
 const templateDir = path.join(root, "content", "level-templates");
+let p0ItemPackReferences = 0;
 for (const file of fs.readdirSync(templateDir).filter((name) => name.endsWith(".json"))) {
   const template = JSON.parse(fs.readFileSync(path.join(templateDir, file), "utf8"));
   if (!ids.has(template.gameId)) errors.push(`${file}: unknown gameId ${template.gameId}`);
+  if (template.contentPack === "sample-items") errors.push(`${file}: obsolete sample-items content pack`);
+  if (template.contentPack === itemPack.id) p0ItemPackReferences += 1;
   if (!template.successRule?.kind) errors.push(`${file}: missing success rule`);
   if (template.frustrationPolicy?.endOnDistress !== true) {
     errors.push(`${file}: endOnDistress must be true`);
   }
+}
+
+if (itemPack.id !== "p0-items") errors.push("P0 item pack must use id p0-items.");
+if (itemPack.renderer !== "procedural-svg") errors.push("P0 item pack must use the procedural-svg renderer.");
+if (p0ItemPackReferences === 0) errors.push("No level template references the P0 item pack.");
+
+const itemIds = new Set();
+const assetKeys = new Set();
+for (const item of itemPack.items ?? []) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id ?? "")) {
+    errors.push(`P0 item pack: invalid item id ${item.id}`);
+  }
+  if (itemIds.has(item.id)) errors.push(`P0 item pack: duplicate item id ${item.id}`);
+  itemIds.add(item.id);
+
+  if (assetKeys.has(item.assetKey)) errors.push(`P0 item pack: duplicate asset key ${item.assetKey}`);
+  assetKeys.add(item.assetKey);
+  if (item.assetKey !== `procedural/items/${item.id}`) {
+    errors.push(`P0 item pack: invalid asset key for ${item.id}`);
+  }
+  if (item.assetKey?.startsWith("placeholder/")) {
+    errors.push(`P0 item pack: placeholder asset forbidden for ${item.id}`);
+  }
+  if (!item.label || !item.labelDef) errors.push(`P0 item pack: missing Romanian label for ${item.id}`);
+  if (!validItemCategories.has(item.category)) {
+    errors.push(`P0 item pack: invalid category for ${item.id}`);
+  }
+  if (!/^#[0-9A-F]{6}$/.test(item.defaultColor ?? "")) {
+    errors.push(`P0 item pack: invalid default color for ${item.id}`);
+  }
+  if (typeof item.recolorable !== "boolean") {
+    errors.push(`P0 item pack: missing recolorable flag for ${item.id}`);
+  }
+  if (!item.attributes?.color) errors.push(`P0 item pack: missing semantic color for ${item.id}`);
+}
+if (itemIds.size < 36) {
+  errors.push(`P0 item pack must contain at least 36 production illustrations, found ${itemIds.size}.`);
 }
 
 if (catalog.games.length < 60) errors.push("Catalog should contain at least 60 game families.");
@@ -132,5 +175,6 @@ if (errors.length > 0) {
 const byPriority = Object.groupBy(catalog.games, (game) => game.implementationPriority);
 const byDomain = Object.groupBy(catalog.games, (game) => game.domain);
 console.log(`Validated ${catalog.games.length} game families, ${ids.size} unique IDs and ${progressionAnchorCount} progression anchors.`);
+console.log(`Validated ${itemIds.size} canonical procedural illustrations and ${p0ItemPackReferences} template references.`);
 console.log("Priorities:", Object.fromEntries(Object.entries(byPriority).map(([key, value]) => [key, value.length])));
 console.log("Domains:", Object.fromEntries(Object.entries(byDomain).map(([key, value]) => [key, value.length])));

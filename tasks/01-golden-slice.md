@@ -39,6 +39,8 @@ rămâne blocat până la validările umane și pe dispozitiv.
 - IndexedDB cu migrare v1/v2 și fallback;
 - manifest P0 și registry lazy tipizat, generate din catalog/ladders/ordinea
   release, cu toate chunk-urile verificate în precache;
+- manifest canonic pentru 36 ilustrații procedurale originale, cu maparea
+  renderer–asset verificată static și fără pachet placeholder;
 - Parent Mode React și progresie limitată strict la stage-urile eligibile;
 - 324 clipuri RO locale, fără Web Speech sau request-uri audio externe;
 - Axe automat și 30 baseline-uri vizuale deterministe Chromium/WebKit;

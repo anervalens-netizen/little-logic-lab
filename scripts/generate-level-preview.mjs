@@ -12,9 +12,22 @@ import {
 } from "../packages/core/dist/index.js";
 
 const root = path.resolve(new URL("..", import.meta.url).pathname);
-const itemsDoc = JSON.parse(fs.readFileSync(path.join(root, "content", "themes", "sample-items.json"), "utf8"));
-const items = itemsDoc.items.map((item) => ({ id: item.id, attributes: item.attributes }));
+const itemsDoc = JSON.parse(fs.readFileSync(path.join(root, "content", "themes", "p0-items.json"), "utf8"));
+const items = itemsDoc.items.map((item) => ({
+  id: item.id,
+  attributes: { category: item.category, ...item.attributes },
+}));
 const symbols = items.slice(0, 6).map((item) => item.id);
+const sortColors = ["red", "blue", "yellow", "green"];
+const sortItems = itemsDoc.items
+  .filter((item) => item.recolorable)
+  .slice(0, 4)
+  .flatMap((item) =>
+    sortColors.map((color) => ({
+      id: `${item.id}-${color}`,
+      attributes: { category: item.category, color },
+    })),
+  );
 
 const levels = [
   generateVisualChoice("preview:visual", {
@@ -25,7 +38,7 @@ const levels = [
   }),
   generateSortLevel("preview:sort", {
     gameId: "sort-by-color",
-    items,
+    items: sortItems,
     attribute: "color",
     binCount: 2,
     itemCount: 6,
@@ -39,8 +52,8 @@ const levels = [
     gameId: "tap-dont-tap",
     trialCount: 8,
     goRatio: 0.65,
-    goStimulusId: "sun-yellow",
-    noGoStimulusId: "cloud-blue",
+    goStimulusId: "sun",
+    noGoStimulusId: "cloud",
   }),
   generatePattern("preview:pattern", {
     gameId: "repeat-pattern-ab",

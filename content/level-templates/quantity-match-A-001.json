@@ -8,7 +8,7 @@
     "symbolSupport": "none",
     "perceptualControl": "basic"
   },
-  "contentPack": "sample-items",
+  "contentPack": "p0-items",
   "successRule": {
     "kind": "single_choice"
   },

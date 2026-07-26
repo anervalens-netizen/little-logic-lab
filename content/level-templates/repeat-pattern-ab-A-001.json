@@ -8,7 +8,7 @@
     "missingPositions": 1,
     "modalityCount": 1
   },
-  "contentPack": "sample-items",
+  "contentPack": "p0-items",
   "successRule": {
     "kind": "single_choice"
   },
