@@ -229,6 +229,7 @@ test("parent mode is React-owned and persists semantic settings", async ({
   await expect(
     page.getByRole("heading", { name: "Zonă pentru adulți" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Setări" }).click();
 
   const reducedMotion = page.getByRole("switch", {
     name: "Mișcare redusă (fără animații)",
@@ -244,11 +245,49 @@ test("parent mode is React-owned and persists semantic settings", async ({
     })
     .toBe(false);
 
+  await page.getByRole("button", { name: "Date" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Date locale" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Exportă progresul (JSON)" }),
+  ).toBeVisible();
+
   await page.getByRole("button", { name: "Înapoi" }).click();
   await expect(
     page.locator('[data-screen="home"][data-screen-ready="true"]'),
   ).toBeVisible();
   await expect(page.locator(".parent-panel")).toHaveCount(0);
+});
+
+test("visual baseline: Parent Mode", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await enterHome(page);
+  await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+  await page
+    .getByRole("button", { name: "Ține apăsat 3 secunde" })
+    .dispatchEvent("pointerdown");
+  await expect(
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 5_000 });
+  await page.addStyleTag({
+    content:
+      "*,*::before,*::after{animation:none!important;transition:none!important;}",
+  });
+  await expect(page).toHaveScreenshot("parent-overview.png", {
+    animations: "disabled",
+    caret: "hide",
+    scale: "css",
+  });
+  await expectNoAutomaticAccessibilityViolations(page);
+
+  await page.getByRole("button", { name: "Setări" }).click();
+  await expect(page).toHaveScreenshot("parent-settings.png", {
+    animations: "disabled",
+    caret: "hide",
+    scale: "css",
+  });
+  await expectNoAutomaticAccessibilityViolations(page);
 });
 
 test("Parent accessibility preferences change contrast, target size and demo timing", async ({
@@ -262,6 +301,7 @@ test("Parent accessibility preferences change contrast, target size and demo tim
   await expect(
     page.locator('[data-screen="parent"][data-screen-ready="true"]'),
   ).toBeVisible({ timeout: 5_000 });
+  await page.getByRole("button", { name: "Setări" }).click();
 
   await page.getByRole("switch", { name: "Contrast ridicat" }).click();
   await page
@@ -482,6 +522,10 @@ test("Pixi exposes frame diagnostics and meets the input budget", async ({
   await page
     .getByRole("button", { name: "Ține apăsat 3 secunde" })
     .dispatchEvent("pointerdown");
+  await expect(
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 5_000 });
+  await page.getByRole("button", { name: "Setări" }).click();
   const reducedMotion = page.getByRole("switch", {
     name: "Mișcare redusă (fără animații)",
   });
@@ -1960,6 +2004,14 @@ test("installed build reloads with the network disabled", async ({
     await expect(
       page.locator('[data-screen="home"][data-screen-ready="true"]'),
     ).toBeVisible();
+    await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+    await page
+      .getByRole("button", { name: "Ține apăsat 3 secunde" })
+      .dispatchEvent("pointerdown");
+    await expect(
+      page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+    ).toBeVisible({ timeout: 5_000 });
+    await page.getByRole("button", { name: "Înapoi" }).click();
     await page.getByRole("button", { name: "Urmează drumul" }).click();
     await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
       timeout: 8_000,

@@ -14,8 +14,6 @@ import { meadowScene } from "../art/scenery";
 import { openParentGate } from "../ui/gate";
 import { attachAmbient } from "../ui/ambient";
 import { jelly } from "../ui/feedback";
-import { showParentScreen } from "./parent";
-import { runSession } from "../app/session";
 import { stopSpeaking } from "../audio/speech";
 import { getAudioContext } from "../audio/audio";
 import { sfxTap } from "../audio/sfx";
@@ -44,15 +42,18 @@ function Artwork({
   );
 }
 
-function startSession(singleGameId?: string): void {
+async function startSession(singleGameId?: string): Promise<void> {
   if (sessionRunning) return;
   sessionRunning = true;
   sfxTap();
-  void runSession(
-    singleGameId === undefined ? undefined : { singleGameId },
-  ).finally(() => {
+  try {
+    const { runSession } = await import("../app/session");
+    await runSession(
+      singleGameId === undefined ? undefined : { singleGameId },
+    );
+  } finally {
     sessionRunning = false;
-  });
+  }
 }
 
 function HomeScreen({
@@ -74,7 +75,13 @@ function HomeScreen({
   }, []);
 
   const openParent = () => {
-    screen.append(openParentGate(() => void showParentScreen()));
+    screen.append(
+      openParentGate(() => {
+        void import("./parent").then(({ showParentScreen }) =>
+          showParentScreen(),
+        );
+      }),
+    );
   };
 
   const animateCard = (event: PointerEvent<HTMLButtonElement>) => {
@@ -125,7 +132,7 @@ function HomeScreen({
               type="button"
               className="btn-big green home-play-button"
               aria-label="Joacă"
-              onClick={() => startSession()}
+              onClick={() => void startSession()}
             >
               <Artwork markup={PLAY_ICON} className="home-play-icon" />
               <span>JOACĂ</span>
@@ -156,7 +163,7 @@ function HomeScreen({
                     } as CSSProperties
                   }
                   onPointerDown={animateCard}
-                  onClick={() => startSession(game.id)}
+                  onClick={() => void startSession(game.id)}
                 >
                   <Artwork
                     markup={game.icon()}

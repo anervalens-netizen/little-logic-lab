@@ -54,7 +54,9 @@ packages/testing/
 Implementarea curentă are `apps/web`, `packages/core`, un manifest P0 și un
 registry TypeScript generate din catalog + `content/p0-release.json`.
 Implementările jocurilor și runtime-urile Pixi sunt lazy-loaded; home încarcă
-numai jocurile deblocate, iar build-ul verifică precache-ul fiecărui chunk.
+numai jocurile deblocate. Parent Mode și orchestratorul sesiunii sunt de
+asemenea importuri dinamice, încărcate numai după acțiunea utilizatorului;
+build-ul verifică precache-ul fiecărui chunk de joc.
 Pachetele separate se extrag numai când al doilea consumator justifică granița.
 
 ## Game plugin contract

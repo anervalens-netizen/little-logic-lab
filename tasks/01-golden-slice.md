@@ -43,9 +43,9 @@ rămâne blocat până la validările umane și pe dispozitiv.
   renderer–asset verificată static și fără pachet placeholder;
 - Parent Mode React și progresie limitată strict la stage-urile eligibile;
 - 321 clipuri RO locale, fără Web Speech sau request-uri audio externe;
-- Axe automat și 38 baseline-uri vizuale deterministe Chromium/WebKit;
+- Axe automat și 42 baseline-uri vizuale deterministe Chromium/WebKit;
 - telemetrie locală pentru frame p95, input latency și long tasks;
-- 82,99 KiB JS inițial gzip, sub bugetul de 100 KiB;
+- 69,67 KiB JS inițial gzip, sub bugetul de 100 KiB;
 - primul pass pentru toate cele trei jocuri și E2E Chromium/WebKit.
 
 Rămân deschise revizia auditivă umană, device performance, VoiceOver/TalkBack

@@ -20,8 +20,9 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   generează manifestul compact și
   registry-ul TypeScript lazy. Cele 36 de ilustrații procedurale originale au
   manifest canonic, ID-uri tipizate și mapare completă renderer–asset.
-  Shell-ul inițial este 82,99 KiB gzip, sub bugetul de 100 KiB; toate cele 15
-  chunk-uri de joc sunt precached, iar scenele Pixi au lifecycle și overlay semantic.
+  Parent Mode și orchestratorul sesiunii sunt lazy, iar shell-ul inițial este
+  69,67 KiB gzip, sub bugetul de 100 KiB; toate cele 15 chunk-uri de joc sunt
+  precached, iar scenele Pixi au lifecycle și overlay semantic.
   Exit-ul real rămâne condiționat de dispozitiv.
 - R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
   rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
@@ -41,7 +42,7 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   consumă toate cele 19 stage-uri, inclusiv semnale întârziate și schimbarea
   regulii. `trace-road` folosește generator determinist în core și tracking
   nativ de pointer pe canvas pentru toate cele 17 stage-uri. Toate cele 15
-  familii P0 sunt acum Pixi. 321 clipuri RO locale, Axe și 38 baseline-uri
+  familii P0 sunt acum Pixi. 321 clipuri RO locale, Axe și 42 baseline-uri
   vizuale cu seed și ceas fixe sunt integrate. Feedback-ul implicit descrie
   strategia/efortul, nu identitatea copilului. Lipsesc măsurarea pe
   dispozitiv, revizia umană a vocii și validarea observată.
@@ -61,6 +62,8 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   canvasul în timpul unui drag. Splash, co-play și finalul calm sunt acum React,
   folosesc aceeași ierarhie vizuală responsive și trec Axe + baseline-uri
   Chromium/WebKit; Splash este verificat separat și în landscape 844×390.
+  Parent Mode are acum Rezumat/Setări/Date, progres bazat numai pe dovezi,
+  layout telefon/tabletă și acces direct la reactivarea sesiunii.
 
 ## 1. Obiectiv
 
