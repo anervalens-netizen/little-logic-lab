@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { registerScreenCleanup, showScreen } from "../app/router";
 import { drawLumi } from "../art/lumi";
 import { meadowScene, nightScene } from "../art/scenery";
-import { speak } from "../audio/speech";
+import { speakAndWait, stopSpeaking } from "../audio/speech";
 import { sfxSessionEnd } from "../audio/sfx";
 
 function Artwork({
@@ -44,6 +44,10 @@ export async function showCoPlayCard(prompt: string): Promise<void> {
   const done = new Promise<void>((resolve) => {
     resolveDone = resolve;
   });
+  const finish = () => {
+    stopSpeaking();
+    resolveDone();
+  };
 
   await showScreen(() =>
     mountReactScreen(
@@ -70,7 +74,7 @@ export async function showCoPlayCard(prompt: string): Promise<void> {
             <button
               type="button"
               className="btn-big green session-card-button"
-              onClick={resolveDone}
+              onClick={finish}
             >
               Am făcut-o!
             </button>
@@ -79,7 +83,7 @@ export async function showCoPlayCard(prompt: string): Promise<void> {
       </>,
     ),
   );
-  speak(prompt);
+  void speakAndWait(prompt);
   await done;
 }
 
@@ -89,6 +93,10 @@ export async function showSessionEndCard(onReady: () => void): Promise<void> {
   const done = new Promise<void>((resolve) => {
     resolveDone = resolve;
   });
+  const finish = () => {
+    stopSpeaking();
+    resolveDone();
+  };
 
   await showScreen(() =>
     mountReactScreen(
@@ -120,7 +128,7 @@ export async function showSessionEndCard(onReady: () => void): Promise<void> {
             <button
               type="button"
               className="btn-big blue session-card-button"
-              onClick={resolveDone}
+              onClick={finish}
             >
               Înapoi acasă
             </button>
@@ -130,7 +138,9 @@ export async function showSessionEndCard(onReady: () => void): Promise<void> {
     ),
   );
   sfxSessionEnd();
-  speak("Gata pentru azi! Ai lucrat cu răbdare. Lumi se odihnește acum.");
+  void speakAndWait(
+    "Gata pentru azi! Ai lucrat cu răbdare. Lumi se odihnește acum.",
+  );
   onReady();
   await done;
 }
