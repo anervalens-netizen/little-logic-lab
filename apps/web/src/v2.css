@@ -1,5 +1,12 @@
 /* V2 product layer. Kept separate until the visual system replaces legacy CSS. */
 
+/* Vocea este autoritară pentru ritmul rundei. Blochează atingerea scenei în
+   timpul încărcării/redării, fără a bloca Home, ieșirea sau Parent Mode. */
+html[data-speech-state="loading"] .game-play-area,
+html[data-speech-state="playing"] .game-play-area {
+  pointer-events: none;
+}
+
 .home-adventure {
   position: relative;
   z-index: 3;
