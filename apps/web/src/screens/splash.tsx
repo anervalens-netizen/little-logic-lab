@@ -1,17 +1,19 @@
-/** Ecranul React de pornire; prima atingere deblochează audio. */
+/** Ecranul React de pornire; prima atingere deblochează audio și build-ul offline. */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { registerScreenCleanup, showScreen } from "../app/router";
+import { waitForOfflineReady } from "../app/update";
 import { drawLumi } from "../art/lumi";
 import { meadowScene } from "../art/scenery";
 import { getAudioContext } from "../audio/audio";
-import { speak } from "../audio/speech";
+import { speakAndWait } from "../audio/speech";
 import { showHome } from "./home";
-import { sfxWin } from "../audio/sfx";
+import { sfxTap } from "../audio/sfx";
 import { attachAmbient } from "../ui/ambient";
 
 const START_ICON = `<svg viewBox="0 0 48 48"><path d="M17 11 L39 24 L17 37 Z" fill="#4A3F35"/></svg>`;
+const GREETING = "Salut! Eu sunt Lumi! Hai să ne jucăm împreună!";
 
 function Artwork({
   markup,
@@ -32,6 +34,7 @@ function Artwork({
 function SplashScreen() {
   const started = useRef(false);
   const ambientHost = useRef<HTMLDivElement>(null);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     const host = ambientHost.current;
@@ -40,17 +43,22 @@ function SplashScreen() {
     return () => host.replaceChildren();
   }, []);
 
-  const start = () => {
+  const start = async () => {
     if (started.current) return;
     started.current = true;
+    setStarting(true);
     getAudioContext();
-    sfxWin();
-    speak("Salut! Eu sunt Lumi! Hai să ne jucăm împreună!");
-    void showHome();
+    sfxTap();
+
+    await Promise.all([
+      speakAndWait(GREETING),
+      waitForOfflineReady(),
+    ]);
+    await showHome();
   };
 
   return (
-    <div className="splash-interaction" onPointerDown={start}>
+    <div className="splash-interaction" onPointerDown={() => void start()}>
       <div
         aria-hidden="true"
         className="splash-scenery"
@@ -66,22 +74,25 @@ function SplashScreen() {
         <section className="splash-brand-card" aria-labelledby="splash-title">
           <div className="splash-lumi-halo" aria-hidden="true" />
           <Artwork
-            markup={drawLumi("happy", 190)}
-            className="splash-lumi lumi happy lll-float"
+            markup={drawLumi(starting ? "think" : "happy", 190)}
+            className={`splash-lumi lumi ${starting ? "think" : "happy"} lll-float`}
           />
           <h1 id="splash-title" className="splash-title">
             Minte în joacă
           </h1>
-          <p className="splash-subtitle">
-            Jocuri logice blânde pentru cei mici
+          <p className="splash-subtitle" aria-live="polite">
+            {starting
+              ? "Pregătesc joaca pentru a funcționa și fără internet…"
+              : "Jocuri logice blânde pentru cei mici"}
           </p>
           <button
             type="button"
             className="btn-big sun splash-start-button pop-in"
-            onClick={start}
+            disabled={starting}
+            onClick={() => void start()}
           >
             <Artwork markup={START_ICON} className="splash-start-icon" />
-            <span>Atinge și joacă-te!</span>
+            <span>{starting ? "PREGĂTESC…" : "Atinge și joacă-te!"}</span>
           </button>
         </section>
       </div>
