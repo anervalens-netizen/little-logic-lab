@@ -32,14 +32,29 @@ async function waitForController(timeoutMs: number): Promise<boolean> {
   });
 }
 
+/** Găsește asset-ul și când Workbox folosește o cheie cu __WB_REVISION__. */
+async function findPrecachedResponse(
+  pathname: string,
+): Promise<Response | undefined> {
+  for (const cacheName of await caches.keys()) {
+    const cache = await caches.open(cacheName);
+    const request = (await cache.keys()).find(
+      (candidate) => new URL(candidate.url).pathname === pathname,
+    );
+    if (!request) continue;
+    const response = await cache.match(request);
+    if (response) return response;
+  }
+  return undefined;
+}
+
 async function currentReleaseIsCached(): Promise<boolean> {
   const htmlIdentity = document.querySelector<HTMLMetaElement>(
     'meta[name="logic-lab-release"]',
   )?.content;
   if (!htmlIdentity) return false;
 
-  const request = new Request(new URL("/release.json", window.location.href));
-  const cached = await caches.match(request);
+  const cached = await findPrecachedResponse("/release.json");
   if (!cached?.ok) return false;
 
   try {
