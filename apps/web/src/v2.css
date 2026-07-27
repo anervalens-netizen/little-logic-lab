@@ -1,0 +1,183 @@
+/* V2 product layer. Kept separate until the visual system replaces legacy CSS. */
+
+.home-adventure {
+  position: relative;
+  z-index: 3;
+  width: min(920px, calc(100% - 28px));
+  margin: 0 auto 18px;
+  padding: 18px 20px 22px;
+  border: 3px solid rgba(255, 255, 255, 0.78);
+  border-radius: 34px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 249, 230, 0.72));
+  box-shadow:
+    0 10px 0 rgba(74, 63, 53, 0.08),
+    0 20px 44px rgba(74, 63, 53, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.home-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.home-adventure .home-library-title {
+  margin: 0;
+  text-align: left;
+}
+
+.home-adventure-badge {
+  flex: 0 0 auto;
+  padding: 7px 13px;
+  border: 2px solid rgba(74, 63, 53, 0.12);
+  border-radius: 999px;
+  background: var(--sun);
+  box-shadow: 0 4px 0 rgba(74, 63, 53, 0.12);
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 800;
+}
+
+.home-adventure-map {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: clamp(14px, 3vw, 34px);
+  min-height: 205px;
+  padding: 18px 10px 10px;
+}
+
+.home-adventure-path {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: 10%;
+  left: 10%;
+  height: 18px;
+  border: 4px solid rgba(166, 123, 91, 0.28);
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.9) 0 18px,
+      rgba(255, 255, 255, 0.1) 18px 32px
+    ),
+    #d6aa79;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45);
+  transform: rotate(-2deg);
+}
+
+.home-adventure-stop {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+}
+
+.home-adventure-stop--1 {
+  transform: translateY(18px) rotate(-1.5deg);
+}
+
+.home-adventure-stop--2 {
+  transform: translateY(-16px) rotate(1deg);
+}
+
+.home-adventure-stop--3 {
+  transform: translateY(12px) rotate(-0.5deg);
+}
+
+.home-adventure-card {
+  width: min(100%, 230px);
+  min-height: 166px;
+  border-width: 5px;
+  background:
+    radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.95), transparent 48%),
+    color-mix(in srgb, var(--adventure-accent) 16%, white) !important;
+  box-shadow:
+    0 8px 0 color-mix(in srgb, var(--adventure-accent) 34%, rgba(74, 63, 53, 0.12)),
+    0 16px 30px rgba(74, 63, 53, 0.12);
+}
+
+.home-adventure-card .home-game-art {
+  width: clamp(88px, 13vw, 126px);
+  height: clamp(88px, 13vw, 126px);
+}
+
+.home-adventure-number {
+  position: absolute;
+  z-index: 2;
+  top: -14px;
+  left: max(2px, calc(50% - 106px));
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 4px 0 rgba(74, 63, 53, 0.18);
+  color: white;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+html[data-high-contrast="true"] .home-adventure {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+
+.reduced-motion .home-adventure-stop,
+.reduced-motion .home-adventure-path {
+  transform: none;
+}
+
+@media (max-width: 620px) and (orientation: portrait) {
+  .home-adventure {
+    width: calc(100% - 18px);
+    padding: 15px 14px 18px;
+    border-radius: 28px;
+  }
+
+  .home-adventure-map {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    min-height: 0;
+    padding: 12px 0 4px;
+  }
+
+  .home-adventure-path {
+    top: 8%;
+    right: auto;
+    bottom: 8%;
+    left: 50%;
+    width: 16px;
+    height: auto;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.9) 0 18px,
+        rgba(255, 255, 255, 0.1) 18px 32px
+      ),
+      #d6aa79;
+    transform: translateX(-50%) rotate(1deg);
+  }
+
+  .home-adventure-stop,
+  .home-adventure-stop--1,
+  .home-adventure-stop--2,
+  .home-adventure-stop--3 {
+    transform: none;
+  }
+
+  .home-adventure-card {
+    width: min(100%, 260px);
+    min-height: 144px;
+  }
+
+  .home-adventure-number {
+    left: calc(50% - 132px);
+  }
+}
