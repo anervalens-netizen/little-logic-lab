@@ -8,13 +8,14 @@ import {
 } from "react";
 import { createRoot } from "react-dom/client";
 import { registerScreenCleanup, showScreen } from "../app/router";
+import { waitForOfflineReady } from "../app/update";
 import { GAME_IDS, loadGames } from "../generated/game-registry";
 import { drawLumi } from "../art/lumi";
 import { meadowScene } from "../art/scenery";
 import { openParentGate } from "../ui/gate";
 import { attachAmbient } from "../ui/ambient";
 import { jelly } from "../ui/feedback";
-import { stopSpeaking } from "../audio/speech";
+import { preloadSpeech, stopSpeaking } from "../audio/speech";
 import { getAudioContext } from "../audio/audio";
 import { sfxTap } from "../audio/sfx";
 import { getProfile } from "../app/appState";
@@ -23,6 +24,11 @@ import type { WebGame } from "../games/types";
 
 const PARENT_ICON = `<svg viewBox="0 0 48 48"><circle cx="24" cy="16" r="8" fill="#4A3F35"/><path d="M 8 42 Q 8 28 24 28 Q 40 28 40 42 Z" fill="#4A3F35"/></svg>`;
 const PLAY_ICON = `<svg viewBox="0 0 48 48"><path d="M 16 10 L 40 24 L 16 38 Z" fill="#4A3F35"/></svg>`;
+const ADVENTURE_IDS = [
+  "same-picture",
+  "sort-by-color",
+  "inset-puzzle",
+] as const;
 
 let sessionRunning = false;
 
@@ -47,6 +53,7 @@ async function startSession(singleGameId?: string): Promise<void> {
   sessionRunning = true;
   sfxTap();
   try {
+    await waitForOfflineReady();
     const { runSession } = await import("../app/session");
     await runSession(
       singleGameId === undefined ? undefined : { singleGameId },
@@ -54,6 +61,39 @@ async function startSession(singleGameId?: string): Promise<void> {
   } finally {
     sessionRunning = false;
   }
+}
+
+function GameButton({
+  game,
+  index,
+  className = "",
+  onAnimate,
+}: {
+  readonly game: WebGame;
+  readonly index: number;
+  readonly className?: string;
+  readonly onAnimate: (event: PointerEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`choice-card pop-in home-game-card ${className}`.trim()}
+      aria-label={game.title}
+      style={
+        {
+          background: `${game.bubbleColor}26`,
+          borderColor: game.bubbleColor,
+          "--home-delay": `${index * 55}ms`,
+          "--adventure-accent": game.bubbleColor,
+        } as CSSProperties
+      }
+      onPointerDown={onAnimate}
+      onClick={() => void startSession(game.id)}
+    >
+      <Artwork markup={game.icon()} className="home-game-art" />
+      <span className="home-game-name">{game.title}</span>
+    </button>
+  );
 }
 
 function HomeScreen({
@@ -66,6 +106,14 @@ function HomeScreen({
   readonly screen: HTMLElement;
 }) {
   const ambientHost = useRef<HTMLDivElement>(null);
+  const adventureGames = ADVENTURE_IDS.map((id) =>
+    games.find((game) => game.id === id),
+  ).filter((game): game is WebGame => game !== undefined);
+  const adventureReady = adventureGames.length === ADVENTURE_IDS.length;
+  const adventureIdSet = new Set(ADVENTURE_IDS);
+  const otherGames = adventureReady
+    ? games.filter((game) => !adventureIdSet.has(game.id as (typeof ADVENTURE_IDS)[number]))
+    : games;
 
   useEffect(() => {
     const host = ambientHost.current;
@@ -73,6 +121,10 @@ function HomeScreen({
     attachAmbient(host);
     return () => host.replaceChildren();
   }, []);
+
+  useEffect(() => {
+    void preloadSpeech(games.map((game) => game.instruction));
+  }, [games]);
 
   const openParent = () => {
     screen.append(
@@ -140,37 +192,55 @@ function HomeScreen({
           )}
         </section>
 
-        {!sessionLocked ? (
+        {!sessionLocked && adventureReady ? (
+          <section
+            className="home-adventure"
+            aria-labelledby="home-adventure-title"
+          >
+            <div className="home-section-heading">
+              <h2 id="home-adventure-title" className="home-library-title">
+                Aventura lui Lumi
+              </h2>
+              <span className="home-adventure-badge">3 opriri</span>
+            </div>
+            <div className="home-adventure-map">
+              <div className="home-adventure-path" aria-hidden="true" />
+              {adventureGames.map((game, index) => (
+                <div
+                  key={game.id}
+                  className={`home-adventure-stop home-adventure-stop--${index + 1}`}
+                >
+                  <span className="home-adventure-number" aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <GameButton
+                    game={game}
+                    index={index}
+                    className="home-adventure-card"
+                    onAnimate={animateCard}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {!sessionLocked && otherGames.length > 0 ? (
           <section className="home-library" aria-labelledby="home-library-title">
             <h2 id="home-library-title" className="home-library-title">
-              Alege o aventură
+              {adventureReady ? "Mai multe jocuri" : "Alege o aventură"}
             </h2>
             <div
               className="home-game-grid"
-              data-game-count={String(games.length)}
+              data-game-count={String(otherGames.length)}
             >
-              {games.map((game, index) => (
-                <button
+              {otherGames.map((game, index) => (
+                <GameButton
                   key={game.id}
-                  type="button"
-                  className="choice-card pop-in home-game-card"
-                  aria-label={game.title}
-                  style={
-                    {
-                      background: `${game.bubbleColor}26`,
-                      borderColor: game.bubbleColor,
-                      "--home-delay": `${index * 40}ms`,
-                    } as CSSProperties
-                  }
-                  onPointerDown={animateCard}
-                  onClick={() => void startSession(game.id)}
-                >
-                  <Artwork
-                    markup={game.icon()}
-                    className="home-game-art"
-                  />
-                  <span className="home-game-name">{game.title}</span>
-                </button>
+                  game={game}
+                  index={index}
+                  onAnimate={animateCard}
+                />
               ))}
             </div>
           </section>
@@ -206,6 +276,6 @@ export async function showHome(): Promise<void> {
     return screen;
   });
 
-  // Deblochează audio la prima interacțiune și salută.
+  // Contextul rămâne suspendat până la atingere; decodarea locală poate începe.
   getAudioContext();
 }
