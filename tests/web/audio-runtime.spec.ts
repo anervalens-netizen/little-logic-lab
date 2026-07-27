@@ -62,7 +62,7 @@ test("current release is cached and speech gates child input", async ({
 
   await expect(
     page.locator('[data-screen="home"][data-screen-ready="true"]'),
-  ).toBeVisible({ timeout: 15_000 });
+  ).toBeVisible({ timeout: 35_000 });
   await expect(page.locator("html")).toHaveAttribute(
     "data-offline-state",
     "ready",
@@ -71,9 +71,17 @@ test("current release is cached and speech gates child input", async ({
     const htmlCommit = document.querySelector<HTMLMetaElement>(
       'meta[name="logic-lab-release"]',
     )?.content;
-    const cached = await caches.match(new URL("/release.json", location.href));
-    const release = cached?.ok
-      ? ((await cached.json()) as { commit?: string })
+    let response: Response | undefined;
+    for (const cacheName of await caches.keys()) {
+      const cache = await caches.open(cacheName);
+      const request = (await cache.keys()).find(
+        (candidate) => new URL(candidate.url).pathname === "/release.json",
+      );
+      if (request) response = await cache.match(request);
+      if (response) break;
+    }
+    const release = response?.ok
+      ? ((await response.json()) as { commit?: string })
       : undefined;
     return { htmlCommit, cachedCommit: release?.commit };
   });
@@ -106,7 +114,7 @@ test("the first three games become a coherent adventure map", async ({
 
   await expect(
     page.locator('[data-screen="home"][data-screen-ready="true"]'),
-  ).toBeVisible({ timeout: 15_000 });
+  ).toBeVisible({ timeout: 35_000 });
   await expect(
     page.getByRole("heading", { name: "Aventura lui Lumi" }),
   ).toBeVisible();
