@@ -1,20 +1,24 @@
-# Minte în joacă — PWA React/Pixi
+# Minte în joacă — PWA React/Pixi V2
 
-Aplicația P0 este live la `https://logic-lab.astancu.eu/`. Producția servește
-build-ul static Vite prin Cloudflare Tunnel → Caddy; nu folosește un backend.
+Producția curentă este servită static prin Cloudflare Tunnel → Caddy și nu
+folosește backend. Rebuild-ul V2 este pe branch-ul
+`agent/v2-runtime-reboot`; nu trebuie publicat înainte ca toate verificările din
+`docs/12-roadmap.md` să treacă.
 
 ## Rulare locală
 
 ```bash
 cd ../..
 npm install
-npm run dev --workspace @little-logic-lab/web
+npm run check:v2-runtime
+npm run typecheck
 npm run build:web
+npm run test:web -- --project chromium-touch
 npm run preview --workspace @little-logic-lab/web
 ```
 
 `preview` este numai pentru verificare locală. `npm run build:web` impune
-bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
+bugetul de shell și verifică precache-ul implementărilor lazy.
 
 ## Livrare statică
 
@@ -34,53 +38,77 @@ docker exec unihub-caddy test -r /srv/logic-lab/index.html
 După publicare se verifică `/release.json` prin URL-ul public. Un răspuns `403`
 nu se atribuie Cloudflare înainte de verificarea permisiunilor din container.
 
-## Stare curentă
+## Runtime V2
 
-- TypeScript 7 strict, React 19 pentru Splash/Home/tranziții/shell/Parent Mode,
-  PixiJS 8/WebGL pentru scene și Vite 8;
-- 15/15 familii P0 funcționale, cu toate stage-urile ladder consumate;
-- registry TypeScript generat din catalog + ordinea P0, fără listă manuală;
-- 36 ilustrații procedurale originale, cu metadate canonice și ID-uri tipizate;
-- jocurile și runtime-urile Pixi sunt chunk-uri lazy, precached pentru offline;
-- profil, replay, progres și setări în IndexedDB cu migrări/recovery;
-- snapshot local v4, migrări v1/v2/v3 și blocare calmă după sesiune,
-  deblocată numai din Parent Mode;
-- 321 clipuri românești locale, cu feedback despre strategie/efort, și efecte
-  Web Audio, fără servicii remote;
-- overlay semantic, Reduced Motion, contrast ridicat, ținte de 112 px,
-  demonstrații 1,5× mai lente, Axe și baseline-uri Chromium/WebKit;
-- PWA versionată, CSP strict și zero egress de gameplay;
-- buildurile de release pornesc fail-closed numai dintr-un worktree Git curat,
-  expun commitul și tree-ul în HTML plus `/release.json`, iar identitatea este
-  inclusă în precache-ul offline și validată de `check:web-build`;
-- Parent Mode și orchestratorul sesiunii sunt chunk-uri lazy, precached;
-- diagnostics verifică cinci cicluri consecutive fără canvas, overlay, clone,
-  voce, tonuri sau lease-uri SVG reziduale;
-- shell inițial 69,98 KiB JS gzip, sub bugetul de 100 KiB.
+- vocea RO este locală și decodificată în `AudioBuffer`;
+- clipurile apropiate sunt preîncărcate și reutilizate;
+- o singură replică poate fi activă;
+- vocea și SFX folosesc magistrale separate;
+- SFX sunt reduse cât timp vocea vorbește;
+- `wait()` păstrează durata vizuală minimă și așteaptă vocea activă;
+- vocile procedurale ale obiectelor sunt dezactivate;
+- Splash așteaptă service worker activ, controlul paginii și identitatea release
+  în Cache Storage înainte de Home, cu timeout de recovery;
+- Home grupează primele trei jocuri deblocate în „Aventura lui Lumi”;
+- `data-speech-state` și `data-offline-state` permit teste deterministe;
+- `npm run check:v2-runtime` blochează revenirea la `new Audio()` și la vocile
+  sintetice vechi.
 
-## Structură
+## Structură relevantă
 
 ```text
 src/
-  main.tsx           bootstrap React
-  app/               sesiuni, profil, IndexedDB, update PWA
-  generated/         content, asset manifest și registry lazy generate
-  games/             implementările P0 și engine-ul transversal
-  runtime/           scene Pixi reutilizabile
-  screens/           splash, home, joc și Parent Mode
-  audio/             manifest RO, playback local și efecte
-  art/               Lumi, scene și renderere SVG procedurale locale
-  ui/                input/feedback/parent gate
+  main.tsx                 bootstrap React + styles V2
+  app/
+    update.ts              offline readiness și update sigur
+    session.ts             preloading și secvențiere sesiune
+  audio/
+    audio.ts               output, voice bus, SFX bus, ducking
+    playback.ts            fetch, decode, cache, playback lifecycle
+    speech.ts              manifest RO, anulare și speech state
+    voices.ts              API rezervat pentru viitorul pack Higgs
+  screens/
+    splash.tsx             pregătire offline
+    home.tsx               Home și aventura golden-slice
+  games/
+    engine.ts              context awaitable
+    choiceGame.ts          runtime sincronizat
+  ui/dom.ts                wait audio-aware
+  v2.css                   stratul vizual nou
 ```
 
-## Porți rămase pentru pilot
+## Starea conținutului
 
-- audiția celor 321 clipuri de un vorbitor nativ;
-- verificare manuală TalkBack/VoiceOver;
-- observație copil–adult și remedierea blocajelor constatate.
+- nucleul pedagogic, ladder-ele și cele 15 familii P0 existente se păstrează;
+- prioritatea de produs este acum golden slice:
+  - `same-picture`;
+  - `sort-by-color`;
+  - `inset-puzzle`;
+- cele 321 de clipuri Edge TTS rămân temporar și necesită revizie auditivă;
+- viitorul pachet Higgs se generează offline și înlocuiește numai asset-urile;
+- nu se adaugă jocuri noi înainte de validarea golden-slice.
 
-Poarta Android este închisă pe OnePlus 6T/Android 11/Chrome 150:
-59,55–59,84 FPS, frame p95 16,8 ms, input 5,8–7,3 ms, zero long tasks și
-zero resurse active după cinci cicluri.
+## Validare obligatorie înainte de publicare
 
-Roadmap-ul canonic este `../../docs/12-roadmap.md`.
+```bash
+npm run check:v2-runtime
+npm test
+npm run typecheck
+npm run build:web
+npm run test:web -- --project chromium-touch
+npm run test:web -- --project webkit-touch
+```
+
+Apoi:
+
+- prima pornire online;
+- închidere completă a aplicației;
+- activare airplane mode;
+- sesiune completă cu cele trei jocuri;
+- suspend/resume;
+- verificare zero canvas/audio/timer rezidual;
+- test manual TalkBack/VoiceOver;
+- observație copil–adult.
+
+Roadmap-ul canonic este `../../docs/12-roadmap.md`, iar decizia V2 este
+`../../docs/decisions/2026-07-27-v2-runtime-reboot.md`.
