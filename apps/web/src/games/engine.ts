@@ -10,7 +10,11 @@ import {
 } from "@core";
 import type { GameContext, WebGame, PlayResult } from "./types";
 import { getProfile, recordAttempt, setGameDifficulty } from "../app/appState";
-import { speakAndWait, stopSpeaking } from "../audio/speech";
+import {
+  speakAndWait,
+  stopSpeaking,
+  waitForSpeechIdle,
+} from "../audio/speech";
 import { praise, isMotionReduced } from "../ui/feedback";
 import { demoTap, demoHand } from "../ui/feedback";
 import { wait } from "../ui/dom";
@@ -131,6 +135,9 @@ export async function runGame(
       }
     }
 
+    // Un runtime de joc poate rezolva rezultatul după animația vizuală minimă,
+    // dar ultima explicație audio trebuie lăsată să se încheie înaintea laudei.
+    await waitForSpeechIdle();
     if (result.completed && !cancelFlag) {
       await praise(shell, { win: result.correctFirstTry });
     }
