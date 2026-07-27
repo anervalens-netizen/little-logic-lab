@@ -3,7 +3,7 @@ import { registerSW } from "virtual:pwa-register";
 let updateReady = false;
 let updateServiceWorker: ((reloadPage?: boolean) => Promise<void>) | null = null;
 let offlineReady = !import.meta.env.PROD;
-let offlineReadyPromise: Promise<boolean> = Promise.resolve(offlineReady);
+let offlineProbe: Promise<boolean> | null = null;
 
 function markOfflineState(state: "preparing" | "ready" | "unavailable"): void {
   document.documentElement.dataset.offlineState = state;
@@ -49,29 +49,14 @@ async function currentReleaseIsCached(): Promise<boolean> {
   }
 }
 
-export function initializeAppUpdates(): void {
-  if (!import.meta.env.PROD) {
-    markOfflineState("ready");
-    return;
-  }
-  if (!("serviceWorker" in navigator) || !("caches" in window)) {
-    offlineReady = false;
-    offlineReadyPromise = Promise.resolve(false);
-    markOfflineState("unavailable");
-    return;
-  }
+function startOfflineProbe(controllerTimeoutMs: number): Promise<boolean> {
+  if (offlineReady) return Promise.resolve(true);
+  if (offlineProbe) return offlineProbe;
 
   markOfflineState("preparing");
-  updateServiceWorker = registerSW({
-    immediate: true,
-    onNeedRefresh() {
-      updateReady = true;
-    },
-  });
-
-  offlineReadyPromise = navigator.serviceWorker.ready
+  const probe = navigator.serviceWorker.ready
     .then(async () => {
-      const controlled = await waitForController(8_000);
+      const controlled = await waitForController(controllerTimeoutMs);
       const currentReleaseCached = await currentReleaseIsCached();
       offlineReady = controlled && currentReleaseCached;
       markOfflineState(offlineReady ? "ready" : "unavailable");
@@ -81,7 +66,34 @@ export function initializeAppUpdates(): void {
       offlineReady = false;
       markOfflineState("unavailable");
       return false;
+    })
+    .finally(() => {
+      if (!offlineReady && offlineProbe === probe) offlineProbe = null;
     });
+  offlineProbe = probe;
+  return probe;
+}
+
+export function initializeAppUpdates(): void {
+  if (!import.meta.env.PROD) {
+    offlineReady = true;
+    markOfflineState("ready");
+    return;
+  }
+  if (!("serviceWorker" in navigator) || !("caches" in window)) {
+    offlineReady = false;
+    offlineProbe = null;
+    markOfflineState("unavailable");
+    return;
+  }
+
+  updateServiceWorker = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      updateReady = true;
+    },
+  });
+  void startOfflineProbe(25_000);
 }
 
 export function isOfflineReady(): boolean {
@@ -89,15 +101,19 @@ export function isOfflineReady(): boolean {
 }
 
 /**
- * Așteaptă pregătirea completă a build-ului offline, dar nu blochează la infinit
- * primul ecran dacă browserul refuză service worker-ul.
+ * Așteaptă instalarea completă și identitatea release-ului curent. Un eșec sau
+ * timeout poate fi reîncercat; nu păstrăm permanent un rezultat negativ.
  */
 export async function waitForOfflineReady(
-  timeoutMs = 8_000,
+  timeoutMs = 30_000,
 ): Promise<boolean> {
   if (offlineReady) return true;
+  if (!import.meta.env.PROD) return true;
+  if (!("serviceWorker" in navigator) || !("caches" in window)) return false;
+
+  const probe = startOfflineProbe(timeoutMs);
   return await Promise.race([
-    offlineReadyPromise,
+    probe,
     new Promise<false>((resolve) =>
       window.setTimeout(() => resolve(false), timeoutMs),
     ),
