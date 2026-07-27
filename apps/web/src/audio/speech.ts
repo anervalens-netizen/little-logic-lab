@@ -41,6 +41,7 @@ function markSpeechState(state: "idle" | "loading" | "playing"): void {
 
 function setGameInputBlocked(blocked: boolean): void {
   if (typeof document === "undefined") return;
+  document.documentElement.dataset.speechBlocksInput = String(blocked);
   for (const area of document.querySelectorAll<HTMLElement>(".game-play-area")) {
     area.toggleAttribute("inert", blocked);
     area.setAttribute("aria-busy", String(blocked));
