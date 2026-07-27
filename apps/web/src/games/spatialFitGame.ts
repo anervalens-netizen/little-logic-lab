@@ -5,7 +5,6 @@ import type {
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { clear, wait } from "../ui/dom";
-import { speak } from "../audio/speech";
 import { sfxPlace } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
@@ -129,6 +128,7 @@ async function playSpatialFitBatch(
   const finish = (outcome: PlayResult) => {
     if (settled) return;
     settled = true;
+    inputReady = false;
     if (cancelWatch !== null) window.clearInterval(cancelWatch);
     resolveResult(outcome);
   };
@@ -153,8 +153,11 @@ async function playSpatialFitBatch(
       if (itemId !== targetId) {
         const verdict = support.registerError();
         if (verdict === "hint") {
-          window.setTimeout(() => scene.emphasizeTarget(itemId), 180);
-          speak(speech.hint);
+          inputReady = false;
+          scene.emphasizeTarget(itemId);
+          void ctx.speak(speech.hint).then(() => {
+            if (!settled && !simplifying && !ctx.isCancelled()) inputReady = true;
+          });
         } else if (verdict === "simplify") {
           simplifying = true;
           inputReady = false;
@@ -168,19 +171,27 @@ async function playSpatialFitBatch(
       sfxPlace();
       playItemVoice(itemId);
       const piece = pieces.find((candidate) => candidate.id === itemId);
-      if (piece?.speech) speak(piece.speech, { rate: 1 });
+      const pieceSpeech = piece?.speech
+        ? ctx.speak(piece.speech, { rate: 1 })
+        : Promise.resolve();
+      inputReady = false;
       if (placed.size >= pieces.length) {
-        window.setTimeout(
-          () =>
-            finish({
-              completed: true,
-              correctFirstTry: support.wasFirstTryClean,
-              correctEventually: true,
-              hintsUsed: support.hintsUsed,
-              wrongAttempts: support.wrongAttempts,
-            }),
-          ctx.reducedMotion ? 380 : 720,
+        void Promise.all([
+          pieceSpeech,
+          wait(ctx.reducedMotion ? 380 : 720),
+        ]).then(() =>
+          finish({
+            completed: true,
+            correctFirstTry: support.wasFirstTryClean,
+            correctEventually: true,
+            hintsUsed: support.hintsUsed,
+            wrongAttempts: support.wrongAttempts,
+          }),
         );
+      } else {
+        void pieceSpeech.then(() => {
+          if (!settled && !simplifying && !ctx.isCancelled()) inputReady = true;
+        });
       }
       return "correct";
     },
@@ -188,7 +199,7 @@ async function playSpatialFitBatch(
   ctx.onCleanup(scene.destroy);
 
   async function autoCompleteRemaining(): Promise<void> {
-    speak(speech.help);
+    await ctx.speak(speech.help);
     for (const piece of pieces) {
       if (ctx.isCancelled()) return;
       if (placed.has(piece.id)) continue;
@@ -206,8 +217,10 @@ async function playSpatialFitBatch(
     });
   }
 
-  speak(speech.instruction);
-  await wait(demonstrationDelay(900));
+  await Promise.all([
+    ctx.speak(speech.instruction),
+    wait(demonstrationDelay(900)),
+  ]);
   if (ctx.isCancelled()) {
     scene.destroy();
     return {
