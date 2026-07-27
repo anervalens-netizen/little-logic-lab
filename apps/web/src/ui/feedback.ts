@@ -2,7 +2,7 @@
 
 import { el, svgEl, wait } from "./dom";
 import { sfxSuccess, sfxWin, sfxGentleNo, sfxHint } from "../audio/sfx";
-import { speak } from "../audio/speech";
+import { speakAndWait } from "../audio/speech";
 import { demonstrationDelay } from "./accessibilityPreferences";
 
 const CONFETTI_COLORS = ["#F25C4C", "#FFD35C", "#7FC86B", "#4FA8E8", "#9B8CF2", "#FF9EC6"];
@@ -63,8 +63,11 @@ export async function praise(
   container.append(overlay);
   if (opts.win) sfxWin();
   else sfxSuccess();
-  if (opts.voice !== false) speak(text, { rate: 1 });
-  await wait(motionReduced ? 500 : 1500);
+
+  await Promise.all([
+    opts.voice === false ? Promise.resolve() : speakAndWait(text, { rate: 1 }),
+    wait(motionReduced ? 500 : 1500),
+  ]);
   overlay.remove();
 }
 
