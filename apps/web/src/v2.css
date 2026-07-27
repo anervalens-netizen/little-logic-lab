@@ -1,9 +1,8 @@
 /* V2 product layer. Kept separate until the visual system replaces legacy CSS. */
 
-/* Vocea este autoritară pentru ritmul rundei. Blochează atingerea scenei în
-   timpul încărcării/redării, fără a bloca Home, ieșirea sau Parent Mode. */
-html[data-speech-state="loading"] .game-play-area,
-html[data-speech-state="playing"] .game-play-area {
+/* Vocea este autoritară pentru ritmul rundei. Excepțiile go/no-go setează
+   explicit speechBlocksInput=false, deoarece atingerea este comportamentul testat. */
+html[data-speech-blocks-input="true"] .game-play-area {
   pointer-events: none;
 }
 
