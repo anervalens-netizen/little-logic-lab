@@ -5,6 +5,7 @@ let output: GainNode | null = null;
 let sfxBus: GainNode | null = null;
 let voiceBus: GainNode | null = null;
 let enabled = true;
+let voiceDuckingActive = false;
 
 export function setAudioEnabled(value: boolean): void {
   enabled = value;
@@ -25,7 +26,7 @@ export function getAudioContext(): AudioContext | null {
     sfxBus = ctx.createGain();
     voiceBus = ctx.createGain();
     output.gain.value = 1;
-    sfxBus.gain.value = 1;
+    sfxBus.gain.value = voiceDuckingActive ? 0.32 : 1;
     voiceBus.gain.value = 1;
     sfxBus.connect(output);
     voiceBus.connect(output);
@@ -50,10 +51,11 @@ export function getVoiceBus(): GainNode | null {
 
 /** Reduce efectele cât timp vocea vorbește, fără a le opri complet. */
 export function setVoiceDucking(active: boolean): void {
-  const context = ctx ?? getAudioContext();
-  const bus = sfxBus ?? getMaster();
-  if (!context || !bus) return;
+  voiceDuckingActive = active;
+  // Nu crea un AudioContext doar pentru a restabili starea idle înaintea
+  // primei interacțiuni. Valoarea este aplicată la inițializare.
+  if (!ctx || !sfxBus) return;
   const target = active ? 0.32 : 1;
-  bus.gain.cancelScheduledValues(context.currentTime);
-  bus.gain.setTargetAtTime(target, context.currentTime, active ? 0.025 : 0.08);
+  sfxBus.gain.cancelScheduledValues(ctx.currentTime);
+  sfxBus.gain.setTargetAtTime(target, ctx.currentTime, active ? 0.025 : 0.08);
 }
