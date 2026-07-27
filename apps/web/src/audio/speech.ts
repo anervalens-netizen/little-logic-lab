@@ -6,6 +6,8 @@ import { playAudio, preloadAudio, stopAudioPlayback } from "./playback";
 
 let voiceEnabled = true;
 let speechGeneration = 0;
+let speechActive = false;
+const idleWaiters = new Set<() => void>();
 
 function renderFamilyText(template: string, labelDef: string): string {
   const label = `${labelDef.charAt(0).toUpperCase()}${labelDef.slice(1)}`;
@@ -34,6 +36,19 @@ function markSpeechState(state: "idle" | "loading" | "playing"): void {
   if (typeof document !== "undefined") {
     document.documentElement.dataset.speechState = state;
   }
+}
+
+function setSpeechActive(value: boolean): void {
+  speechActive = value;
+  if (value) return;
+  for (const resolve of idleWaiters) resolve();
+  idleWaiters.clear();
+}
+
+/** Se rezolvă când replica activă la momentul apelului s-a încheiat. */
+export function waitForSpeechIdle(): Promise<void> {
+  if (!speechActive) return Promise.resolve();
+  return new Promise<void>((resolve) => idleWaiters.add(resolve));
 }
 
 export function setVoiceEnabled(value: boolean): void {
@@ -79,6 +94,7 @@ export async function speakAndWait(
   setActiveVoiceElements(0);
 
   if (!voiceEnabled || !voiceAvailable()) {
+    setSpeechActive(false);
     markSpeechState("idle");
     options.onEnd?.();
     return;
@@ -87,11 +103,13 @@ export async function speakAndWait(
   const source = clipByText.get(text);
   if (!source) {
     // Instrucțiunea vizuală rămâne autoritară; nu apelăm servicii remote.
+    setSpeechActive(false);
     markSpeechState("idle");
     options.onEnd?.();
     return;
   }
 
+  setSpeechActive(true);
   markSpeechState("loading");
   setActiveVoiceElements(1);
   await playAudio(source, {
@@ -105,6 +123,7 @@ export async function speakAndWait(
 
   if (generation !== speechGeneration) return;
   setActiveVoiceElements(0);
+  setSpeechActive(false);
   markSpeechState("idle");
   options.onEnd?.();
 }
@@ -118,5 +137,6 @@ export function stopSpeaking(): void {
   speechGeneration += 1;
   stopAudioPlayback();
   setActiveVoiceElements(0);
+  setSpeechActive(false);
   markSpeechState("idle");
 }
