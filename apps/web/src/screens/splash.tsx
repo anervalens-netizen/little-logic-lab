@@ -35,6 +35,7 @@ function SplashScreen() {
   const started = useRef(false);
   const ambientHost = useRef<HTMLDivElement>(null);
   const [starting, setStarting] = useState(false);
+  const [offlineIssue, setOfflineIssue] = useState(false);
 
   useEffect(() => {
     const host = ambientHost.current;
@@ -47,15 +48,28 @@ function SplashScreen() {
     if (started.current) return;
     started.current = true;
     setStarting(true);
+    setOfflineIssue(false);
     getAudioContext();
     sfxTap();
 
-    await Promise.all([
+    const [, readyOffline] = await Promise.all([
       speakAndWait(GREETING),
       waitForOfflineReady(),
     ]);
+    if (!readyOffline) {
+      started.current = false;
+      setStarting(false);
+      setOfflineIssue(true);
+      return;
+    }
     await showHome();
   };
+
+  const subtitle = starting
+    ? "Pregătesc joaca pentru a funcționa și fără internet…"
+    : offlineIssue
+      ? "Nu am putut salva toate jocurile pe telefon. Verifică internetul și încearcă din nou."
+      : "Jocuri logice blânde pentru cei mici";
 
   return (
     <div className="splash-interaction" onPointerDown={() => void start()}>
@@ -74,16 +88,19 @@ function SplashScreen() {
         <section className="splash-brand-card" aria-labelledby="splash-title">
           <div className="splash-lumi-halo" aria-hidden="true" />
           <Artwork
-            markup={drawLumi(starting ? "think" : "happy", 190)}
-            className={`splash-lumi lumi ${starting ? "think" : "happy"} lll-float`}
+            markup={drawLumi(
+              starting ? "think" : offlineIssue ? "sleepy" : "happy",
+              190,
+            )}
+            className={`splash-lumi lumi ${
+              starting ? "think" : offlineIssue ? "sleepy" : "happy"
+            } lll-float`}
           />
           <h1 id="splash-title" className="splash-title">
             Minte în joacă
           </h1>
-          <p className="splash-subtitle" aria-live="polite">
-            {starting
-              ? "Pregătesc joaca pentru a funcționa și fără internet…"
-              : "Jocuri logice blânde pentru cei mici"}
+          <p className="splash-subtitle" role="status" aria-live="polite">
+            {subtitle}
           </p>
           <button
             type="button"
@@ -92,7 +109,13 @@ function SplashScreen() {
             onClick={() => void start()}
           >
             <Artwork markup={START_ICON} className="splash-start-icon" />
-            <span>{starting ? "PREGĂTESC…" : "Atinge și joacă-te!"}</span>
+            <span>
+              {starting
+                ? "PREGĂTESC…"
+                : offlineIssue
+                  ? "ÎNCEARCĂ DIN NOU"
+                  : "Atinge și joacă-te!"}
+            </span>
           </button>
         </section>
       </div>
