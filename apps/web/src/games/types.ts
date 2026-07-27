@@ -9,8 +9,8 @@ export interface GameContext {
   readonly mount: HTMLElement;
   /** Întregul ecran (overlay-uri, confetti). */
   readonly shell: HTMLElement;
-  /** Rostește un text (ro-RO) dacă vocea e activă. */
-  readonly speak: (text: string, opts?: { rate?: number }) => void;
+  /** Rostește un text local și se rezolvă la finalul real al clipului. */
+  readonly speak: (text: string, opts?: { rate?: number }) => Promise<void>;
   /** Oprește vocea. */
   readonly hush: () => void;
   readonly reducedMotion: boolean;
