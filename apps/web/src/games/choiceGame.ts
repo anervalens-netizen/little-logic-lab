@@ -19,7 +19,6 @@ import { choiceRow, targetStage } from "./widgets";
 import { el, clear, wait } from "../ui/dom";
 import { markCorrect, showHintGlow, danceItem, particlesAt, jelly } from "../ui/feedback";
 import { playItemVoice } from "../audio/voices";
-import { speak } from "../audio/speech";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 export interface ChoiceRound {
@@ -122,9 +121,11 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
       layout.append(row);
       ctx.mount.append(layout);
 
-      // Anunț + scurtă demonstrație: mânuța atinge ținta, apoi copilul alege.
-      speak(round.roundSpeech);
-      await wait(demonstrationDelay(1300));
+      // Durata minimă păstrează ritmul; audio-ul real poate extinde secvența.
+      await Promise.all([
+        ctx.speak(round.roundSpeech),
+        wait(demonstrationDelay(1300)),
+      ]);
       if (ctx.isCancelled()) return aborted();
 
       const correctCard = cards.get(round.correctId);
@@ -183,7 +184,7 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
             if (verdict === "hint" && correctCard) {
               showHintGlow(correctCard);
               jelly(correctCard);
-              speak("Uite, acesta e la fel!");
+              void ctx.speak("Uite, acesta e la fel!");
             } else if (verdict === "simplify" && correctCard) {
               // Încheiem cu succes: arătăm răspunsul bucuroși, fără presiune.
               for (const other of round.options) {
@@ -192,7 +193,7 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
                 }
               }
               showHintGlow(correctCard);
-              speak("Uite! Aceasta este perechea. Bravo că ai încercat!");
+              void ctx.speak("Uite! Aceasta este perechea. Bravo că ai încercat!");
               setTimeout(() => {
                 markCorrect(correctCard);
                 finish({
@@ -267,7 +268,7 @@ async function playPixiRound(
       ? {
           targetActionLabel: round.targetActionLabel,
           onTargetActivate: () => {
-            speak(round.roundSpeech);
+            void ctx.speak(round.roundSpeech);
             repeatsUsed += 1;
             return repeatAvailability !== "limited" || repeatsUsed < 1;
           },
@@ -304,12 +305,12 @@ async function playPixiRound(
       const verdict = support.registerError(scene.readyElement);
       if (verdict === "hint") {
         scene.emphasize(round.correctId);
-        speak("Uite, acesta e la fel!");
+        void ctx.speak("Uite, acesta e la fel!");
       } else if (verdict === "simplify") {
         inputReady = false;
         scene.dimExcept(round.correctId);
         scene.emphasize(round.correctId);
-        speak("Uite! Aceasta este perechea. Bravo că ai încercat!");
+        void ctx.speak("Uite! Aceasta este perechea. Bravo că ai încercat!");
         window.setTimeout(() => {
           scene.markCorrect(round.correctId);
           finish({
@@ -325,8 +326,10 @@ async function playPixiRound(
   });
   ctx.onCleanup(scene.destroy);
 
-  speak(round.roundSpeech);
-  await wait(demonstrationDelay(900));
+  await Promise.all([
+    ctx.speak(round.roundSpeech),
+    wait(demonstrationDelay(900)),
+  ]);
   if (ctx.isCancelled()) return aborted();
   if (!ctx.reducedMotion) scene.emphasize(round.correctId);
   await wait(demonstrationDelay(400));
