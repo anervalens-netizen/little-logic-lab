@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { registerScreenCleanup, showScreen } from "../app/router";
-import { waitForOfflineReady } from "../app/update";
+import {
+  closeStartupUpdateBoundary,
+  waitForOfflineReady,
+} from "../app/update";
 import { drawLumi } from "../art/lumi";
 import { meadowScene } from "../art/scenery";
 import { getAudioContext } from "../audio/audio";
@@ -62,6 +65,7 @@ function SplashScreen() {
       setOfflineIssue(true);
       return;
     }
+    closeStartupUpdateBoundary();
     await showHome();
   };
 
