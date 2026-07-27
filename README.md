@@ -3,94 +3,115 @@
 Aplicație web/PWA și bibliotecă de jocuri logice pentru aproximativ
 **2 ani și 6 luni – 6 ani**.
 
-Proiectul este construit pentru un copil real, dar repo-ul nu conține nume, fotografii, data nașterii sau alte date personale. Personalizarea se face numai local, în aplicația instalată.
+Proiectul este construit pentru un copil real, dar repo-ul nu conține nume,
+fotografii, data nașterii sau alte date personale. Personalizarea și progresul
+rămân exclusiv pe dispozitiv.
 
-## Ce conține
+## Status V2
 
-- **80 familii de jocuri**, grupate în 19 arhetipuri reutilizabile și 10 domenii: atenție vizuală, clasificare, memorie de lucru, control inhibitor, flexibilitate, secvențe, raționament spațial, numerație, limbaj/social, coordonare și activități în lumea reală.
-- **1.030 ancore de progresie** generate automat, fiecare schimbând o singură axă; nivelurile sunt parametrice și deterministe, nu o listă rigidă: fiecare joc are axe precum număr de opțiuni, similitudinea distractorilor, lungimea secvenței, numărul de reguli sau gradul de ajutor.
-- Un nucleu TypeScript pur pentru progres, dificultate, planificarea sesiunilor, opt generatoare și state-machine-uri de referință pentru primele arhetipuri.
-- Specificație completă pentru un agent Codex: arhitectură, UX, animații, audio, privacy, testare, roadmap, task-uri executabile și criterii de acceptare.
-- Cercetare și limite explicite ale afirmațiilor.
+Rebuild-ul activ este `agent/v2-runtime-reboot`, pornit din commitul
+`3b8f0c92ec49f1098c262d6ed8abba5970ab1651`.
+
+Branch-ul introduce:
+
+- audio local bufferizat și sincronizat cu rundele;
+- magistrale separate voice/SFX și ducking;
+- eliminarea vocilor procedurale neplăcute ale obiectelor;
+- pregătire offline verificată înainte de Home;
+- primul Home V2 cu „Aventura lui Lumi” pentru cele trei jocuri golden-slice;
+- teste și check-uri de regresie V2;
+- roadmap complet pentru validare, redesign și pachetul Higgs.
+
+Branch-ul nu este release-ready până când serverul nu rulează toate porțile din
+`docs/12-roadmap.md`.
+
+## Ce conține proiectul
+
+- **80 familii de jocuri**, grupate în 19 arhetipuri reutilizabile și 10 domenii;
+- **1.030 ancore de progresie** generate automat, fiecare schimbând o singură
+  axă;
+- nucleu TypeScript pur pentru progres, dificultate, sesiuni, generatoare și
+  state machines;
+- 15 familii P0 funcționale;
+- React pentru shell și Parent Mode;
+- PixiJS/WebGL pentru scene;
+- IndexedDB cu migrări și recovery;
+- PWA versionată, statică, fără backend și fără egress de gameplay;
+- documentație, cercetare, contracte și teste.
 
 ## Ce nu promite
 
-Aplicația poate exersa abilități concrete: potrivire, clasificare, memorie, inhibiție, flexibilitate, planificare, vocabular și numerație timpurie. Nu trebuie prezentată ca metodă de „creștere a IQ-ului”. Cercetarea privind transferul îndepărtat al antrenamentului cognitiv este mixtă, iar cele mai solide efecte sunt de obicei asupra sarcinilor exersate sau apropiate.
+Aplicația poate exersa potrivire, clasificare, memorie, inhibiție, flexibilitate,
+planificare, vocabular și numerație timpurie. Nu este prezentată drept metodă de
+creștere a IQ-ului și nu oferă diagnostic.
 
-## Pachetul de început: 30–36 luni
+## Golden slice V2
 
-Primele jocuri recomandate pentru implementare:
+Ordinea curentă de produs:
 
-1. Găsește perechea identică
-2. Potrivește umbra
-3. Coșurile de culori
-4. Casa formelor
-5. Mic, mijlociu, mare
-6. Privește și găsește
-7. Așteaptă semnalul
-8. Ce facem întâi?
-9. Pune forma la loc
-10. Dă câte unul
-11. Ascultă și găsește
-12. Cum se simte?
-13. Urmează drumul
-14. Mută și potrivește
-15. Vânătoarea de culori în lumea reală
+1. `same-picture` — Găsește perechea;
+2. `sort-by-color` — Coșurile de culori;
+3. `inset-puzzle` — Pune forma la loc.
 
-Pentru această etapă: 2–3 opțiuni, o singură regulă, fără cronometru, instrucțiuni audio scurte, ținte foarte mari și adultul aproape.
+Aceste trei jocuri trebuie aduse la standard vizual, audio și interactiv final,
+validate în airplane mode și observate cu copilul înainte de extinderea
+catalogului.
 
 ## Principii obligatorii
 
-- Offline-first; fără cont, reclame, analytics terț, push, cameră, microfon, locație sau identificatori.
-- Sesiune implicită 5 minute, configurabilă de adult la 3, 5 sau 7 minute.
-- După finalul sesiunii, numai Parent Mode poate permite una nouă.
-- Fără infinite scroll, streak-uri, clasamente, vieți, loot sau recompense aleatorii.
-- Fără rușinare și fără ecran de eșec. După erori: feedback specific, indiciu, simplificare, apoi încheiere pozitivă.
-- Vârsta este doar punct de pornire; progresul se bazează pe stăpânire demonstrată.
-- Fiecare joc are întrebare de co-play și activitate echivalentă în lumea reală.
-- Jocurile deschise și hibride nu au scor.
+- offline-first; fără cont, reclame, analytics terț sau tracking;
+- fără cameră, microfon, locație, contacte ori fotografii;
+- sesiune implicită scurtă și blocare calmă după limită;
+- fără streak-uri, vieți, clasamente, loot sau recompense aleatorii;
+- fără rușinare și fără ecran de eșec;
+- progres bazat pe stăpânire demonstrată, nu doar pe vârstă;
+- fără citire obligatorie în Child Mode;
+- voce românească locală și demonstrații vizuale;
+- fiecare joc are co-play și transfer în lumea reală.
 
 ## Structură
 
 ```text
-content/                 catalog, preseturi, 1.030 ancore, teme și localizare
-docs/                    research, produs, jocuri, UX, arhitectură, privacy
+content/                 catalog, preseturi, ladder-e, teme și localizare
+docs/                    produs, UX, arhitectură, decizii și roadmap
 research/                matrice de dovezi și registru de surse
 packages/core/           logică TypeScript independentă de UI
 schemas/                 contracte JSON pentru conținut și date locale
-scripts/                 generare, validare, policy checks și preview
-tasks/                   pași de implementare gata pentru Codex
-apps/web/                aplicația PWA React/Pixi, offline-first
-AGENTS.md                instrucțiuni autoritative pentru Codex
+scripts/                 generare, validare și quality gates
+tasks/                   task-uri istorice și bounded assignments
+apps/web/                PWA React/Pixi offline-first
+AGENTS.md                reguli autoritative pentru coding agents
 ```
-
-**Aplicația PWA este live:** `https://logic-lab.astancu.eu/`; detalii locale în
-`apps/web/README.md`.
-Roadmap-ul canonic este `docs/12-roadmap.md`; stack-ul activ este în ADR 005.
 
 ## Verificare locală
 
 ```bash
 npm install
+npm run check:v2-runtime
 npm test
 npm run typecheck
 npm run build:web
+npm run test:web -- --project chromium-touch
+npm run test:web -- --project webkit-touch
 ```
 
-`npm test` regenerează și validează cele 1.030 de ancore, registry-ul P0 și
-manifestul celor 36 de ilustrații procedurale, verifică politica
-offline/privacy, compilează nucleul TypeScript și rulează 23 de teste, inclusiv
-verificări pe sute de seed-uri. `npm run build:web` impune shell JS sub 100 KiB
-gzip și verifică precache-ul tuturor chunk-urilor P0.
+Nu se publică direct după build. Se verifică apoi pe dispozitiv:
 
-## Ordinea de implementare
+- primul start și instalarea completă;
+- sesiune în airplane mode;
+- audio sincronizat și fără suprapuneri;
+- 60 FPS și input rapid;
+- cleanup complet după cinci cicluri;
+- TalkBack/VoiceOver;
+- Reduced Motion și audio off;
+- ștergere/export date locale.
 
-1. Stabilizare, Git/deploy și contracte de date/PWA.
-2. React shell + runtime PixiJS.
-3. Golden slice: pereche, sortare culoare, puzzle.
-4. Cele 15 familii P0.
-5. Pilot observat și hardening.
-6. Extindere P1–P3 prin cele 19 arhetipuri.
+## Documente curente
 
-Vezi `tasks/00-stabilization.md`, `docs/11-codex-build-plan.md` și
-`docs/12-roadmap.md`.
+- roadmap canonic: `docs/12-roadmap.md`;
+- decizia runtime V2:
+  `docs/decisions/2026-07-27-v2-runtime-reboot.md`;
+- arhitectură: `docs/05-architecture.md`;
+- UX copil: `docs/06-child-ux-design-system.md`;
+- siguranță/privacy: `docs/08-safety-privacy-compliance.md`;
+- aplicația web: `apps/web/README.md`.
