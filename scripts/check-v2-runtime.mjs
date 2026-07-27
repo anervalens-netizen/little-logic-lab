@@ -47,6 +47,10 @@ const voices = await readFile(
   "utf8",
 );
 const dom = await readFile(path.join(sourceRoot, "ui/dom.ts"), "utf8");
+const engine = await readFile(
+  path.join(sourceRoot, "games/engine.ts"),
+  "utf8",
+);
 const updates = await readFile(
   path.join(sourceRoot, "app/update.ts"),
   "utf8",
@@ -55,22 +59,31 @@ const home = await readFile(
   path.join(sourceRoot, "screens/home.tsx"),
   "utf8",
 );
+const traceRoad = await readFile(
+  path.join(sourceRoot, "games/traceRoad.ts"),
+  "utf8",
+);
 
 requireText(speech, "waitForSpeechIdle", "speech runtime");
+requireText(speech, "waitForSpeechBoundary", "speech runtime");
+requireText(speech, 'toggleAttribute("inert", blocked)', "speech input gate");
 requireText(speech, "setVoiceDucking", "speech runtime");
 requireText(playback, "decodeAudioData", "buffered playback");
 requireText(playback, "getVoiceBus", "buffered playback");
 requireText(dom, "waitForSpeechIdle", "shared timing");
-requireText(updates, 'caches.match("/release.json")', "offline readiness");
+requireText(engine, "await waitForSpeechIdle()", "praise boundary");
+requireText(updates, "currentReleaseIsCached", "offline readiness");
+requireText(updates, "release.commit === htmlIdentity", "offline identity");
 requireText(updates, "waitForController", "offline readiness");
 requireText(home, '"same-picture"', "adventure home");
 requireText(home, '"sort-by-color"', "adventure home");
 requireText(home, '"inset-puzzle"', "adventure home");
+requireText(traceRoad, "if (!inputReady || settled)", "trace input gate");
 
 if (voices.includes("createOscillator") || voices.includes("createBufferSource")) {
   throw new Error("Vocile sintetice vechi ale obiectelor au reapărut.");
 }
 
 console.log(
-  `V2 runtime valid: ${sourceFiles.length} fișiere verificate, audio bufferizat, offline gate și aventura P0 prezente.`,
+  `V2 runtime valid: ${sourceFiles.length} fișiere verificate, audio bufferizat, release offline curent, input gate și aventura P0 prezente.`,
 );
