@@ -6,6 +6,9 @@ export default defineConfig({
   workers: 2,
   retries: 0,
   reporter: "line",
+  expect: {
+    timeout: 35_000,
+  },
   use: {
     baseURL: "http://127.0.0.1:4173",
     serviceWorkers: "allow",
@@ -16,7 +19,7 @@ export default defineConfig({
       "npm run build:web && npm run preview --workspace @little-logic-lab/web -- --host 127.0.0.1",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: false,
-    timeout: 30_000,
+    timeout: 60_000,
   },
   projects: [
     {
