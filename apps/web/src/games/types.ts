@@ -1,6 +1,10 @@
 /** Contractul unui joc web + contextul pe care îl primește de la motor. */
 
-import type { DifficultyAxisSpec, DifficultyVector, AttemptOutcome } from "@core";
+import type {
+  DifficultyAxisSpec,
+  DifficultyVector,
+  AttemptOutcome,
+} from "@core";
 
 export interface PlayResult extends AttemptOutcome {}
 
@@ -10,7 +14,10 @@ export interface GameContext {
   /** Întregul ecran (overlay-uri, confetti). */
   readonly shell: HTMLElement;
   /** Rostește un text local și se rezolvă la finalul real al clipului. */
-  readonly speak: (text: string, opts?: { rate?: number }) => Promise<void>;
+  readonly speak: (
+    text: string,
+    opts?: { readonly rate?: number; readonly blockInput?: boolean },
+  ) => Promise<void>;
   /** Oprește vocea. */
   readonly hush: () => void;
   readonly reducedMotion: boolean;
@@ -18,7 +25,7 @@ export interface GameContext {
   readonly demonstrate: (target: HTMLElement) => Promise<void>;
   /** Înregistrează cleanup idempotent executat de motor la final/anulare. */
   readonly onCleanup: (cleanup: () => void) => void;
-  /** Semnal de așteptare: true dacă jocul a fost întrerupt (ieșire din ecran). */
+  /** Semnal de așteptare: true dacă jocul a fost întrerupt. */
   readonly isCancelled: () => boolean;
 }
 
@@ -29,20 +36,21 @@ export interface WebGame {
   readonly domain: string;
   /** Instrucțiunea rostită la început de nivel. */
   readonly instruction: string;
-  /** Întrebare/activitate de co-play pentru final (transfer în lumea reală). */
+  /** Întrebare/activitate de co-play pentru final. */
   readonly coPlayPrompt: string;
   /** Pictograma din bulă, pe ecranul principal. */
   readonly icon: () => string;
   readonly bubbleColor: string;
-  /** Axe de dificultate, în ordinea în care se pot modifica (câte una). */
+  /** Axe de dificultate, în ordinea în care se pot modifica. */
   readonly axes: readonly DifficultyAxisSpec[];
-  /** Dificultatea de pornire (banda 30–36 luni, conservatoare). */
+  /** Dificultatea de pornire. */
   readonly initialDifficulty: DifficultyVector;
-  /** Jocurile hibride/deschise nu se punctează și nu influențează mastery. */
+  /** Jocurile hibride/deschise nu influențează mastery. */
   readonly scored: boolean;
-  /**
-   * Rulează UN nivel complet: demonstrează, lasă copilul să joace,
-   * aplică politica de suport și rezolvă cu rezultatul.
-   */
-  play(ctx: GameContext, difficulty: DifficultyVector, seed: string): Promise<PlayResult>;
+  /** Rulează un nivel complet. */
+  play(
+    ctx: GameContext,
+    difficulty: DifficultyVector,
+    seed: string,
+  ): Promise<PlayResult>;
 }
