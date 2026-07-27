@@ -31,6 +31,24 @@ async function waitForController(timeoutMs: number): Promise<boolean> {
   });
 }
 
+async function currentReleaseIsCached(): Promise<boolean> {
+  const htmlIdentity = document.querySelector<HTMLMetaElement>(
+    'meta[name="logic-lab-release"]',
+  )?.content;
+  if (!htmlIdentity) return false;
+
+  const request = new Request(new URL("/release.json", window.location.href));
+  const cached = await caches.match(request);
+  if (!cached?.ok) return false;
+
+  try {
+    const release = (await cached.clone().json()) as { commit?: unknown };
+    return release.commit === htmlIdentity;
+  } catch {
+    return false;
+  }
+}
+
 export function initializeAppUpdates(): void {
   if (!import.meta.env.PROD) {
     markOfflineState("ready");
@@ -54,8 +72,8 @@ export function initializeAppUpdates(): void {
   offlineReadyPromise = navigator.serviceWorker.ready
     .then(async () => {
       const controlled = await waitForController(8_000);
-      const release = await caches.match("/release.json");
-      offlineReady = controlled && Boolean(release?.ok);
+      const currentReleaseCached = await currentReleaseIsCached();
+      offlineReady = controlled && currentReleaseCached;
       markOfflineState(offlineReady ? "ready" : "unavailable");
       return offlineReady;
     })
