@@ -12,13 +12,28 @@ interface ActivePlayback {
   readonly settle: () => void;
 }
 
+const MAX_DECODED_BUFFERS = 48;
 const bufferByUrl = new Map<string, Promise<AudioBuffer>>();
 let activePlayback: ActivePlayback | null = null;
 let playbackGeneration = 0;
 
+function rememberBuffer(
+  url: string,
+  buffer: Promise<AudioBuffer>,
+): Promise<AudioBuffer> {
+  bufferByUrl.delete(url);
+  bufferByUrl.set(url, buffer);
+  while (bufferByUrl.size > MAX_DECODED_BUFFERS) {
+    const oldest = bufferByUrl.keys().next().value as string | undefined;
+    if (!oldest || oldest === url) break;
+    bufferByUrl.delete(oldest);
+  }
+  return buffer;
+}
+
 async function loadAudioBuffer(url: string): Promise<AudioBuffer> {
   const cached = bufferByUrl.get(url);
-  if (cached) return cached;
+  if (cached) return await rememberBuffer(url, cached);
 
   const pending = (async () => {
     const context = getAudioContext();
@@ -34,8 +49,7 @@ async function loadAudioBuffer(url: string): Promise<AudioBuffer> {
     throw error;
   });
 
-  bufferByUrl.set(url, pending);
-  return pending;
+  return await rememberBuffer(url, pending);
 }
 
 function stopActivePlayback(): void {
@@ -111,6 +125,10 @@ export async function playAudio(
   } catch {
     if (generation === playbackGeneration) stopActivePlayback();
   }
+}
+
+export function decodedAudioCacheSize(): number {
+  return bufferByUrl.size;
 }
 
 export function stopAudioPlayback(): void {
