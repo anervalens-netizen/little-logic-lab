@@ -12,7 +12,7 @@ Build a calm, offline-first, privacy-preserving mobile learning game for ages ro
 2. Do not transmit child progress or device identifiers.
 3. Do not add Firebase, Sentry, Amplitude, Mixpanel, AppsFlyer, Adjust, AdMob or similar SDKs.
 4. Do not create streaks, infinite feeds, loot, lives, leaderboards, scarcity, autoplay loops or variable-ratio rewards.
-5. Child gameplay must work fully in airplane mode with all assets bundled.
+5. Child gameplay must work fully in airplane mode with all required assets bundled or explicitly installed locally.
 6. Parent settings and outbound links require a parental gate.
 7. Never require reading in the child flow. Pair concise Romanian audio with visual demonstrations.
 8. Open-ended and hybrid games are not scored.
@@ -29,28 +29,32 @@ Build a calm, offline-first, privacy-preserving mobile learning game for ages ro
 - `docs/05-architecture.md`: module boundaries.
 - `docs/06-child-ux-design-system.md`: child UX and motion.
 - `docs/08-safety-privacy-compliance.md`: privacy and store constraints.
+- `docs/12-roadmap.md`: canonical V2 status, priorities and acceptance gates.
+- `docs/decisions/2026-07-27-v2-runtime-reboot.md`: audio/offline runtime decision.
 - `tasks/`: bounded implementation assignments and acceptance gates.
 
-When documents conflict, safety/privacy wins, then `AGENTS.md`, then schemas/catalog, then implementation notes.
+When documents conflict, safety/privacy wins, then `AGENTS.md`, then schemas/catalog, then the canonical roadmap, then implementation notes.
 
 ## Implementation stack
 
 The product is web/PWA-first. The canonical stack and delivery order are in
-`docs/12-roadmap.md` and ADR 005.
+`docs/12-roadmap.md` and the decision records.
 
 - TypeScript 7 native, pinned at the workspace root, strict mode.
 - React for the application shell, parent mode and semantic UI.
 - PixiJS 8 with the production WebGL renderer for interactive game scenes.
 - DOM accessibility overlays for every actionable canvas object.
 - IndexedDB with versioned migrations for local persistence.
-- Bundled Romanian recordings and Web Audio for child-facing audio.
+- Bundled Romanian recordings decoded through Web Audio.
+- Separate voice and SFX buses; SFX duck while speech is active.
 - Generated, revisioned service-worker precaching.
 - Vitest/property tests and committed Playwright tests.
 - Static deployment through Cloudflare Tunnel + Caddy; Cloudflare Pages remains
   an optional managed target. No runtime backend.
 
-Do not add a second native application until the P0 web/PWA release passes its
-product and device gates. Record exact dependency versions in ADR 005.
+Do not add a second native application until the V2 PWA passes offline,
+product and device gates. A future Capacitor/TWA wrapper may package the same
+web build, but must not duplicate logic or add permissions.
 
 ## Architecture rules
 
@@ -61,16 +65,21 @@ product and device gates. Record exact dependency versions in ADR 005.
 - Each game plugin implements generate, initialize, reduce, evaluate and getHint. Reuse the pure reference runtimes in `packages/core/src/runtime/` before inventing new behavior.
 - Every generated level must be replayable from its seed.
 - Each major game mechanic needs unit tests and a solvability/property test.
+- Do not reintroduce `new Audio()` for child-facing speech.
+- Do not advance input or transitions before active speech finishes.
+- Do not restore procedural oscillator voices for animals or objects.
 
 ## Current delivery order
 
-The automated P0 implementation and Android performance gate are complete.
-Close the remaining human gates before R4:
+The active implementation is `agent/v2-runtime-reboot`. Before visual expansion:
 
-1. native Romanian audio review;
-2. manual VoiceOver/TalkBack traversal;
-3. parent-supervised child observation and remediation;
-4. P1 expansion through existing archetypes only after P0 findings are closed.
+1. compare the branch base with the current `main` HEAD;
+2. make `check:v2-runtime`, tests, typecheck and build green;
+3. verify a complete golden-slice session in airplane mode;
+4. close timeline and lifecycle issues across all arhetipuri;
+5. finish and observe `same-picture`, `sort-by-color`, `inset-puzzle`;
+6. replace the reviewed golden-slice voice pack through the offline Higgs pipeline;
+7. expand other games only after golden-slice gates pass.
 
 Canonical status and acceptance criteria are in `docs/12-roadmap.md`.
 
@@ -79,9 +88,12 @@ Canonical status and acceptance criteria are in `docs/12-roadmap.md`.
 Before any release candidate:
 
 ```bash
+npm run check:v2-runtime
 npm test
 npm run typecheck
 npm run build:web
+npm run test:web -- --project chromium-touch
+npm run test:web -- --project webkit-touch
 ```
 
 Then verify on small and large iOS/Android screens, VoiceOver/TalkBack, Reduce Motion, audio off, airplane mode and after local-data deletion.
