@@ -10,7 +10,7 @@ import {
 } from "@core";
 import type { GameContext, WebGame, PlayResult } from "./types";
 import { getProfile, recordAttempt, setGameDifficulty } from "../app/appState";
-import { speak, stopSpeaking } from "../audio/speech";
+import { speakAndWait, stopSpeaking } from "../audio/speech";
 import { praise, isMotionReduced } from "../ui/feedback";
 import { demoTap, demoHand } from "../ui/feedback";
 import { wait } from "../ui/dom";
@@ -50,7 +50,7 @@ export function makeContext(
   return {
     mount,
     shell,
-    speak: (text, opts) => speak(text, opts),
+    speak: (text, opts) => speakAndWait(text, opts),
     hush: () => stopSpeaking(),
     reducedMotion: isMotionReduced(),
     demonstrate: async (target) => {
