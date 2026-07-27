@@ -39,9 +39,18 @@ function markSpeechState(state: "idle" | "loading" | "playing"): void {
   }
 }
 
+function setGameInputBlocked(blocked: boolean): void {
+  if (typeof document === "undefined") return;
+  for (const area of document.querySelectorAll<HTMLElement>(".game-play-area")) {
+    area.toggleAttribute("inert", blocked);
+    area.setAttribute("aria-busy", String(blocked));
+  }
+}
+
 function setSpeechActive(value: boolean): void {
   speechActive = value;
   setVoiceDucking(value);
+  setGameInputBlocked(value);
   if (value) return;
   for (const resolve of idleWaiters) resolve();
   idleWaiters.clear();
