@@ -15,6 +15,8 @@
     "build:web": "npm run build --workspace @little-logic-lab/web && npm run check:web-build",
     "check:web-build": "node scripts/check-web-build.mjs",
     "check:v2-runtime": "node scripts/check-v2-runtime.mjs",
+    "audit:speech": "node scripts/audit-speech-coverage.mjs",
+    "audit:speech:strict": "node scripts/audit-speech-coverage.mjs --strict",
     "typecheck": "tsc -p packages/core/tsconfig.json --noEmit && npm run typecheck --workspace @little-logic-lab/web",
     "test:web": "playwright test",
     "test:web:performance": "LOGIC_LAB_PERF=1 playwright test --grep \"Pixi exposes frame diagnostics\" --project chromium-touch --workers=1",
