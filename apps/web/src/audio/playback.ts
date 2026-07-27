@@ -1,6 +1,6 @@
 /** Redare audio locală, bufferizată, cu lifecycle și final determinist. */
 
-import { getAudioContext, getMaster } from "./audio";
+import { getAudioContext, getVoiceBus } from "./audio";
 
 export interface AudioPlaybackOptions {
   readonly playbackRate?: number;
@@ -76,8 +76,8 @@ export async function playAudio(
   stopActivePlayback();
 
   const context = getAudioContext();
-  const master = getMaster();
-  if (!context || !master) return;
+  const voiceBus = getVoiceBus();
+  if (!context || !voiceBus) return;
 
   try {
     if (context.state === "suspended") await context.resume();
@@ -88,7 +88,7 @@ export async function playAudio(
       const source = context.createBufferSource();
       source.buffer = buffer;
       source.playbackRate.value = options.playbackRate ?? 1;
-      source.connect(master);
+      source.connect(voiceBus);
 
       let settled = false;
       const settle = () => {
