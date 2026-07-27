@@ -2,6 +2,7 @@
 
 import manifest from "./ro-RO-v1.json";
 import { setActiveVoiceElements } from "../runtime/resourceDiagnostics";
+import { setVoiceDucking } from "./audio";
 import { playAudio, preloadAudio, stopAudioPlayback } from "./playback";
 
 let voiceEnabled = true;
@@ -40,6 +41,7 @@ function markSpeechState(state: "idle" | "loading" | "playing"): void {
 
 function setSpeechActive(value: boolean): void {
   speechActive = value;
+  setVoiceDucking(value);
   if (value) return;
   for (const resolve of idleWaiters) resolve();
   idleWaiters.clear();
