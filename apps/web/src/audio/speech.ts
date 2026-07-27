@@ -53,6 +53,17 @@ export function waitForSpeechIdle(): Promise<void> {
   return new Promise<void>((resolve) => idleWaiters.add(resolve));
 }
 
+/**
+ * Păstrează o durată vizuală minimă și împiedică tranziția înaintea vocii.
+ * Este primitiva comună pentru feedback, schimbarea batch-ului și încheiere.
+ */
+export async function waitForSpeechBoundary(minimumMs = 0): Promise<void> {
+  await Promise.all([
+    waitForSpeechIdle(),
+    new Promise<void>((resolve) => window.setTimeout(resolve, minimumMs)),
+  ]);
+}
+
 export function setVoiceEnabled(value: boolean): void {
   voiceEnabled = value;
   if (!value) stopSpeaking();
@@ -130,9 +141,12 @@ export async function speakAndWait(
   options.onEnd?.();
 }
 
-/** Compatibilitate pentru feedback care nu trebuie să blocheze fluxul. */
-export function speak(text: string, options: SpeakOptions = {}): void {
-  void speakAndWait(text, options);
+/** Compatibilitate pentru apelurile existente; promisiunea poate fi ignorată. */
+export function speak(
+  text: string,
+  options: SpeakOptions = {},
+): Promise<void> {
+  return speakAndWait(text, options);
 }
 
 export function stopSpeaking(): void {
