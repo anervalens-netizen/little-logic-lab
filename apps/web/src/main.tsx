@@ -1,6 +1,7 @@
 /** Punctul de intrare React: shell semantic, setări și lifecycle global. */
 
 import "./styles.css";
+import "./v2.css";
 import { createRoot } from "react-dom/client";
 import { applySettings, initializeProfile } from "./app/appState";
 import { initializeAppUpdates } from "./app/update";
