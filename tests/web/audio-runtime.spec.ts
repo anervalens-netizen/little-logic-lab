@@ -46,7 +46,7 @@ async function seedThreeUnlockedGames(page: Page): Promise<void> {
   });
 }
 
-test("offline preparation and speech finish before child input", async ({
+test("current release is cached and speech gates child input", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -67,8 +67,23 @@ test("offline preparation and speech finish before child input", async ({
     "data-offline-state",
     "ready",
   );
+  const releaseIdentity = await page.evaluate(async () => {
+    const htmlCommit = document.querySelector<HTMLMetaElement>(
+      'meta[name="logic-lab-release"]',
+    )?.content;
+    const cached = await caches.match(new URL("/release.json", location.href));
+    const release = cached?.ok
+      ? ((await cached.json()) as { commit?: string })
+      : undefined;
+    return { htmlCommit, cachedCommit: release?.commit };
+  });
+  expect(releaseIdentity.cachedCommit).toBe(releaseIdentity.htmlCommit);
+  expect(releaseIdentity.cachedCommit).toMatch(/^[0-9a-f]{40}$/);
 
   await page.getByRole("button", { name: "Găsește perechea" }).click();
+  const playArea = page.locator(".game-play-area");
+  await expect(playArea).toBeVisible({ timeout: 8_000 });
+  await expect(playArea).toHaveAttribute("inert", "", { timeout: 8_000 });
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
     timeout: 12_000,
   });
@@ -76,6 +91,7 @@ test("offline preparation and speech finish before child input", async ({
     "data-speech-state",
     "idle",
   );
+  await expect(playArea).not.toHaveAttribute("inert", "");
 });
 
 test("the first three games become a coherent adventure map", async ({
