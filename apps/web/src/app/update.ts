@@ -4,6 +4,7 @@ let updateReady = false;
 let updateServiceWorker: ((reloadPage?: boolean) => Promise<void>) | null = null;
 let offlineReady = !import.meta.env.PROD;
 let offlineProbe: Promise<boolean> | null = null;
+let startupUpdateBoundaryOpen = true;
 
 function markOfflineState(state: "preparing" | "ready" | "unavailable"): void {
   document.documentElement.dataset.offlineState = state;
@@ -91,9 +92,19 @@ export function initializeAppUpdates(): void {
     immediate: true,
     onNeedRefresh() {
       updateReady = true;
+      // Splash este o limită sigură: nu există nivel, progres nesalvat sau input
+      // activ. Activăm imediat noul worker; după Home update-ul se amână.
+      if (startupUpdateBoundaryOpen && updateServiceWorker) {
+        void updateServiceWorker(true);
+      }
     },
   });
   void startOfflineProbe(25_000);
+}
+
+/** Închide activarea automată după ce intrăm în experiența copilului. */
+export function closeStartupUpdateBoundary(): void {
+  startupUpdateBoundaryOpen = false;
 }
 
 export function isOfflineReady(): boolean {
