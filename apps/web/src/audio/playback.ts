@@ -13,6 +13,7 @@ interface ActivePlayback {
 }
 
 const MAX_DECODED_BUFFERS = 48;
+const MAX_PRELOAD_CONCURRENCY = 3;
 const bufferByUrl = new Map<string, Promise<AudioBuffer>>();
 let activePlayback: ActivePlayback | null = null;
 let playbackGeneration = 0;
@@ -65,14 +66,23 @@ function stopActivePlayback(): void {
   current.settle();
 }
 
-/** Pregătește clipuri locale fără a bloca interfața dacă un asset este corupt. */
+/** Pregătește clipuri locale fără spike de decodare pe dispozitive mobile. */
 export async function preloadAudio(urls: readonly string[]): Promise<void> {
+  const uniqueUrls = [...new Set(urls)];
+  let nextIndex = 0;
+  const workerCount = Math.min(MAX_PRELOAD_CONCURRENCY, uniqueUrls.length);
   await Promise.all(
-    [...new Set(urls)].map(async (url) => {
-      try {
-        await loadAudioBuffer(url);
-      } catch {
-        // Redarea păstrează fallback-ul vizual; validarea build-ului verifică asset-urile.
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < uniqueUrls.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        const url = uniqueUrls[index];
+        if (!url) continue;
+        try {
+          await loadAudioBuffer(url);
+        } catch {
+          // Redarea păstrează fallback-ul vizual; build-ul verifică asset-urile.
+        }
       }
     }),
   );
