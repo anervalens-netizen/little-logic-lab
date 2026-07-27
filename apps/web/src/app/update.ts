@@ -13,15 +13,20 @@ async function waitForController(timeoutMs: number): Promise<boolean> {
   if (navigator.serviceWorker.controller) return true;
 
   return await new Promise<boolean>((resolve) => {
-    const timeout = window.setTimeout(() => {
-      navigator.serviceWorker.removeEventListener("controllerchange", onChange);
-      resolve(Boolean(navigator.serviceWorker.controller));
-    }, timeoutMs);
-    const onChange = () => {
+    let settled = false;
+    let timeout = 0;
+    const finish = (controlled: boolean) => {
+      if (settled) return;
+      settled = true;
       window.clearTimeout(timeout);
       navigator.serviceWorker.removeEventListener("controllerchange", onChange);
-      resolve(true);
+      resolve(controlled);
     };
+    const onChange = () => finish(Boolean(navigator.serviceWorker.controller));
+    timeout = window.setTimeout(
+      () => finish(Boolean(navigator.serviceWorker.controller)),
+      timeoutMs,
+    );
     navigator.serviceWorker.addEventListener("controllerchange", onChange);
   });
 }
@@ -31,7 +36,7 @@ export function initializeAppUpdates(): void {
     markOfflineState("ready");
     return;
   }
-  if (!("serviceWorker" in navigator)) {
+  if (!("serviceWorker" in navigator) || !("caches" in window)) {
     offlineReady = false;
     offlineReadyPromise = Promise.resolve(false);
     markOfflineState("unavailable");
