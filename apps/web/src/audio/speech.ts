@@ -1,10 +1,11 @@
-/** Voce RO locală, versionată și disponibilă offline. */
+/** Voce RO locală, versionată, bufferizată și disponibilă offline. */
 
 import manifest from "./ro-RO-v1.json";
 import { setActiveVoiceElements } from "../runtime/resourceDiagnostics";
+import { playAudio, preloadAudio, stopAudioPlayback } from "./playback";
 
 let voiceEnabled = true;
-let activeAudio: HTMLAudioElement | null = null;
+let speechGeneration = 0;
 
 function renderFamilyText(template: string, labelDef: string): string {
   const label = `${labelDef.charAt(0).toUpperCase()}${labelDef.slice(1)}`;
@@ -29,24 +30,56 @@ const clipByText = new Map(
   ]),
 );
 
+function markSpeechState(state: "idle" | "loading" | "playing"): void {
+  if (typeof document !== "undefined") {
+    document.documentElement.dataset.speechState = state;
+  }
+}
+
 export function setVoiceEnabled(value: boolean): void {
   voiceEnabled = value;
   if (!value) stopSpeaking();
 }
 
 export function voiceAvailable(): boolean {
-  return typeof Audio !== "undefined" && clipByText.size > 0;
+  if (typeof window === "undefined" || clipByText.size === 0) return false;
+  return Boolean(
+    window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext,
+  );
 }
 
 export interface SpeakOptions {
   readonly rate?: number;
   readonly pitch?: number;
+  readonly onStart?: () => void;
   readonly onEnd?: () => void;
 }
 
-export function speak(text: string, options: SpeakOptions = {}): void {
-  stopSpeaking();
+/** Pregătește instrucțiunile apropiate pentru pornire fără latență. */
+export async function preloadSpeech(texts: readonly string[]): Promise<void> {
+  if (!voiceEnabled || !voiceAvailable()) return;
+  const urls = texts
+    .map((text) => clipByText.get(text))
+    .filter((url): url is string => url !== undefined);
+  await preloadAudio(urls);
+}
+
+/**
+ * Redă și așteaptă durata reală a clipului. O replică nouă întrerupe replica
+ * anterioară fără ca vechiul callback să poată avansa jocul.
+ */
+export async function speakAndWait(
+  text: string,
+  options: SpeakOptions = {},
+): Promise<void> {
+  const generation = ++speechGeneration;
+  stopAudioPlayback();
+  setActiveVoiceElements(0);
+
   if (!voiceEnabled || !voiceAvailable()) {
+    markSpeechState("idle");
     options.onEnd?.();
     return;
   }
@@ -54,37 +87,36 @@ export function speak(text: string, options: SpeakOptions = {}): void {
   const source = clipByText.get(text);
   if (!source) {
     // Instrucțiunea vizuală rămâne autoritară; nu apelăm servicii remote.
+    markSpeechState("idle");
     options.onEnd?.();
     return;
   }
 
-  const audio = new Audio(source);
-  activeAudio = audio;
+  markSpeechState("loading");
   setActiveVoiceElements(1);
-  audio.preload = "auto";
-  audio.playbackRate = options.rate ?? 1;
-  audio.preservesPitch = true;
+  await playAudio(source, {
+    playbackRate: options.rate ?? 1,
+    onStart: () => {
+      if (generation !== speechGeneration) return;
+      markSpeechState("playing");
+      options.onStart?.();
+    },
+  });
 
-  let settled = false;
-  const finish = () => {
-    if (settled) return;
-    settled = true;
-    if (activeAudio === audio) {
-      activeAudio = null;
-      setActiveVoiceElements(0);
-    }
-    options.onEnd?.();
-  };
-  audio.addEventListener("ended", finish, { once: true });
-  audio.addEventListener("error", finish, { once: true });
-  void audio.play().catch(finish);
+  if (generation !== speechGeneration) return;
+  setActiveVoiceElements(0);
+  markSpeechState("idle");
+  options.onEnd?.();
+}
+
+/** Compatibilitate pentru feedback care nu trebuie să blocheze fluxul. */
+export function speak(text: string, options: SpeakOptions = {}): void {
+  void speakAndWait(text, options);
 }
 
 export function stopSpeaking(): void {
-  if (!activeAudio) return;
-  activeAudio.pause();
-  activeAudio.removeAttribute("src");
-  activeAudio.load();
-  activeAudio = null;
+  speechGeneration += 1;
+  stopAudioPlayback();
   setActiveVoiceElements(0);
+  markSpeechState("idle");
 }
