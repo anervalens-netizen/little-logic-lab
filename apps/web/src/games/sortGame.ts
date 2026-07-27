@@ -15,11 +15,15 @@ import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { trayWithItems, coloredBin } from "./widgets";
 import { el, clear, svgEl, wait } from "../ui/dom";
-import { showHintGlow, isMotionReduced, particlesAt, jelly } from "../ui/feedback";
+import {
+  showHintGlow,
+  isMotionReduced,
+  particlesAt,
+  jelly,
+} from "../ui/feedback";
 import { sfxPick, sfxPlace } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { makeDraggable } from "../ui/dragdrop";
-import { speak } from "../audio/speech";
 import type { PixiDragScene } from "../runtime/pixiDragScene";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
@@ -43,10 +47,13 @@ export interface SortGameSpec {
   readonly initialDifficulty: DifficultyVector;
   readonly renderer?: "dom" | "pixi";
   readonly content: readonly ContentItem[];
-  /** Alternativ: conținut ales deterministic din seed (ex. un singur tip de obiect). */
+  /** Alternativ: conținut ales deterministic din seed. */
   readonly contentForSeed?: (seed: string) => readonly ContentItem[];
   readonly attribute: string;
-  readonly binVisual: (value: string, index: number) => { hex: string; badge?: string; label: string };
+  readonly binVisual: (
+    value: string,
+    index: number,
+  ) => { hex: string; badge?: string; label: string };
   readonly itemVisual: (itemId: string) => SortItemVisual;
   /** Rostit când copilul selectează un obiect (opțional). */
   readonly speakPick?: (itemId: string) => string;
@@ -66,13 +73,18 @@ export function createSortGame(spec: SortGameSpec): WebGame {
     initialDifficulty: spec.initialDifficulty,
     scored: true,
 
-    async play(ctx: GameContext, difficulty: DifficultyVector, seed: string): Promise<PlayResult> {
+    async play(
+      ctx: GameContext,
+      difficulty: DifficultyVector,
+      seed: string,
+    ): Promise<PlayResult> {
       const binCount = Number(difficulty["binCount"] ?? 2);
       const itemCount = Number(difficulty["itemCount"] ?? 2);
+      const content = spec.contentForSeed
+        ? spec.contentForSeed(seed)
+        : spec.content;
 
-      const content = spec.contentForSeed ? spec.contentForSeed(seed) : spec.content;
-
-      // Generează până când fiecare coș primește cel puțin un obiect (determinist).
+      // Generează până când fiecare coș primește cel puțin un obiect.
       let level = generateSortLevel(seed, {
         gameId: spec.id,
         items: content,
@@ -81,7 +93,9 @@ export function createSortGame(spec: SortGameSpec): WebGame {
         itemCount: Math.max(2, itemCount),
       });
       for (let attempt = 0; attempt < 12; attempt += 1) {
-        const covered = new Set(Object.values(level.payload.correctBinByItemId));
+        const covered = new Set(
+          Object.values(level.payload.correctBinByItemId),
+        );
         if (level.payload.bins.every((bin) => covered.has(bin))) break;
         level = generateSortLevel(`${seed}#cover${attempt}`, {
           gameId: spec.id,
@@ -98,17 +112,21 @@ export function createSortGame(spec: SortGameSpec): WebGame {
 
       let state = initializeSort(level.payload.correctBinByItemId);
       const support = new SupportTracker();
-
       clear(ctx.mount);
       const layout = el("div", {});
       layout.style.cssText =
         "display:flex;flex-direction:column;align-items:center;justify-content:space-between;width:100%;height:100%;gap:6px;";
 
-      const itemVisuals = level.payload.itemIds.map((id) => spec.itemVisual(id));
-      const { tray, nodes } = trayWithItems(
-        itemVisuals.map((v) => ({ id: v.id, svg: v.svg, label: v.speakOnPlace ?? v.id })),
+      const itemVisuals = level.payload.itemIds.map((id) =>
+        spec.itemVisual(id),
       );
-
+      const { tray, nodes } = trayWithItems(
+        itemVisuals.map((visual) => ({
+          id: visual.id,
+          svg: visual.svg,
+          label: visual.speakOnPlace ?? visual.id,
+        })),
+      );
       const binsRow = el("div", { className: "sort-bins" });
       const binNodes = new Map<string, HTMLElement>();
       level.payload.bins.forEach((binValue, binIndex) => {
@@ -118,14 +136,17 @@ export function createSortGame(spec: SortGameSpec): WebGame {
         binNodes.set(binValue, bin);
         binsRow.append(bin);
       });
-
       layout.append(tray, binsRow);
       ctx.mount.append(layout);
 
-      speak(spec.instruction);
-      await wait(demonstrationDelay(900));
+      await Promise.all([
+        ctx.speak(spec.instruction),
+        wait(demonstrationDelay(900)),
+      ]);
+      if (ctx.isCancelled()) return abortedSort();
 
       let selectedItemId: string | null = null;
+      let interactionLocked = false;
 
       const selectItem = (itemId: string): void => {
         selectedItemId = itemId;
@@ -133,7 +154,7 @@ export function createSortGame(spec: SortGameSpec): WebGame {
           node.classList.toggle("selected", id === itemId);
         }
         sfxPick();
-        if (spec.speakPick) speak(spec.speakPick(itemId), { rate: 1 });
+        if (spec.speakPick) void ctx.speak(spec.speakPick(itemId), { rate: 1 });
         for (const bin of binNodes.values()) bin.classList.add("bin-ready");
       };
 
@@ -145,36 +166,48 @@ export function createSortGame(spec: SortGameSpec): WebGame {
 
       return await new Promise<PlayResult>((resolve) => {
         let settled = false;
+        let cancelWatch: number | null = null;
         const finish = (result: PlayResult) => {
           if (settled) return;
           settled = true;
+          interactionLocked = true;
+          if (cancelWatch !== null) window.clearInterval(cancelWatch);
           resolve(result);
         };
 
-        const cancelWatch = setInterval(() => {
-          if (ctx.isCancelled()) {
-            clearInterval(cancelWatch);
-            finish({
-              completed: state.completed,
-              correctFirstTry: false,
-              correctEventually: state.completed,
-              hintsUsed: support.hintsUsed,
-              wrongAttempts: support.wrongAttempts,
-              abandoned: !state.completed,
-            });
-          }
+        cancelWatch = window.setInterval(() => {
+          if (!ctx.isCancelled()) return;
+          finish({
+            completed: state.completed,
+            correctFirstTry: false,
+            correctEventually: state.completed,
+            hintsUsed: support.hintsUsed,
+            wrongAttempts: support.wrongAttempts,
+            abandoned: !state.completed,
+          });
         }, 250);
 
-        const placeInto = async (itemId: string, binValue: string, silent = false): Promise<void> => {
+        const placeInto = async (
+          itemId: string,
+          binValue: string,
+          silent = false,
+        ): Promise<void> => {
           const node = nodes.get(itemId);
           const bin = binNodes.get(binValue);
           if (!node || !bin) return;
           if (!silent) sfxPlace();
-          const speakText = itemVisuals.find((v) => v.id === itemId)?.speakOnPlace;
-          if (speakText && !silent) speak(speakText, { rate: 1 });
+          const speakText = itemVisuals.find(
+            (visual) => visual.id === itemId,
+          )?.speakOnPlace;
+          const narration =
+            speakText && !silent
+              ? ctx.speak(speakText, { rate: 1 })
+              : Promise.resolve();
           node.classList.add("placed");
           const mini = el("div", { className: "bin-item" });
-          const visual = itemVisuals.find((v) => v.id === itemId);
+          const visual = itemVisuals.find(
+            (candidate) => candidate.id === itemId,
+          );
           if (visual) {
             const art = svgEl(visual.svg);
             art.style.width = "100%";
@@ -183,21 +216,29 @@ export function createSortGame(spec: SortGameSpec): WebGame {
           }
           bin.append(mini);
           deselect();
-          await wait(isMotionReduced() ? 100 : 260);
+          await Promise.all([
+            narration,
+            wait(isMotionReduced() ? 100 : 260),
+          ]);
         };
 
         const autoCompleteRemaining = async (): Promise<void> => {
+          interactionLocked = true;
           const remaining = level.payload.itemIds.filter(
             (id) => state.placedBinByItemId[id] === undefined,
           );
-          speak("Hai să le punem împreună! Uite așa!");
+          await ctx.speak("Hai să le punem împreună! Uite așa!");
           for (const itemId of remaining) {
             if (ctx.isCancelled()) break;
             const correctBin = level.payload.correctBinByItemId[itemId];
             if (!correctBin) continue;
             const bin = binNodes.get(correctBin);
             if (bin) showHintGlow(bin);
-            state = reduceSort(state, { type: "place", itemId, binId: correctBin });
+            state = reduceSort(state, {
+              type: "place",
+              itemId,
+              binId: correctBin,
+            });
             await placeInto(itemId, correctBin, true);
             await wait(420);
           }
@@ -210,31 +251,54 @@ export function createSortGame(spec: SortGameSpec): WebGame {
           });
         };
 
-        /** Logica comună de plasare (click pe coș SAU drop din drag). */
-        const tryPlace = (itemId: string, binValue: string, bin: HTMLElement): void => {
-          if (settled || state.placedBinByItemId[itemId] !== undefined) return;
+        const tryPlace = (
+          itemId: string,
+          binValue: string,
+          bin: HTMLElement,
+        ): void => {
+          if (
+            interactionLocked ||
+            settled ||
+            state.placedBinByItemId[itemId] !== undefined
+          ) {
+            return;
+          }
           const before = state;
-          state = reduceSort(state, { type: "place", itemId, binId: binValue });
+          state = reduceSort(state, {
+            type: "place",
+            itemId,
+            binId: binValue,
+          });
           if (state === before) return;
 
           if (state.lastIncorrectItemId === itemId) {
             const verdict = support.registerError(bin);
             deselect();
             if (verdict === "hint") {
-              const correctBinValue = level.payload.correctBinByItemId[itemId];
-              const correctBinNode = correctBinValue ? binNodes.get(correctBinValue) : undefined;
+              interactionLocked = true;
+              const correctBinValue =
+                level.payload.correctBinByItemId[itemId];
+              const correctBinNode = correctBinValue
+                ? binNodes.get(correctBinValue)
+                : undefined;
               if (correctBinNode) {
                 showHintGlow(correctBinNode);
                 jelly(correctBinNode);
               }
-              speak("Uite, aici e locul lui!");
-              selectItem(itemId);
+              void ctx.speak("Uite, aici e locul lui!").then(() => {
+                if (!settled && !ctx.isCancelled()) {
+                  selectItem(itemId);
+                  interactionLocked = false;
+                }
+              });
             } else if (verdict === "simplify") {
+              interactionLocked = true;
               void autoCompleteRemaining();
             }
             return;
           }
 
+          interactionLocked = true;
           support.registerSuccess();
           playItemVoice(itemId);
           const shellRect = ctx.shell.getBoundingClientRect();
@@ -253,27 +317,38 @@ export function createSortGame(spec: SortGameSpec): WebGame {
                 hintsUsed: support.hintsUsed,
                 wrongAttempts: support.wrongAttempts,
               });
+            } else if (!settled && !ctx.isCancelled()) {
+              interactionLocked = false;
             }
           });
         };
 
-        // Selectare obiect din tavă (tap rămâne disponibil).
         for (const [itemId, node] of nodes) {
           node.addEventListener("click", () => {
-            if (settled || state.placedBinByItemId[itemId] !== undefined) return;
+            if (
+              interactionLocked ||
+              settled ||
+              state.placedBinByItemId[itemId] !== undefined
+            ) {
+              return;
+            }
             if (selectedItemId === itemId) {
               deselect();
               return;
             }
             selectItem(itemId);
           });
-
-          // Tragere cu degetul către coș.
           makeDraggable(node, {
             data: itemId,
-            canDrag: () => !settled && state.placedBinByItemId[itemId] === undefined,
+            canDrag: () =>
+              !interactionLocked &&
+              !settled &&
+              state.placedBinByItemId[itemId] === undefined,
             targets: () =>
-              [...binNodes.entries()].map(([data, binNode]) => ({ node: binNode, data })),
+              [...binNodes.entries()].map(([data, binNode]) => ({
+                node: binNode,
+                data,
+              })),
             onDrop: (target) => {
               deselect();
               tryPlace(itemId, target.data, target.node);
@@ -281,12 +356,16 @@ export function createSortGame(spec: SortGameSpec): WebGame {
           });
         }
 
-        // Atingere coș.
         for (const [binValue, bin] of binNodes) {
           bin.addEventListener("click", () => {
-            if (settled || selectedItemId === null) return;
-            const itemId = selectedItemId;
-            tryPlace(itemId, binValue, bin);
+            if (
+              interactionLocked ||
+              settled ||
+              selectedItemId === null
+            ) {
+              return;
+            }
+            tryPlace(selectedItemId, binValue, bin);
           });
         }
       });
@@ -381,19 +460,26 @@ async function playPixiSortRound(
 
         if (state.lastIncorrectItemId === itemId) {
           const verdict = support.registerError();
+          inputReady = false;
           if (verdict === "hint") {
             const correctBin = level.correctBinByItemId[itemId];
-            if (correctBin) {
-              window.setTimeout(() => scene.emphasizeTarget(correctBin), 180);
-            }
-            speak("Uite, aici e locul lui!");
+            if (correctBin) scene.emphasizeTarget(correctBin);
+            void ctx.speak("Uite, aici e locul lui!").then(() => {
+              if (
+                !settled &&
+                !simplifying &&
+                !ctx.isCancelled() &&
+                activeScene === scene
+              ) {
+                inputReady = true;
+              }
+            });
           } else if (verdict === "simplify") {
             simplifying = true;
-            inputReady = false;
-            window.setTimeout(
-              () => void autoCompleteRemaining(batchIndex),
-              ctx.reducedMotion ? 120 : 460,
-            );
+            void Promise.all([
+              ctx.speak("Hai să le punem împreună! Uite așa!"),
+              wait(ctx.reducedMotion ? 120 : 460),
+            ]).then(() => autoCompleteRemaining(batchIndex, true));
           }
           return "incorrect";
         }
@@ -401,29 +487,43 @@ async function playPixiSortRound(
         support.registerSuccess();
         sfxPlace();
         playItemVoice(itemId);
+        inputReady = false;
         const speakText = itemVisuals.get(itemId)?.speakOnPlace;
-        if (speakText) speak(speakText, { rate: 1 });
+        const narration = speakText
+          ? ctx.speak(speakText, { rate: 1 })
+          : Promise.resolve();
         const batchCompleted = batch.every(
           (id) => state.placedBinByItemId[id] !== undefined,
         );
         if (batchCompleted) {
-          inputReady = false;
-          window.setTimeout(
-            () => {
-              if (batchIndex + 1 < batches.length) {
-                void showBatch(batchIndex + 1, true);
-              } else {
-                finish({
-                  completed: true,
-                  correctFirstTry: support.wasFirstTryClean,
-                  correctEventually: true,
-                  hintsUsed: support.hintsUsed,
-                  wrongAttempts: support.wrongAttempts,
-                });
-              }
-            },
-            ctx.reducedMotion ? 380 : 720,
-          );
+          void Promise.all([
+            narration,
+            wait(ctx.reducedMotion ? 380 : 720),
+          ]).then(() => {
+            if (settled || ctx.isCancelled()) return;
+            if (batchIndex + 1 < batches.length) {
+              void showBatch(batchIndex + 1, true);
+            } else {
+              finish({
+                completed: true,
+                correctFirstTry: support.wasFirstTryClean,
+                correctEventually: true,
+                hintsUsed: support.hintsUsed,
+                wrongAttempts: support.wrongAttempts,
+              });
+            }
+          });
+        } else {
+          void narration.then(() => {
+            if (
+              !settled &&
+              !simplifying &&
+              !ctx.isCancelled() &&
+              activeScene === scene
+            ) {
+              inputReady = true;
+            }
+          });
         }
         return "correct";
       },
@@ -439,8 +539,14 @@ async function playPixiSortRound(
     return scene;
   }
 
-  async function autoCompleteRemaining(startBatchIndex: number): Promise<void> {
-    speak("Hai să le punem împreună! Uite așa!");
+  async function autoCompleteRemaining(
+    startBatchIndex: number,
+    speechAlreadyPlayed = false,
+  ): Promise<void> {
+    inputReady = false;
+    if (!speechAlreadyPlayed) {
+      await ctx.speak("Hai să le punem împreună! Uite așa!");
+    }
     for (
       let batchIndex = startBatchIndex;
       batchIndex < batches.length;
@@ -486,22 +592,23 @@ async function playPixiSortRound(
     activeScene = null;
   });
   const initialScene = await showBatch(0, false);
-  speak(spec.instruction);
-  await wait(demonstrationDelay(900));
+  await Promise.all([
+    ctx.speak(spec.instruction),
+    wait(demonstrationDelay(900)),
+  ]);
   if (ctx.isCancelled()) return abortedSort();
   inputReady = true;
   if (initialScene) initialScene.readyElement.dataset.gameReady = "true";
   cancelWatch = window.setInterval(() => {
-    if (ctx.isCancelled()) {
-      finish({
-        completed: state.completed,
-        correctFirstTry: false,
-        correctEventually: state.completed,
-        hintsUsed: support.hintsUsed,
-        wrongAttempts: support.wrongAttempts,
-        abandoned: !state.completed,
-      });
-    }
+    if (!ctx.isCancelled()) return;
+    finish({
+      completed: state.completed,
+      correctFirstTry: false,
+      correctEventually: state.completed,
+      hintsUsed: support.hintsUsed,
+      wrongAttempts: support.wrongAttempts,
+      abandoned: !state.completed,
+    });
   }, 200);
   return result;
 }
