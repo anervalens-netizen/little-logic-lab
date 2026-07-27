@@ -15,23 +15,26 @@ Rebuild-ul activ este `agent/v2-runtime-reboot`, pornit din commitul
 Branch-ul introduce:
 
 - audio local bufferizat și sincronizat cu rundele;
-- magistrale separate voice/SFX și ducking;
+- cache audio limitat și preload controlat;
+- magistrale separate voice/SFX, ducking și cleanup complet;
+- input semantic blocat în timpul instrucțiunilor;
+- excepție explicită pentru trialurile go/no-go;
 - eliminarea vocilor procedurale neplăcute ale obiectelor;
-- pregătire offline verificată înainte de Home;
-- primul Home V2 cu „Aventura lui Lumi” pentru cele trei jocuri golden-slice;
-- teste și check-uri de regresie V2;
-- roadmap complet pentru validare, redesign și pachetul Higgs.
+- pregătire offline fail-closed înainte de Home;
+- verificarea release-ului curent inclusiv sub chei Workbox revizionate;
+- update automat numai la limita sigură Splash;
+- primul Home V2 cu „Aventura lui Lumi” pentru golden slice;
+- teste, audit de acoperire audio și garduri statice V2;
+- roadmap complet și handoff pentru server.
 
-Branch-ul nu este release-ready până când serverul nu rulează toate porțile din
+Branch-ul este **NO-GO pentru merge/release** până la executarea porților din
 `docs/12-roadmap.md`.
 
 ## Ce conține proiectul
 
 - **80 familii de jocuri**, grupate în 19 arhetipuri reutilizabile și 10 domenii;
-- **1.030 ancore de progresie** generate automat, fiecare schimbând o singură
-  axă;
-- nucleu TypeScript pur pentru progres, dificultate, sesiuni, generatoare și
-  state machines;
+- **1.030 ancore de progresie** generate automat, fiecare schimbând o singură axă;
+- nucleu TypeScript pur pentru progres, dificultate, sesiuni și generatoare;
 - 15 familii P0 funcționale;
 - React pentru shell și Parent Mode;
 - PixiJS/WebGL pentru scene;
@@ -73,12 +76,12 @@ catalogului.
 
 ```text
 content/                 catalog, preseturi, ladder-e, teme și localizare
-docs/                    produs, UX, arhitectură, decizii și roadmap
+docs/                    produs, UX, arhitectură, audit, decizii și roadmap
 research/                matrice de dovezi și registru de surse
 packages/core/           logică TypeScript independentă de UI
 schemas/                 contracte JSON pentru conținut și date locale
-scripts/                 generare, validare și quality gates
-tasks/                   task-uri istorice și bounded assignments
+scripts/                 generare, validare și audituri locale
+tasks/                   task-uri și handoff-uri executabile
 apps/web/                PWA React/Pixi offline-first
 AGENTS.md                reguli autoritative pentru coding agents
 ```
@@ -88,6 +91,7 @@ AGENTS.md                reguli autoritative pentru coding agents
 ```bash
 npm install
 npm run check:v2-runtime
+npm run audit:speech
 npm test
 npm run typecheck
 npm run build:web
@@ -95,11 +99,16 @@ npm run test:web -- --project chromium-touch
 npm run test:web -- --project webkit-touch
 ```
 
-Nu se publică direct după build. Se verifică apoi pe dispozitiv:
+`npm run audit:speech:strict` este poarta țintă pentru pachetul audio final, după
+clasificarea și acoperirea replicilor golden-slice.
+
+După build se verifică pe dispozitiv:
 
 - primul start și instalarea completă;
+- update peste o versiune veche;
 - sesiune în airplane mode;
 - audio sincronizat și fără suprapuneri;
+- memorie stabilă după minimum 30 de replici;
 - 60 FPS și input rapid;
 - cleanup complet după cinci cicluri;
 - TalkBack/VoiceOver;
@@ -109,8 +118,9 @@ Nu se publică direct după build. Se verifică apoi pe dispozitiv:
 ## Documente curente
 
 - roadmap canonic: `docs/12-roadmap.md`;
-- decizia runtime V2:
-  `docs/decisions/2026-07-27-v2-runtime-reboot.md`;
+- audit independent V2: `docs/13-v2-independent-audit.md`;
+- decizia runtime V2: `docs/decisions/2026-07-27-v2-runtime-reboot.md`;
+- handoff server: `tasks/20-v2-server-handoff.md`;
 - arhitectură: `docs/05-architecture.md`;
 - UX copil: `docs/06-child-ux-design-system.md`;
 - siguranță/privacy: `docs/08-safety-privacy-compliance.md`;
