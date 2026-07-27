@@ -47,10 +47,10 @@ function setGameInputBlocked(blocked: boolean): void {
   }
 }
 
-function setSpeechActive(value: boolean): void {
+function setSpeechActive(value: boolean, blockInput = true): void {
   speechActive = value;
   setVoiceDucking(value);
-  setGameInputBlocked(value);
+  setGameInputBlocked(value && blockInput);
   if (value) return;
   for (const resolve of idleWaiters) resolve();
   idleWaiters.clear();
@@ -90,6 +90,11 @@ export function voiceAvailable(): boolean {
 export interface SpeakOptions {
   readonly rate?: number;
   readonly pitch?: number;
+  /**
+   * Implicit true. Se setează false numai când apăsarea în timpul replicii este
+   * chiar comportamentul evaluat, de exemplu într-un trial go/no-go.
+   */
+  readonly blockInput?: boolean;
   readonly onStart?: () => void;
   readonly onEnd?: () => void;
 }
@@ -131,7 +136,7 @@ export async function speakAndWait(
     return;
   }
 
-  setSpeechActive(true);
+  setSpeechActive(true, options.blockInput !== false);
   markSpeechState("loading");
   setActiveVoiceElements(1);
   await playAudio(source, {
