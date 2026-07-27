@@ -14,7 +14,11 @@ import { runGame, cancelCurrentGame, resetCancelFlag, cancelFlagPending } from "
 import { buildGameShell } from "../screens/gameScreen";
 import { showScreen } from "./router";
 import { wait } from "../ui/dom";
-import { speak, stopSpeaking } from "../audio/speech";
+import {
+  preloadSpeech,
+  speakAndWait,
+  stopSpeaking,
+} from "../audio/speech";
 import { showHome } from "../screens/home";
 import {
   showCoPlayCard,
@@ -26,6 +30,10 @@ import { unlockedGameIds } from "./unlocks";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 const SESSION_SECONDS_WARN = 0; // nu afișăm cronometru copilului
+const PRAISE_LINES = [
+  "Ai găsit soluția din prima!",
+  "Ai continuat cu răbdare și ai reușit!",
+] as const;
 
 async function buildCandidates(): Promise<GameCandidate[]> {
   const profile = getProfile();
@@ -98,13 +106,18 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
   let gamesPlayed = 0;
   let levelSalt = 0;
 
-  for (const entry of plan) {
+  for (const [planIndex, entry] of plan.entries()) {
     if (Date.now() - start >= limitMs + SESSION_SECONDS_WARN) break;
     const game = await loadGame(entry.gameId);
     if (!game) continue;
 
+    const nextEntry = plan[planIndex + 1];
+    if (nextEntry) void loadGame(nextEntry.gameId);
+    void preloadSpeech([game.instruction, ...PRAISE_LINES]);
+
     let playAnotherLevel = true;
     let quit = false;
+    let introductionPlayed = false;
     const shell = buildGameShell({
       onHome: () => {
         quit = true;
@@ -118,12 +131,22 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
     while (playAnotherLevel && Date.now() - start < limitMs) {
       shell.setProgress(gamesPlayed, plan.length);
 
-      // Instrucțiune + demonstrație vizuală (fără citit).
-      shell.showBubble(game.instruction);
-      shell.setLumiMood("think");
-      speak(game.instruction);
-      await wait(demonstrationDelay(1400));
-      shell.hideBubble();
+      // Instrucțiunea generală se redă o singură dată la intrarea în joc.
+      if (!introductionPlayed) {
+        shell.showBubble(game.instruction);
+        shell.setLumiMood("think");
+        await Promise.all([
+          speakAndWait(game.instruction),
+          wait(demonstrationDelay(1400)),
+        ]);
+        if (cancelFlagPending()) {
+          stopSpeaking();
+          await showHome();
+          return;
+        }
+        shell.hideBubble();
+        introductionPlayed = true;
+      }
 
       const { result, cancelled } = await runGame(
         game,
