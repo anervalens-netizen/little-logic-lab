@@ -50,8 +50,8 @@ export function getVoiceBus(): GainNode | null {
 
 /** Reduce efectele cât timp vocea vorbește, fără a le opri complet. */
 export function setVoiceDucking(active: boolean): void {
-  const context = getAudioContext();
-  const bus = getMaster();
+  const context = ctx ?? getAudioContext();
+  const bus = sfxBus ?? getMaster();
   if (!context || !bus) return;
   const target = active ? 0.32 : 1;
   bus.gain.cancelScheduledValues(context.currentTime);
