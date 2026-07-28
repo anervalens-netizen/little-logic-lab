@@ -153,3 +153,55 @@ test("partially corrupt local data is repaired without a full reset", async ({
   await expect(page.getByText("Date locale reparate automat")).toBeVisible();
   await expect(page.getByText(/Au fost corectate \d+ secțiuni/)).toBeVisible();
 });
+
+test("an emergency snapshot is confirmed into IndexedDB on the next boot", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open("minte-in-joaca");
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+    const profile = await new Promise<Record<string, any>>((resolve, reject) => {
+      const read = db
+        .transaction("profiles", "readonly")
+        .objectStore("profiles")
+        .get("current");
+      read.onerror = () => reject(read.error);
+      read.onsuccess = () => resolve(read.result);
+    });
+    db.close();
+
+    profile.ageMonths = 44;
+    profile.settings.voiceEnabled = false;
+    profile.settings.sessionMinutes = 7;
+    localStorage.setItem(
+      "minte-in-joaca/emergency-profile-v4",
+      JSON.stringify(profile),
+    );
+  });
+
+  await page.reload();
+  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+
+  await expect
+    .poll(async () => await readProfile(page), { timeout: 8_000 })
+    .toMatchObject({
+      ageMonths: 44,
+      settings: {
+        voiceEnabled: false,
+        sessionMinutes: 7,
+      },
+    });
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        localStorage.getItem("minte-in-joaca/emergency-profile-v4"),
+      ),
+    )
+    .toBeNull();
+});
