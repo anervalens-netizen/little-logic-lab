@@ -1,6 +1,5 @@
 /**
- * Fabrică pentru jocuri de sortare: „atinge obiectul, apoi coșul potrivit".
- * Mecanica pură: generateSortLevel + reduceSort din core.
+ * Fabrică pentru jocuri de sortare: „atinge obiectul, apoi coșul potrivit”.
  */
 
 import {
@@ -11,6 +10,7 @@ import {
   type DifficultyAxisSpec,
   type DifficultyVector,
 } from "@core";
+import type { SpeechCueId } from "../audio/speech";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { trayWithItems, coloredBin } from "./widgets";
@@ -30,8 +30,8 @@ import { demonstrationDelay } from "../ui/accessibilityPreferences";
 export interface SortItemVisual {
   readonly id: string;
   readonly svg: string;
-  /** Rostit la plasare (ex. numele culorii). */
   readonly speakOnPlace?: string;
+  readonly speakOnPlaceCueId?: SpeechCueId;
 }
 
 export interface SortGameSpec {
@@ -40,6 +40,11 @@ export interface SortGameSpec {
   readonly skillId: string;
   readonly domain: string;
   readonly instruction: string;
+  readonly instructionCueId?: SpeechCueId;
+  readonly hintSpeech?: string;
+  readonly hintCueId?: SpeechCueId;
+  readonly helpSpeech?: string;
+  readonly helpCueId?: SpeechCueId;
   readonly coPlayPrompt: string;
   readonly icon: () => string;
   readonly bubbleColor: string;
@@ -47,7 +52,6 @@ export interface SortGameSpec {
   readonly initialDifficulty: DifficultyVector;
   readonly renderer?: "dom" | "pixi";
   readonly content: readonly ContentItem[];
-  /** Alternativ: conținut ales deterministic din seed. */
   readonly contentForSeed?: (seed: string) => readonly ContentItem[];
   readonly attribute: string;
   readonly binVisual: (
@@ -55,8 +59,16 @@ export interface SortGameSpec {
     index: number,
   ) => { hex: string; badge?: string; label: string };
   readonly itemVisual: (itemId: string) => SortItemVisual;
-  /** Rostit când copilul selectează un obiect (opțional). */
   readonly speakPick?: (itemId: string) => string;
+}
+
+function speakWithCue(
+  ctx: GameContext,
+  cueId: SpeechCueId | undefined,
+  text: string,
+  opts: { readonly rate?: number } = {},
+): Promise<void> {
+  return cueId ? ctx.speakCue(cueId, text, opts) : ctx.speak(text, opts);
 }
 
 export function createSortGame(spec: SortGameSpec): WebGame {
@@ -66,6 +78,9 @@ export function createSortGame(spec: SortGameSpec): WebGame {
     skillId: spec.skillId,
     domain: spec.domain,
     instruction: spec.instruction,
+    ...(spec.instructionCueId
+      ? { instructionCueId: spec.instructionCueId }
+      : {}),
     coPlayPrompt: spec.coPlayPrompt,
     icon: spec.icon,
     bubbleColor: spec.bubbleColor,
@@ -84,7 +99,6 @@ export function createSortGame(spec: SortGameSpec): WebGame {
         ? spec.contentForSeed(seed)
         : spec.content;
 
-      // Generează până când fiecare coș primește cel puțin un obiect.
       let level = generateSortLevel(seed, {
         gameId: spec.id,
         items: content,
@@ -113,10 +127,10 @@ export function createSortGame(spec: SortGameSpec): WebGame {
       let state = initializeSort(level.payload.correctBinByItemId);
       const support = new SupportTracker();
       clear(ctx.mount);
+
       const layout = el("div", {});
       layout.style.cssText =
         "display:flex;flex-direction:column;align-items:center;justify-content:space-between;width:100%;height:100%;gap:6px;";
-
       const itemVisuals = level.payload.itemIds.map((id) =>
         spec.itemVisual(id),
       );
@@ -140,15 +154,17 @@ export function createSortGame(spec: SortGameSpec): WebGame {
       ctx.mount.append(layout);
 
       await Promise.all([
-        ctx.speak(spec.instruction),
+        speakWithCue(ctx, spec.instructionCueId, spec.instruction),
         wait(demonstrationDelay(900)),
       ]);
       if (ctx.isCancelled()) return abortedSort();
 
       let selectedItemId: string | null = null;
       let interactionLocked = false;
+      let simplifying = false;
 
       const selectItem = (itemId: string): void => {
+        if (interactionLocked || simplifying) return;
         selectedItemId = itemId;
         for (const [id, node] of nodes) {
           node.classList.toggle("selected", id === itemId);
@@ -166,26 +182,18 @@ export function createSortGame(spec: SortGameSpec): WebGame {
 
       return await new Promise<PlayResult>((resolve) => {
         let settled = false;
+        let operationGeneration = 0;
         let cancelWatch: number | null = null;
+        const active = (generation: number) =>
+          generation === operationGeneration && !settled && !ctx.isCancelled();
         const finish = (result: PlayResult) => {
           if (settled) return;
           settled = true;
           interactionLocked = true;
+          operationGeneration += 1;
           if (cancelWatch !== null) window.clearInterval(cancelWatch);
           resolve(result);
         };
-
-        cancelWatch = window.setInterval(() => {
-          if (!ctx.isCancelled()) return;
-          finish({
-            completed: state.completed,
-            correctFirstTry: false,
-            correctEventually: state.completed,
-            hintsUsed: support.hintsUsed,
-            wrongAttempts: support.wrongAttempts,
-            abandoned: !state.completed,
-          });
-        }, 250);
 
         const placeInto = async (
           itemId: string,
@@ -196,18 +204,17 @@ export function createSortGame(spec: SortGameSpec): WebGame {
           const bin = binNodes.get(binValue);
           if (!node || !bin) return;
           if (!silent) sfxPlace();
-          const speakText = itemVisuals.find(
-            (visual) => visual.id === itemId,
-          )?.speakOnPlace;
-          const narration =
-            speakText && !silent
-              ? ctx.speak(speakText, { rate: 1 })
-              : Promise.resolve();
+          const visual = itemVisuals.find((item) => item.id === itemId);
+          if (visual?.speakOnPlace && !silent) {
+            void speakWithCue(
+              ctx,
+              visual.speakOnPlaceCueId,
+              visual.speakOnPlace,
+              { rate: 1 },
+            );
+          }
           node.classList.add("placed");
           const mini = el("div", { className: "bin-item" });
-          const visual = itemVisuals.find(
-            (candidate) => candidate.id === itemId,
-          );
           if (visual) {
             const art = svgEl(visual.svg);
             art.style.width = "100%";
@@ -216,20 +223,25 @@ export function createSortGame(spec: SortGameSpec): WebGame {
           }
           bin.append(mini);
           deselect();
-          await Promise.all([
-            narration,
-            wait(isMotionReduced() ? 100 : 260),
-          ]);
+          await wait(isMotionReduced() ? 100 : 260);
         };
 
         const autoCompleteRemaining = async (): Promise<void> => {
+          if (simplifying || settled) return;
+          simplifying = true;
           interactionLocked = true;
+          const generation = ++operationGeneration;
+          await speakWithCue(
+            ctx,
+            spec.helpCueId,
+            spec.helpSpeech ?? "Hai să le punem împreună! Uite așa!",
+          );
+          if (!active(generation)) return;
           const remaining = level.payload.itemIds.filter(
             (id) => state.placedBinByItemId[id] === undefined,
           );
-          await ctx.speak("Hai să le punem împreună! Uite așa!");
           for (const itemId of remaining) {
-            if (ctx.isCancelled()) break;
+            if (!active(generation)) return;
             const correctBin = level.payload.correctBinByItemId[itemId];
             if (!correctBin) continue;
             const bin = binNodes.get(correctBin);
@@ -240,8 +252,10 @@ export function createSortGame(spec: SortGameSpec): WebGame {
               binId: correctBin,
             });
             await placeInto(itemId, correctBin, true);
+            if (!active(generation)) return;
             await wait(420);
           }
+          if (!active(generation)) return;
           finish({
             completed: true,
             correctFirstTry: false,
@@ -258,24 +272,28 @@ export function createSortGame(spec: SortGameSpec): WebGame {
         ): void => {
           if (
             interactionLocked ||
+            simplifying ||
             settled ||
             state.placedBinByItemId[itemId] !== undefined
           ) {
             return;
           }
+          interactionLocked = true;
           const before = state;
           state = reduceSort(state, {
             type: "place",
             itemId,
             binId: binValue,
           });
-          if (state === before) return;
+          if (state === before) {
+            interactionLocked = false;
+            return;
+          }
 
           if (state.lastIncorrectItemId === itemId) {
             const verdict = support.registerError(bin);
             deselect();
             if (verdict === "hint") {
-              interactionLocked = true;
               const correctBinValue =
                 level.payload.correctBinByItemId[itemId];
               const correctBinNode = correctBinValue
@@ -285,20 +303,26 @@ export function createSortGame(spec: SortGameSpec): WebGame {
                 showHintGlow(correctBinNode);
                 jelly(correctBinNode);
               }
-              void ctx.speak("Uite, aici e locul lui!").then(() => {
-                if (!settled && !ctx.isCancelled()) {
-                  selectItem(itemId);
+              const generation = ++operationGeneration;
+              void speakWithCue(
+                ctx,
+                spec.hintCueId,
+                spec.hintSpeech ?? "Uite, aici e locul lui!",
+              ).then(() => {
+                if (active(generation)) {
                   interactionLocked = false;
+                  selectItem(itemId);
                 }
               });
             } else if (verdict === "simplify") {
-              interactionLocked = true;
+              interactionLocked = false;
               void autoCompleteRemaining();
+            } else {
+              interactionLocked = false;
             }
             return;
           }
 
-          interactionLocked = true;
           support.registerSuccess();
           playItemVoice(itemId);
           const shellRect = ctx.shell.getBoundingClientRect();
@@ -308,7 +332,9 @@ export function createSortGame(spec: SortGameSpec): WebGame {
             binRect.left - shellRect.left + binRect.width / 2,
             binRect.top - shellRect.top + binRect.height * 0.3,
           );
+          const generation = ++operationGeneration;
           void placeInto(itemId, binValue).then(() => {
+            if (!active(generation)) return;
             if (state.completed) {
               finish({
                 completed: true,
@@ -317,7 +343,7 @@ export function createSortGame(spec: SortGameSpec): WebGame {
                 hintsUsed: support.hintsUsed,
                 wrongAttempts: support.wrongAttempts,
               });
-            } else if (!settled && !ctx.isCancelled()) {
+            } else {
               interactionLocked = false;
             }
           });
@@ -327,21 +353,20 @@ export function createSortGame(spec: SortGameSpec): WebGame {
           node.addEventListener("click", () => {
             if (
               interactionLocked ||
+              simplifying ||
               settled ||
               state.placedBinByItemId[itemId] !== undefined
             ) {
               return;
             }
-            if (selectedItemId === itemId) {
-              deselect();
-              return;
-            }
-            selectItem(itemId);
+            if (selectedItemId === itemId) deselect();
+            else selectItem(itemId);
           });
           makeDraggable(node, {
             data: itemId,
             canDrag: () =>
               !interactionLocked &&
+              !simplifying &&
               !settled &&
               state.placedBinByItemId[itemId] === undefined,
             targets: () =>
@@ -355,11 +380,11 @@ export function createSortGame(spec: SortGameSpec): WebGame {
             },
           });
         }
-
         for (const [binValue, bin] of binNodes) {
           bin.addEventListener("click", () => {
             if (
               interactionLocked ||
+              simplifying ||
               settled ||
               selectedItemId === null
             ) {
@@ -368,6 +393,18 @@ export function createSortGame(spec: SortGameSpec): WebGame {
             tryPlace(selectedItemId, binValue, bin);
           });
         }
+
+        cancelWatch = window.setInterval(() => {
+          if (!ctx.isCancelled()) return;
+          finish({
+            completed: state.completed,
+            correctFirstTry: false,
+            correctEventually: state.completed,
+            hintsUsed: support.hintsUsed,
+            wrongAttempts: support.wrongAttempts,
+            abandoned: !state.completed,
+          });
+        }, 250);
       });
     },
   };
@@ -394,6 +431,7 @@ async function playPixiSortRound(
   let activeScene: PixiDragScene | null = null;
   let activeBatchIndex = 0;
   let sceneToken = 0;
+  let operationGeneration = 0;
   const batchSize = window.innerWidth < 600 ? 3 : 4;
   const batches: readonly (readonly string[])[] = Array.from(
     { length: Math.ceil(level.itemIds.length / batchSize) },
@@ -403,10 +441,13 @@ async function playPixiSortRound(
   const result = new Promise<PlayResult>((resolve) => {
     resolveResult = resolve;
   });
+  const active = (generation: number) =>
+    generation === operationGeneration && !settled && !ctx.isCancelled();
   const finish = (outcome: PlayResult) => {
     if (settled) return;
     settled = true;
     inputReady = false;
+    operationGeneration += 1;
     sceneToken += 1;
     if (cancelWatch !== null) window.clearInterval(cancelWatch);
     resolveResult(outcome);
@@ -418,7 +459,6 @@ async function playPixiSortRound(
       return [itemId, visual] as const;
     }),
   );
-
   const targets = level.bins.map((binId, index) => {
     const visual = spec.binVisual(binId, index);
     return {
@@ -454,32 +494,42 @@ async function playPixiSortRound(
       reducedMotion: ctx.reducedMotion,
       onDrop(itemId, binId) {
         if (!inputReady || settled || simplifying) return "ignore";
+        inputReady = false;
         const before = state;
         state = reduceSort(state, { type: "place", itemId, binId });
-        if (state === before) return "ignore";
+        if (state === before) {
+          inputReady = true;
+          return "ignore";
+        }
 
         if (state.lastIncorrectItemId === itemId) {
           const verdict = support.registerError();
-          inputReady = false;
           if (verdict === "hint") {
             const correctBin = level.correctBinByItemId[itemId];
-            if (correctBin) scene.emphasizeTarget(correctBin);
-            void ctx.speak("Uite, aici e locul lui!").then(() => {
-              if (
-                !settled &&
-                !simplifying &&
-                !ctx.isCancelled() &&
-                activeScene === scene
-              ) {
-                inputReady = true;
-              }
+            if (correctBin) {
+              window.setTimeout(() => {
+                if (!settled && !ctx.isCancelled()) {
+                  scene.emphasizeTarget(correctBin);
+                }
+              }, 180);
+            }
+            const generation = ++operationGeneration;
+            void speakWithCue(
+              ctx,
+              spec.hintCueId,
+              spec.hintSpeech ?? "Uite, aici e locul lui!",
+            ).then(() => {
+              if (active(generation) && !simplifying) inputReady = true;
             });
           } else if (verdict === "simplify") {
             simplifying = true;
-            void Promise.all([
-              ctx.speak("Hai să le punem împreună! Uite așa!"),
-              wait(ctx.reducedMotion ? 120 : 460),
-            ]).then(() => autoCompleteRemaining(batchIndex, true));
+            inputReady = false;
+            window.setTimeout(
+              () => void autoCompleteRemaining(batchIndex),
+              ctx.reducedMotion ? 120 : 460,
+            );
+          } else {
+            inputReady = true;
           }
           return "incorrect";
         }
@@ -487,20 +537,22 @@ async function playPixiSortRound(
         support.registerSuccess();
         sfxPlace();
         playItemVoice(itemId);
-        inputReady = false;
-        const speakText = itemVisuals.get(itemId)?.speakOnPlace;
-        const narration = speakText
-          ? ctx.speak(speakText, { rate: 1 })
-          : Promise.resolve();
+        const visual = itemVisuals.get(itemId);
+        if (visual?.speakOnPlace) {
+          void speakWithCue(
+            ctx,
+            visual.speakOnPlaceCueId,
+            visual.speakOnPlace,
+            { rate: 1 },
+          );
+        }
         const batchCompleted = batch.every(
           (id) => state.placedBinByItemId[id] !== undefined,
         );
         if (batchCompleted) {
-          void Promise.all([
-            narration,
-            wait(ctx.reducedMotion ? 380 : 720),
-          ]).then(() => {
-            if (settled || ctx.isCancelled()) return;
+          const generation = ++operationGeneration;
+          void wait(ctx.reducedMotion ? 380 : 720).then(() => {
+            if (!active(generation)) return;
             if (batchIndex + 1 < batches.length) {
               void showBatch(batchIndex + 1, true);
             } else {
@@ -514,16 +566,7 @@ async function playPixiSortRound(
             }
           });
         } else {
-          void narration.then(() => {
-            if (
-              !settled &&
-              !simplifying &&
-              !ctx.isCancelled() &&
-              activeScene === scene
-            ) {
-              inputReady = true;
-            }
-          });
+          inputReady = true;
         }
         return "correct";
       },
@@ -539,28 +582,28 @@ async function playPixiSortRound(
     return scene;
   }
 
-  async function autoCompleteRemaining(
-    startBatchIndex: number,
-    speechAlreadyPlayed = false,
-  ): Promise<void> {
-    inputReady = false;
-    if (!speechAlreadyPlayed) {
-      await ctx.speak("Hai să le punem împreună! Uite așa!");
-    }
+  async function autoCompleteRemaining(startBatchIndex: number): Promise<void> {
+    const generation = ++operationGeneration;
+    await speakWithCue(
+      ctx,
+      spec.helpCueId,
+      spec.helpSpeech ?? "Hai să le punem împreună! Uite așa!",
+    );
+    if (!active(generation)) return;
     for (
       let batchIndex = startBatchIndex;
       batchIndex < batches.length;
       batchIndex += 1
     ) {
-      if (settled || ctx.isCancelled()) return;
+      if (!active(generation)) return;
       const scene =
         batchIndex === activeBatchIndex
           ? activeScene
           : await showBatch(batchIndex, false);
       const batch = batches[batchIndex];
-      if (!scene || !batch) return;
+      if (!scene || !batch || !active(generation)) return;
       for (const itemId of batch) {
-        if (settled || ctx.isCancelled()) return;
+        if (!active(generation)) return;
         if (state.placedBinByItemId[itemId] !== undefined) continue;
         const correctBin = level.correctBinByItemId[itemId];
         if (!correctBin) continue;
@@ -571,12 +614,14 @@ async function playPixiSortRound(
           binId: correctBin,
         });
         await scene.autoPlace(itemId, correctBin);
+        if (!active(generation)) return;
         await wait(ctx.reducedMotion ? 100 : 280);
       }
       if (batchIndex + 1 < batches.length) {
         await wait(ctx.reducedMotion ? 100 : 320);
       }
     }
+    if (!active(generation)) return;
     finish({
       completed: true,
       correctFirstTry: false,
@@ -587,13 +632,14 @@ async function playPixiSortRound(
   }
 
   ctx.onCleanup(() => {
+    operationGeneration += 1;
     sceneToken += 1;
     activeScene?.destroy();
     activeScene = null;
   });
   const initialScene = await showBatch(0, false);
   await Promise.all([
-    ctx.speak(spec.instruction),
+    speakWithCue(ctx, spec.instructionCueId, spec.instruction),
     wait(demonstrationDelay(900)),
   ]);
   if (ctx.isCancelled()) return abortedSort();
