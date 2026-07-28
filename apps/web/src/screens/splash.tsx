@@ -39,6 +39,7 @@ function SplashScreen() {
   const started = useRef(false);
   const ambientHost = useRef<HTMLDivElement>(null);
   const [starting, setStarting] = useState(false);
+  const [repairing, setRepairing] = useState(false);
   const [offlineIssue, setOfflineIssue] = useState(false);
 
   useEffect(() => {
@@ -53,6 +54,7 @@ function SplashScreen() {
     const shouldRepair = offlineIssue;
     started.current = true;
     setStarting(true);
+    setRepairing(shouldRepair);
     setOfflineIssue(false);
     getAudioContext();
     sfxTap();
@@ -67,15 +69,17 @@ function SplashScreen() {
     if (!readyOffline) {
       started.current = false;
       setStarting(false);
+      setRepairing(false);
       setOfflineIssue(true);
       return;
     }
+    setRepairing(false);
     closeStartupUpdateBoundary();
     await showHome();
   };
 
   const subtitle = starting
-    ? offlineIssue
+    ? repairing
       ? "Repar pachetul local pentru folosire fără internet…"
       : "Pregătesc joaca pentru a funcționa și fără internet…"
     : offlineIssue
@@ -122,7 +126,9 @@ function SplashScreen() {
             <Artwork markup={START_ICON} className="splash-start-icon" />
             <span>
               {starting
-                ? "PREGĂTESC…"
+                ? repairing
+                  ? "REPAR…"
+                  : "PREGĂTESC…"
                 : offlineIssue
                   ? "REPARĂ ȘI ÎNCEARCĂ DIN NOU"
                   : "Atinge și joacă-te!"}
