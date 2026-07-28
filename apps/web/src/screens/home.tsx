@@ -6,7 +6,6 @@ import { registerScreenCleanup, showScreen } from "../app/router";
 import { waitForOfflineReady } from "../app/update";
 import { GAME_IDS } from "../generated/game-registry";
 import {
-  GAME_METADATA,
   gameMetadata,
   type GameMetadata,
 } from "../generated/game-metadata";
@@ -51,7 +50,7 @@ function Artwork({
   );
 }
 
-async function startSession(): Promise<void> {
+async function startSession(preferredGameId?: string): Promise<void> {
   if (sessionRunning) return;
   sessionRunning = true;
   sfxTap();
@@ -59,15 +58,16 @@ async function startSession(): Promise<void> {
     const ready = await waitForOfflineReady();
     if (!ready) return;
     const { runSession } = await import("../app/session");
-    await runSession();
+    await runSession({ preferredGameId });
   } finally {
     sessionRunning = false;
   }
 }
 
 function successfulAttempts(profile: StoredProfile, gameId: string): number {
-  return (profile.progressByGame[gameId]?.recentOutcomes ?? []).filter(
+  return profile.attempts.filter(
     (attempt) =>
+      attempt.gameId === gameId &&
       attempt.completed &&
       attempt.correctEventually &&
       !attempt.abandoned,
@@ -240,7 +240,7 @@ function HomeScreen({
               type="button"
               className="btn-big green home-play-button home-continue-button"
               aria-label="Continuă aventura"
-              onClick={() => void startSession()}
+              onClick={() => void startSession(activeGame?.id)}
             >
               <Artwork markup={PLAY_ICON} className="home-play-icon" />
               <span>CONTINUĂ AVENTURA</span>
@@ -270,8 +270,5 @@ export async function showHome(): Promise<void> {
     return screen;
   });
 
-  // Nu importăm implementări de joc în Home. Contextul audio este doar pregătit.
   getAudioContext();
 }
-
-export const HOME_GAME_METADATA = GAME_METADATA;
