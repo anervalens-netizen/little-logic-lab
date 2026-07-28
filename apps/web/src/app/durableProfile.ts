@@ -59,7 +59,10 @@ async function saveToIndexedDb(profile: StoredProfile): Promise<void> {
   }
 }
 
-async function writeSnapshot(profile: StoredProfile): Promise<void> {
+async function writeSnapshot(
+  profile: StoredProfile,
+  emergencyToken: string | null,
+): Promise<void> {
   health = { ...health, status: "saving", lastError: null };
   try {
     await saveToIndexedDb(profile);
@@ -68,7 +71,9 @@ async function writeSnapshot(profile: StoredProfile): Promise<void> {
     } catch {
       // Scrierea principală a reușit; cleanup-ul fallback-ului nu este critic.
     }
-    clearEmergencyProfileSnapshot();
+    if (emergencyToken !== null) {
+      clearEmergencyProfileSnapshot(emergencyToken);
+    }
     health = {
       status: "healthy",
       lastSavedAtLocal: new Date().toISOString(),
@@ -79,7 +84,9 @@ async function writeSnapshot(profile: StoredProfile): Promise<void> {
     const message = error instanceof Error ? error.message : String(error);
     try {
       localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(profile));
-      clearEmergencyProfileSnapshot();
+      if (emergencyToken !== null) {
+        clearEmergencyProfileSnapshot(emergencyToken);
+      }
       health = {
         status: "fallback",
         lastSavedAtLocal: new Date().toISOString(),
@@ -103,14 +110,14 @@ async function writeSnapshot(profile: StoredProfile): Promise<void> {
 
 /**
  * Scrie mai întâi sincron snapshot-ul de urgență, apoi serializează confirmarea
- * IndexedDB. O închidere între cele două limite nu pierde ultima mutație.
+ * IndexedDB. O confirmare veche nu poate șterge snapshot-ul unei mutații noi.
  */
 export function queueProfileSave(profile: StoredProfile): void {
   const snapshot = structuredClone(profile);
-  writeEmergencyProfileSnapshot(snapshot);
+  const emergencyToken = writeEmergencyProfileSnapshot(snapshot);
   writeQueue = writeQueue
     .catch(() => undefined)
-    .then(() => writeSnapshot(snapshot));
+    .then(() => writeSnapshot(snapshot, emergencyToken));
 }
 
 /** Poartă durabilă folosită la final de nivel, sesiune și înainte de ștergere. */
