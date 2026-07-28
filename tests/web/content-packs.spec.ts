@@ -52,7 +52,7 @@ test("Parent Mode reports required audio packs as locally installed", async ({
   expect(externalRequests).toEqual([]);
 });
 
-test("a missing required clip keeps Child Mode fail-closed", async ({
+test("a missing required clip blocks Child Mode and can be repaired locally", async ({
   page,
 }, testInfo) => {
   test.skip(
@@ -83,14 +83,39 @@ test("a missing required clip keeps Child Mode fail-closed", async ({
 
   await expect(
     page.getByText(
-      "Nu am putut salva toate jocurile pe telefon. Verifică internetul și încearcă din nou.",
+      "Pachetul local este incomplet. Conectează telefonul la internet și încearcă din nou.",
       { exact: true },
     ),
   ).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("button", { name: "ÎNCEARCĂ DIN NOU" })).toBeVisible();
+  const repair = page.getByRole("button", {
+    name: "REPARĂ ȘI ÎNCEARCĂ DIN NOU",
+  });
+  await expect(repair).toBeVisible();
   await expect(page.locator('[data-screen="home"]')).toHaveCount(0);
   await expect(page.locator("html")).toHaveAttribute(
     "data-offline-state",
     "unavailable",
   );
+
+  await repair.click();
+  await expect(
+    page.locator('[data-screen="home"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 35_000 });
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-offline-state",
+    "ready",
+  );
+  const repaired = await page.evaluate(async () => {
+    for (const cacheName of await caches.keys()) {
+      const cache = await caches.open(cacheName);
+      const request = (await cache.keys()).find(
+        (candidate) =>
+          new URL(candidate.url).pathname ===
+          "/audio/ro-RO-v1/hello-lumi.mp3",
+      );
+      if (request) return Boolean(await cache.match(request));
+    }
+    return false;
+  });
+  expect(repaired).toBe(true);
 });
