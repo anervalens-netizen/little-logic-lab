@@ -1,4 +1,8 @@
 import type { StoredProfile } from "./storage";
+import {
+  clearEmergencyProfileSnapshot,
+  writeEmergencyProfileSnapshot,
+} from "./emergencyProfile";
 
 const DATABASE_NAME = "minte-in-joaca";
 const PROFILE_STORE = "profiles";
@@ -28,7 +32,8 @@ let health: ProfileStorageHealth = {
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME);
-    request.onerror = () => reject(request.error ?? new Error("IndexedDB open failed"));
+    request.onerror = () =>
+      reject(request.error ?? new Error("IndexedDB open failed"));
     request.onsuccess = () => resolve(request.result);
   });
 }
@@ -63,6 +68,7 @@ async function writeSnapshot(profile: StoredProfile): Promise<void> {
     } catch {
       // Scrierea principală a reușit; cleanup-ul fallback-ului nu este critic.
     }
+    clearEmergencyProfileSnapshot();
     health = {
       status: "healthy",
       lastSavedAtLocal: new Date().toISOString(),
@@ -73,6 +79,7 @@ async function writeSnapshot(profile: StoredProfile): Promise<void> {
     const message = error instanceof Error ? error.message : String(error);
     try {
       localStorage.setItem(FALLBACK_STORAGE_KEY, JSON.stringify(profile));
+      clearEmergencyProfileSnapshot();
       health = {
         status: "fallback",
         lastSavedAtLocal: new Date().toISOString(),
@@ -80,6 +87,7 @@ async function writeSnapshot(profile: StoredProfile): Promise<void> {
       };
       return;
     } catch (fallbackError) {
+      // Snapshot-ul de urgență rămâne disponibil dacă scrierea sincronă a reușit.
       health = {
         status: "failed",
         lastSavedAtLocal: health.lastSavedAtLocal,
@@ -93,9 +101,13 @@ async function writeSnapshot(profile: StoredProfile): Promise<void> {
   }
 }
 
-/** Coalescează snapshot-uri: păstrează ordinea și nu lasă o eroare să blocheze coada. */
+/**
+ * Scrie mai întâi sincron snapshot-ul de urgență, apoi serializează confirmarea
+ * IndexedDB. O închidere între cele două limite nu pierde ultima mutație.
+ */
 export function queueProfileSave(profile: StoredProfile): void {
   const snapshot = structuredClone(profile);
+  writeEmergencyProfileSnapshot(snapshot);
   writeQueue = writeQueue
     .catch(() => undefined)
     .then(() => writeSnapshot(snapshot));
