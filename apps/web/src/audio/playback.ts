@@ -14,6 +14,9 @@ interface ActivePlayback {
 
 const MAX_DECODED_BUFFERS = 48;
 const MAX_PRELOAD_CONCURRENCY = 3;
+const AUDIO_FETCH_TIMEOUT_MS = 8_000;
+const AUDIO_DECODE_TIMEOUT_MS = 8_000;
+const PLAYBACK_END_GRACE_MS = 1_500;
 const bufferByUrl = new Map<string, Promise<AudioBuffer>>();
 let activePlayback: ActivePlayback | null = null;
 let playbackGeneration = 0;
@@ -32,6 +35,47 @@ function rememberBuffer(
   return buffer;
 }
 
+async function fetchLocalAudio(url: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(
+    () => controller.abort("Local audio fetch timed out"),
+    AUDIO_FETCH_TIMEOUT_MS,
+  );
+  try {
+    const response = await fetch(url, {
+      cache: "force-cache",
+      credentials: "same-origin",
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`Audio ${url} returned ${response.status}`);
+    }
+    return response;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+async function decodeWithTimeout(
+  context: AudioContext,
+  bytes: ArrayBuffer,
+): Promise<AudioBuffer> {
+  let timeout = 0;
+  try {
+    return await Promise.race([
+      context.decodeAudioData(bytes),
+      new Promise<never>((_, reject) => {
+        timeout = window.setTimeout(
+          () => reject(new Error("Local audio decode timed out")),
+          AUDIO_DECODE_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 async function loadAudioBuffer(url: string): Promise<AudioBuffer> {
   const cached = bufferByUrl.get(url);
   if (cached) return await rememberBuffer(url, cached);
@@ -40,11 +84,10 @@ async function loadAudioBuffer(url: string): Promise<AudioBuffer> {
     const context = getAudioContext();
     if (!context) throw new Error("Web Audio is unavailable");
 
-    const response = await fetch(url, { cache: "force-cache" });
-    if (!response.ok) {
-      throw new Error(`Audio ${url} returned ${response.status}`);
-    }
-    return await context.decodeAudioData(await response.arrayBuffer());
+    const response = await fetchLocalAudio(url);
+    const bytes = await response.arrayBuffer();
+    if (bytes.byteLength === 0) throw new Error(`Audio ${url} is empty`);
+    return await decodeWithTimeout(context, bytes);
   })().catch((error: unknown) => {
     bufferByUrl.delete(url);
     throw error;
@@ -111,13 +154,16 @@ export async function playAudio(
     await new Promise<void>((resolve) => {
       const source = context.createBufferSource();
       source.buffer = buffer;
-      source.playbackRate.value = options.playbackRate ?? 1;
+      const playbackRate = Math.max(0.5, Math.min(2, options.playbackRate ?? 1));
+      source.playbackRate.value = playbackRate;
       source.connect(voiceBus);
 
       let settled = false;
+      let watchdog = 0;
       const settle = () => {
         if (settled) return;
         settled = true;
+        window.clearTimeout(watchdog);
         if (activePlayback?.source === source) activePlayback = null;
         source.disconnect();
         resolve();
@@ -125,6 +171,15 @@ export async function playAudio(
 
       activePlayback = { source, settle };
       source.addEventListener("ended", settle, { once: true });
+      watchdog = window.setTimeout(() => {
+        try {
+          source.stop();
+        } catch {
+          // Sursa poate fi deja oprită; settle închide întotdeauna promisiunea.
+        }
+        settle();
+      }, Math.ceil((buffer.duration / playbackRate) * 1_000) + PLAYBACK_END_GRACE_MS);
+
       try {
         source.start();
         options.onStart?.();
