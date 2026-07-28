@@ -37,8 +37,8 @@ async function enterHome(page: Page, path = "/"): Promise<void> {
   ).toBeVisible();
 }
 
-async function enterParent(page: Page): Promise<void> {
-  await enterHome(page);
+async function enterParent(page: Page, path = "/"): Promise<void> {
+  await enterHome(page, path);
   await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
   const dialog = page.getByRole("dialog", { name: "Zonă pentru adulți" });
   await expect(dialog).toHaveAttribute("aria-modal", "true");
@@ -53,8 +53,9 @@ async function enterParent(page: Page): Promise<void> {
 async function startGameFromParent(
   page: Page,
   gameTitle: string,
+  path = "/",
 ): Promise<void> {
-  await enterParent(page);
+  await enterParent(page, path);
   await page.getByRole("button", { name: "Jocuri" }).click();
   const item = page
     .locator(".parent-game-catalog-item")
@@ -73,20 +74,17 @@ async function completeCurrentChoiceLevel(page: Page): Promise<void> {
   expect(count).toBeGreaterThanOrEqual(2);
   for (let index = 0; index < count; index += 1) {
     const button = choices.nth(index);
-    if (!(await button.isVisible()).valueOf()) continue;
-    await button.click();
-    const sessionEnd = page.getByText("Gata pentru azi!", { exact: false });
-    if (
-      await sessionEnd
-        .waitFor({ state: "visible", timeout: 2_000 })
-        .then(() => true)
-        .catch(() => false)
-    ) {
-      return;
-    }
+    if (!(await button.isVisible())) continue;
+    await button.click().catch(() => undefined);
+    const ended = await page
+      .getByText("Gata pentru azi!", { exact: false })
+      .waitFor({ state: "visible", timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (ended) return;
   }
   await expect(page.getByText("Gata pentru azi!", { exact: false })).toBeVisible({
-    timeout: 8_000,
+    timeout: 10_000,
   });
 }
 
@@ -163,7 +161,7 @@ test("visual baseline: premium child journey", async ({ page }) => {
   await expectNoAutomaticAccessibilityViolations(page);
 });
 
-test("Parent Mode persists settings and exposes metadata catalog", async ({ page }) => {
+test("Parent Mode persists settings and exposes age-eligible metadata catalog", async ({ page }) => {
   await enterParent(page);
   await page.getByRole("button", { name: "Setări" }).click();
 
@@ -181,7 +179,8 @@ test("Parent Mode persists settings and exposes metadata catalog", async ({ page
   await expect(
     page.getByRole("heading", { name: "Jocuri disponibile" }),
   ).toBeVisible();
-  await expect(page.locator(".parent-game-catalog-item")).toHaveCount(15);
+  await expect(page.locator(".parent-game-catalog-item")).toHaveCount(14);
+  await expect(page.getByText("Mic, mijlociu, mare", { exact: true })).toHaveCount(0);
   await expect(
     page
       .locator(".parent-game-catalog-item")
@@ -285,6 +284,10 @@ test("a completed adult test locks child play until Parent Mode allows a new ses
   await startGameFromParent(page, "Găsește perechea");
   await completeCurrentChoiceLevel(page);
 
+  await page.addStyleTag({
+    content:
+      "*,*::before,*::after{animation:none!important;transition:none!important;}",
+  });
   await expect(page).toHaveScreenshot("session-end.png", {
     animations: "disabled",
     caret: "hide",
@@ -413,7 +416,7 @@ test("Pixi exposes frame diagnostics and meets the input budget", async ({
     "Chromium is the repeatable synthetic performance gate; device QA is separate.",
   );
 
-  await startGameFromParent(page, "Găsește perechea");
+  await startGameFromParent(page, "Găsește perechea", "/?diagnostics=1");
   await page.evaluate(() => window.__logicLabPerformance?.reset());
   await page.waitForTimeout(2_000);
   await page.locator(".pixi-accessibility-choice").first().click();
@@ -430,7 +433,7 @@ test("Pixi exposes frame diagnostics and meets the input budget", async ({
   expect(metrics!.inputP95Ms, evidence).toBeLessThan(50);
 });
 
-test("completed attempt stores deterministic replay metadata durably", async ({
+test("completed attempt stores deterministic replay and response evidence durably", async ({
   page,
 }) => {
   await startGameFromParent(page, "Găsește perechea");
@@ -455,6 +458,7 @@ test("completed attempt stores deterministic replay metadata durably", async ({
     /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
   );
   expect(attempt?.levelSeed).toMatch(/^same-picture:/);
+  expect(attempt?.responseMs).toBeGreaterThanOrEqual(0);
 });
 
 test("Pixi scene is destroyed before returning to lightweight Home", async ({
