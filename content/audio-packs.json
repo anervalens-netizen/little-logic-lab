@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0",
+  "packs": [
+    {
+      "id": "core-shell",
+      "title": "Vocea de bază",
+      "description": "Salutul, laudele, încheierea calmă și feedbackul comun.",
+      "requiredAtStartup": true,
+      "gameIds": [],
+      "includeIds": [
+        "hello-lumi",
+        "voice-on",
+        "session-finished",
+        "praise-first-try",
+        "praise-persistence",
+        "try-close",
+        "try-look",
+        "try-again"
+      ],
+      "includePrefixes": []
+    },
+    {
+      "id": "golden-journey",
+      "title": "Aventura atelierului",
+      "description": "Toate replicile pentru perechi, garaje colorate și puzzle.",
+      "requiredAtStartup": true,
+      "gameIds": [
+        "same-picture",
+        "sort-by-color",
+        "inset-puzzle"
+      ],
+      "includeIds": [
+        "sort-instruction",
+        "sort-hint",
+        "sort-help",
+        "inset-instruction",
+        "inset-hint",
+        "inset-help"
+      ],
+      "includePrefixes": [
+        "same-",
+        "color-",
+        "shape-"
+      ]
+    },
+    {
+      "id": "extended-p0",
+      "title": "Jocurile suplimentare",
+      "description": "Replicile pentru restul catalogului P0, instalate în build-ul actual.",
+      "requiredAtStartup": false,
+      "gameIds": [
+        "daily-order",
+        "one-to-one-count",
+        "shadow-match",
+        "peek-and-find",
+        "wait-for-go",
+        "listen-find",
+        "trace-road",
+        "emotion-match",
+        "sort-by-shape",
+        "sort-by-size",
+        "drag-and-fit",
+        "real-color-hunt"
+      ],
+      "includeIds": [],
+      "includePrefixes": [],
+      "includeRemaining": true
+    }
+  ]
+}
