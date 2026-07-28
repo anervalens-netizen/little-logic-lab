@@ -36,6 +36,11 @@ export const sortByColorGame = createSortGame({
   skillId: "classification_color",
   domain: "classification",
   instruction: "Pune fiecare lucru în coșul de aceeași culoare!",
+  instructionCueId: "sort-instruction",
+  hintSpeech: "Uite, aici e locul lui!",
+  hintCueId: "sort-hint",
+  helpSpeech: "Hai să le punem împreună! Uite așa!",
+  helpCueId: "sort-help",
   coPlayPrompt:
     "Alegeți mașinuțe sau obiecte roșii și albastre și parcați-le în două locuri diferite.",
   icon: () => drawItem("car", "#F25C4C"),
@@ -60,8 +65,6 @@ export const sortByColorGame = createSortGame({
     return {
       hex: color.hex,
       badge: garageBadge(color.hex),
-      // Menținem termenul din clipul audio actual; pachetul Higgs va putea
-      // schimba împreună copy-ul și asset-ul după auditul nativ.
       label: `coșul ${color.label}, desenat ca un garaj`,
     };
   },
@@ -72,6 +75,7 @@ export const sortByColorGame = createSortGame({
       id: itemId,
       svg: drawItem(baseId ?? "car", color.hex),
       speakOnPlace: color.label,
+      speakOnPlaceCueId: `color-${color.id}`,
     };
   },
 });
