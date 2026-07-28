@@ -7,10 +7,11 @@ import {
   closeStartupUpdateBoundary,
   waitForOfflineReady,
 } from "../app/update";
+import { repairRequiredStartupAudio } from "../app/contentPacks";
 import { drawLumi } from "../art/lumi";
 import { meadowScene } from "../art/scenery";
 import { getAudioContext } from "../audio/audio";
-import { speakAndWait } from "../audio/speech";
+import { speakCueAndWait } from "../audio/speech";
 import { showHome } from "./home";
 import { sfxTap } from "../audio/sfx";
 import { attachAmbient } from "../ui/ambient";
@@ -49,16 +50,20 @@ function SplashScreen() {
 
   const start = async () => {
     if (started.current) return;
+    const shouldRepair = offlineIssue;
     started.current = true;
     setStarting(true);
     setOfflineIssue(false);
     getAudioContext();
     sfxTap();
 
-    const [, readyOffline] = await Promise.all([
-      speakAndWait(GREETING),
-      waitForOfflineReady(),
-    ]);
+    const greeting = speakCueAndWait("hello-lumi", GREETING);
+    if (shouldRepair) {
+      await repairRequiredStartupAudio().catch(() => false);
+    }
+    const readyOffline = await waitForOfflineReady();
+    await greeting;
+
     if (!readyOffline) {
       started.current = false;
       setStarting(false);
@@ -70,9 +75,11 @@ function SplashScreen() {
   };
 
   const subtitle = starting
-    ? "Pregătesc joaca pentru a funcționa și fără internet…"
+    ? offlineIssue
+      ? "Repar pachetul local pentru folosire fără internet…"
+      : "Pregătesc joaca pentru a funcționa și fără internet…"
     : offlineIssue
-      ? "Nu am putut salva toate jocurile pe telefon. Verifică internetul și încearcă din nou."
+      ? "Pachetul local este incomplet. Conectează telefonul la internet și încearcă din nou."
       : "Jocuri logice blânde pentru cei mici";
 
   return (
@@ -117,7 +124,7 @@ function SplashScreen() {
               {starting
                 ? "PREGĂTESC…"
                 : offlineIssue
-                  ? "ÎNCEARCĂ DIN NOU"
+                  ? "REPARĂ ȘI ÎNCEARCĂ DIN NOU"
                   : "Atinge și joacă-te!"}
             </span>
           </button>
