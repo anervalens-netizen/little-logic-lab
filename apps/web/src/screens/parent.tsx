@@ -2,17 +2,23 @@ import { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { masteryStatus, type MasteryStatus } from "@core";
 import {
+  flushPendingProfileWrites,
   getProfile,
-  updateSettings,
+  getProfileStorageHealth,
   resetProfile,
-  masteryMeanFor,
   unlockSession,
+  updateSettings,
 } from "../app/appState";
 import type { StoredProfile } from "../app/storage";
 import { exportProfileJson } from "../app/storage";
+import { isGameAgeEligible } from "../app/content";
+import { unlockedGameIds } from "../app/unlocks";
 import { registerScreenCleanup, showScreen } from "../app/router";
-import { loadAllGames } from "../generated/game-registry";
-import type { WebGame } from "../games/types";
+import { GAME_IDS } from "../generated/game-registry";
+import {
+  GAME_METADATA,
+  type GameMetadata,
+} from "../generated/game-metadata";
 import { speak } from "../audio/speech";
 import { sfxTap } from "../audio/sfx";
 import { showHome } from "./home";
@@ -20,14 +26,34 @@ import { showHome } from "./home";
 const BACK_ICON = `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M 30 10 L 14 24 L 30 38" fill="none" stroke="#4A3F35" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const STATUS_LABELS: Record<MasteryStatus, string> = {
-  insufficient_evidence: "prea puține date",
-  emerging: "începe să prindă",
-  developing: "în dezvoltare",
-  strong: "stăpânește bine",
+  insufficient_evidence: "în explorare",
+  emerging: "începe să se lege",
+  developing: "devine stabil",
+  strong: "pare bine fixat",
+};
+
+const STATUS_EXPLANATIONS: Record<MasteryStatus, string> = {
+  insufficient_evidence: "Sunt încă prea puține activități pentru o concluzie.",
+  emerging: "Reușește uneori și are încă nevoie de sprijin vizual sau verbal.",
+  developing: "Reușita apare tot mai constant în nivelurile exersate.",
+  strong: "Folosește abilitatea constant în activitățile practicate până acum.",
+};
+
+const DOMAIN_LABELS: Record<string, string> = {
+  visual_attention: "Atenție vizuală",
+  classification: "Clasificare",
+  working_memory: "Memorie de lucru",
+  inhibition_flexibility: "Autocontrol și flexibilitate",
+  sequencing_patterns: "Ordine și secvențe",
+  spatial_planning: "Planificare spațială",
+  numeracy: "Numerație timpurie",
+  language_social: "Limbaj și emoții",
+  fine_motor_creativity: "Coordonare vizual-motorie",
+  hybrid_transfer: "Transfer în lumea reală",
 };
 
 type Settings = StoredProfile["settings"];
-type ParentTab = "overview" | "settings" | "data";
+type ParentTab = "overview" | "games" | "settings" | "data";
 
 function ToggleRow({
   label,
@@ -86,49 +112,56 @@ function SessionMinutes({
   );
 }
 
-function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
-  const profile = getProfile();
-  const [settings, setSettings] = useState(profile.settings);
-  const [sessionLocked, setSessionLocked] = useState(profile.sessionLocked);
+function ParentScreen() {
+  const initialProfile = getProfile();
+  const [settings, setSettings] = useState(initialProfile.settings);
+  const [sessionLocked, setSessionLocked] = useState(
+    initialProfile.sessionLocked,
+  );
   const [deleting, setDeleting] = useState(false);
+  const [launchingGameId, setLaunchingGameId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ParentTab>(
-    profile.sessionLocked ? "settings" : "overview",
+    initialProfile.sessionLocked ? "settings" : "overview",
   );
   const [showAllSkills, setShowAllSkills] = useState(false);
+  const profile = getProfile();
+  const unlocked = unlockedGameIds(profile, new Set(GAME_IDS));
+  const storageHealth = getProfileStorageHealth();
+
   const progressGames = useMemo(() => {
     const seen = new Set<string>();
-    return games.filter((game) => {
+    return GAME_METADATA.filter((game) => {
       if (seen.has(game.skillId)) return false;
       seen.add(game.skillId);
       return true;
     });
-  }, [games]);
+  }, []);
+
   const progressItems = useMemo(
     () =>
       progressGames
         .map((game) => {
           const mastery = profile.masteryBySkill[game.skillId];
-          const mean = masteryMeanFor(game.skillId);
+          const status = masteryStatus({
+            alpha: mastery?.alpha ?? 2,
+            beta: mastery?.beta ?? 2,
+            evidenceCount: mastery?.evidenceCount ?? 0,
+            lastPracticedAtLocal: mastery?.lastPracticedAtLocal ?? null,
+          });
           return {
             game,
-            mean,
             evidenceCount: mastery?.evidenceCount ?? 0,
-            status: masteryStatus({
-              alpha: mastery?.alpha ?? 2,
-              beta: mastery?.beta ?? 2,
-              evidenceCount: mastery?.evidenceCount ?? 0,
-              lastPracticedAtLocal: mastery?.lastPracticedAtLocal ?? null,
-            }),
+            status,
           };
         })
         .sort(
           (left, right) =>
             right.evidenceCount - left.evidenceCount ||
-            right.mean - left.mean ||
             left.game.title.localeCompare(right.game.title, "ro"),
         ),
     [profile.masteryBySkill, progressGames],
   );
+
   const practicedSkills = progressItems.filter(
     ({ evidenceCount }) => evidenceCount > 0,
   );
@@ -138,6 +171,9 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
   const totalMinutes = profile.sessions.reduce(
     (sum, session) => sum + session.minutes,
     0,
+  );
+  const catalogGames = GAME_METADATA.filter((game) =>
+    isGameAgeEligible(game.id, profile.ageMonths),
   );
 
   const changeSettings = (patch: Partial<Settings>) => {
@@ -149,6 +185,28 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
     sfxTap();
     setActiveTab(tab);
   };
+
+  const launchGame = async (game: GameMetadata) => {
+    if (!unlocked.has(game.id) || launchingGameId !== null) return;
+    setLaunchingGameId(game.id);
+    sfxTap();
+    if (getProfile().sessionLocked) {
+      unlockSession();
+      setSessionLocked(false);
+    }
+    await flushPendingProfileWrites().catch(() => undefined);
+    const { runSession } = await import("../app/session");
+    await runSession({ singleGameId: game.id, singleLevelOnly: true });
+  };
+
+  const storageTitle =
+    storageHealth.status === "failed"
+      ? "Progresul nu poate fi salvat"
+      : storageHealth.status === "fallback"
+        ? "Progres salvat în modul de rezervă"
+        : storageHealth.status === "saving"
+          ? "Salvez progresul…"
+          : "Stocare locală pregătită";
 
   return (
     <>
@@ -170,6 +228,7 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
             {(
               [
                 ["overview", "Rezumat"],
+                ["games", "Jocuri"],
                 ["settings", "Setări"],
                 ["data", "Date"],
               ] as const
@@ -217,7 +276,7 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
               <div className="parent-card-heading">
                 <div>
                   <p className="parent-eyebrow">Evoluție locală</p>
-                  <h2 id="parent-progress">Progres pe abilități</h2>
+                  <h2 id="parent-progress">Tendințe observate</h2>
                 </div>
                 <span className="parent-privacy-chip">doar pe dispozitiv</span>
               </div>
@@ -226,32 +285,25 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
                 <div className="parent-empty-state">
                   <strong>Progresul apare după primele jocuri.</strong>
                   <p>
-                    Afișăm tendințe calitative numai după ce există suficiente
-                    activități, fără note sau comparații.
+                    Concluziile rămân prudente și sunt afișate numai după mai
+                    multe activități.
                   </p>
                 </div>
               ) : (
                 <div className="parent-progress-list">
-                  {visibleSkills.map(({ game, mean, status }) => (
-                    <div className="progress-row" key={game.skillId}>
-                      <span className="progress-label">{game.title}</span>
-                      <div
-                        className="progress-bar"
-                        role="meter"
-                        aria-label={`Progres ${game.title}`}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={Math.round(mean * 100)}
-                      >
-                        <div
-                          className="progress-fill"
-                          style={{ width: `${Math.round(mean * 100)}%` }}
-                        />
+                  {visibleSkills.map(({ game, evidenceCount, status }) => (
+                    <article className="parent-skill-card" key={game.skillId}>
+                      <div>
+                        <strong>{game.learningGoal}</strong>
+                        <p>{STATUS_EXPLANATIONS[status]}</p>
+                        <p>
+                          {evidenceCount} {evidenceCount === 1 ? "activitate" : "activități"}
+                        </p>
                       </div>
-                      <span className="progress-status">
+                      <span className="parent-skill-state">
                         {STATUS_LABELS[status]}
                       </span>
-                    </div>
+                    </article>
                   ))}
                 </div>
               )}
@@ -304,12 +356,60 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
                           })}
                         </strong>
                         <span>
-                          {session.gamesPlayed} jocuri · ~{session.minutes} minute
+                          {session.gamesPlayed} activități · ~{session.minutes} minute
                         </span>
                       </p>
                     ))}
                 </div>
               )}
+            </section>
+          </div>
+
+          <div
+            id="parent-panel-games"
+            className="parent-tab-panel"
+            aria-labelledby="parent-tab-games"
+            hidden={activeTab !== "games"}
+          >
+            <section className="parent-card" aria-labelledby="parent-games-title">
+              <p className="parent-eyebrow">Catalog controlat de adult</p>
+              <h2 id="parent-games-title">Jocuri disponibile</h2>
+              <p className="parent-help prominent">
+                Copilul vede numai aventura ghidată. De aici poți testa manual un
+                singur nivel dintr-un joc deja deblocat.
+              </p>
+              <div className="parent-game-catalog">
+                {catalogGames.map((game) => {
+                  const isUnlocked = unlocked.has(game.id);
+                  const progress = profile.progressByGame[game.id];
+                  return (
+                    <article
+                      key={game.id}
+                      className={`parent-game-catalog-item${isUnlocked ? "" : " is-locked"}`}
+                    >
+                      <div className="parent-game-catalog-copy">
+                        <strong>{game.title}</strong>
+                        <p>{game.learningGoal}</p>
+                        <p>
+                          {DOMAIN_LABELS[game.domain] ?? game.domain} · {progress?.timesPlayed ?? 0} încercări
+                        </p>
+                      </div>
+                      {isUnlocked ? (
+                        <button
+                          type="button"
+                          className="parent-game-launch"
+                          disabled={launchingGameId !== null}
+                          onClick={() => void launchGame(game)}
+                        >
+                          {launchingGameId === game.id ? "Pornesc…" : "Testează un nivel"}
+                        </button>
+                      ) : (
+                        <span className="parent-game-status">se deblochează gradual</span>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
             </section>
           </div>
 
@@ -329,7 +429,7 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
                 }
               />
               <ToggleRow
-                label="Carduri „de făcut împreună” după jocuri"
+                label="Carduri de făcut împreună după jocuri"
                 value={settings.coPlayPrompts}
                 onChange={(coPlayPrompts) =>
                   changeSettings({ coPlayPrompts })
@@ -395,14 +495,9 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
               />
             </section>
 
-            <section
-              className="parent-card"
-              aria-labelledby="parent-accessibility"
-            >
+            <section className="parent-card" aria-labelledby="parent-accessibility">
               <p className="parent-eyebrow">Adaptări</p>
-              <h2 id="parent-accessibility">
-                Accesibilitate vizuală și motorie
-              </h2>
+              <h2 id="parent-accessibility">Accesibilitate vizuală și motorie</h2>
               <ToggleRow
                 label="Contrast ridicat"
                 value={settings.highContrast}
@@ -429,8 +524,8 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
                 }
               />
               <p className="parent-help">
-                Aceste opțiuni măresc zonele de atingere și timpul
-                explicațiilor, fără să schimbe dificultatea logică.
+                Aceste opțiuni măresc zonele de atingere și timpul explicațiilor,
+                fără să schimbe dificultatea logică.
               </p>
             </section>
           </div>
@@ -445,9 +540,25 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
               <p className="parent-eyebrow">Controlul familiei</p>
               <h2 id="parent-data">Date locale</h2>
               <p className="parent-help prominent">
-                Tot progresul rămâne pe acest dispozitiv. Fără cont, fără
-                cloud, fără urmărire.
+                Tot progresul rămâne pe acest dispozitiv. Fără cont, fără cloud,
+                fără urmărire.
               </p>
+              <div
+                className={`parent-storage-health${
+                  storageHealth.status === "failed" ||
+                  storageHealth.status === "fallback"
+                    ? " is-warning"
+                    : ""
+                }`}
+                role="status"
+              >
+                <strong>{storageTitle}</strong>
+                <p>
+                  {storageHealth.lastSavedAtLocal
+                    ? `Ultima confirmare: ${new Date(storageHealth.lastSavedAtLocal).toLocaleString("ro-RO")}`
+                    : "Prima salvare va fi confirmată după o modificare sau un joc."}
+                </p>
+              </div>
               <div className="parent-data-actions">
                 <button
                   type="button"
@@ -494,8 +605,8 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
               <p className="parent-eyebrow">Principii</p>
               <h2 id="parent-about">Despre</h2>
               <p className="parent-about-copy">
-                Minte în joacă exersează abilități concrete prin jocuri scurte
-                și blânde. Nu este un test și nu promite „creșterea IQ-ului”.
+                Minte în joacă exersează abilități concrete prin jocuri scurte și
+                blânde. Nu este un test și nu promite creșterea IQ-ului.
                 Recomandat: sesiuni scurte, împreună cu un adult, fără să
                 înlocuiască somnul, mișcarea și joaca liberă.
               </p>
@@ -508,13 +619,12 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
 }
 
 export async function showParentScreen(): Promise<void> {
-  const games = await loadAllGames();
   await showScreen(() => {
     const screen = document.createElement("div");
     screen.className = "bg-meadow";
     screen.dataset.screen = "parent";
     const root = createRoot(screen);
-    root.render(<ParentScreen games={games} />);
+    root.render(<ParentScreen />);
     registerScreenCleanup(screen, () => root.unmount());
     return screen;
   });
