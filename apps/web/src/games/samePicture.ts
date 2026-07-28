@@ -48,6 +48,7 @@ export const samePictureGame = createChoiceGame({
         return { id, svg: drawItem(id), label: item.label };
       }),
       correctId: level.correctChoiceId,
+      joinTargetOnSuccess: true,
     };
   },
 });
