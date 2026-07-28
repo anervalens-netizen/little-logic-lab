@@ -92,6 +92,11 @@ export interface GameCandidate {
   readonly timesPlayed: number;
   readonly dueScore: number;
   readonly ageEligible: boolean;
+  /** Metadate opționale pentru un scheduler mai variat, fără a rupe consumatorii vechi. */
+  readonly domain?: SkillDomain;
+  readonly lastPracticedAtLocal?: string | null;
+  readonly recentSupportLoad?: number;
+  readonly recentAbandonRate?: number;
 }
 
 export type SessionRole = "warmup" | "growth" | "novelty" | "transfer";
