@@ -1,13 +1,23 @@
 import { registerSW } from "virtual:pwa-register";
+import {
+  findCachedResponseByPathname,
+  requiredStartupAudioReady,
+} from "./contentPacks";
 
 let updateReady = false;
 let updateServiceWorker: ((reloadPage?: boolean) => Promise<void>) | null = null;
 let offlineReady = !import.meta.env.PROD;
-let offlineProbe: Promise<boolean> | null = null;
+let offlineProbePromise: Promise<boolean> | null = null;
 let startupUpdateBoundaryOpen = true;
 
 function markOfflineState(state: "preparing" | "ready" | "unavailable"): void {
   document.documentElement.dataset.offlineState = state;
+}
+
+function htmlReleaseIdentity(): string | undefined {
+  return document.querySelector<HTMLMetaElement>(
+    'meta[name="logic-lab-release"]',
+  )?.content;
 }
 
 async function waitForController(timeoutMs: number): Promise<boolean> {
@@ -32,92 +42,90 @@ async function waitForController(timeoutMs: number): Promise<boolean> {
   });
 }
 
-/** Găsește asset-ul și când Workbox folosește o cheie cu __WB_REVISION__. */
-async function findPrecachedResponse(
-  pathname: string,
-): Promise<Response | undefined> {
-  for (const cacheName of await caches.keys()) {
-    const cache = await caches.open(cacheName);
-    const request = (await cache.keys()).find(
-      (candidate) => new URL(candidate.url).pathname === pathname,
-    );
-    if (!request) continue;
-    const response = await cache.match(request);
-    if (response) return response;
-  }
-  return undefined;
-}
-
-async function currentReleaseIsCached(): Promise<boolean> {
-  const htmlIdentity = document.querySelector<HTMLMetaElement>(
-    'meta[name="logic-lab-release"]',
-  )?.content;
+async function cachedReleaseMatchesCurrentBuild(): Promise<boolean> {
+  const htmlIdentity = htmlReleaseIdentity();
   if (!htmlIdentity) return false;
-
-  const cached = await findPrecachedResponse("/release.json");
-  if (!cached?.ok) return false;
-
+  const response = await findCachedResponseByPathname("/release.json");
+  if (!response?.ok) return false;
   try {
-    const release = (await cached.clone().json()) as { commit?: unknown };
+    const release = (await response.json()) as { readonly commit?: string };
     return release.commit === htmlIdentity;
   } catch {
     return false;
   }
 }
 
-function startOfflineProbe(controllerTimeoutMs: number): Promise<boolean> {
-  if (offlineReady) return Promise.resolve(true);
-  if (offlineProbe) return offlineProbe;
+async function probeOfflineReadiness(): Promise<boolean> {
+  if (!import.meta.env.PROD) {
+    offlineReady = true;
+    markOfflineState("ready");
+    return true;
+  }
+  if (!("serviceWorker" in navigator) || !("caches" in window)) {
+    offlineReady = false;
+    markOfflineState("unavailable");
+    return false;
+  }
 
   markOfflineState("preparing");
-  const probe = navigator.serviceWorker.ready
-    .then(async () => {
-      const controlled = await waitForController(controllerTimeoutMs);
-      const currentReleaseCached = await currentReleaseIsCached();
-      offlineReady = controlled && currentReleaseCached;
-      markOfflineState(offlineReady ? "ready" : "unavailable");
-      return offlineReady;
-    })
-    .catch(() => {
-      offlineReady = false;
-      markOfflineState("unavailable");
-      return false;
-    })
-    .finally(() => {
-      if (!offlineReady && offlineProbe === probe) offlineProbe = null;
-    });
-  offlineProbe = probe;
-  return probe;
+  try {
+    await navigator.serviceWorker.ready;
+    const controlled = await waitForController(25_000);
+    const releaseMatches =
+      controlled && (await cachedReleaseMatchesCurrentBuild());
+    const requiredPacksReady =
+      releaseMatches && (await requiredStartupAudioReady());
+    offlineReady = controlled && releaseMatches && requiredPacksReady;
+    markOfflineState(offlineReady ? "ready" : "unavailable");
+    return offlineReady;
+  } catch {
+    offlineReady = false;
+    markOfflineState("unavailable");
+    return false;
+  }
+}
+
+function beginOfflineProbe(): Promise<boolean> {
+  if (offlineReady) return Promise.resolve(true);
+  if (offlineProbePromise !== null) return offlineProbePromise;
+  offlineProbePromise = probeOfflineReadiness().finally(() => {
+    offlineProbePromise = null;
+  });
+  return offlineProbePromise;
 }
 
 export function initializeAppUpdates(): void {
   if (!import.meta.env.PROD) {
-    offlineReady = true;
     markOfflineState("ready");
     return;
   }
   if (!("serviceWorker" in navigator) || !("caches" in window)) {
     offlineReady = false;
-    offlineProbe = null;
     markOfflineState("unavailable");
     return;
   }
 
+  markOfflineState("preparing");
   updateServiceWorker = registerSW({
     immediate: true,
     onNeedRefresh() {
       updateReady = true;
-      // Splash este o limită sigură: nu există nivel, progres nesalvat sau input
-      // activ. Activăm imediat noul worker; după Home update-ul se amână.
-      if (startupUpdateBoundaryOpen && updateServiceWorker) {
-        void updateServiceWorker(true);
+      if (startupUpdateBoundaryOpen) {
+        void applyPendingUpdate();
       }
     },
+    onOfflineReady() {
+      offlineReady = false;
+      void beginOfflineProbe();
+    },
+    onRegisterError() {
+      offlineReady = false;
+      markOfflineState("unavailable");
+    },
   });
-  void startOfflineProbe(25_000);
+  void beginOfflineProbe();
 }
 
-/** Închide activarea automată după ce intrăm în experiența copilului. */
 export function closeStartupUpdateBoundary(): void {
   startupUpdateBoundaryOpen = false;
 }
@@ -127,17 +135,14 @@ export function isOfflineReady(): boolean {
 }
 
 /**
- * Așteaptă instalarea completă și identitatea release-ului curent. Un eșec sau
- * timeout poate fi reîncercat; nu păstrăm permanent un rezultat negativ.
+ * Reîncearcă probe-ul după install lent. Un rezultat negativ nu este memorat
+ * permanent; Child Mode rămâne fail-closed până când pachetul local este complet.
  */
 export async function waitForOfflineReady(
-  timeoutMs = 30_000,
+  timeoutMs = 25_000,
 ): Promise<boolean> {
   if (offlineReady) return true;
-  if (!import.meta.env.PROD) return true;
-  if (!("serviceWorker" in navigator) || !("caches" in window)) return false;
-
-  const probe = startOfflineProbe(timeoutMs);
+  const probe = beginOfflineProbe();
   return await Promise.race([
     probe,
     new Promise<false>((resolve) =>
@@ -146,10 +151,7 @@ export async function waitForOfflineReady(
   ]);
 }
 
-/**
- * Activează build-ul nou numai la o limită sigură de sesiune.
- * Returnează true când reload-ul a fost cerut.
- */
+/** Activează un build nou numai la Splash sau după limita sigură de sesiune. */
 export async function applyPendingUpdate(): Promise<boolean> {
   if (!updateReady || updateServiceWorker === null) return false;
   updateReady = false;
