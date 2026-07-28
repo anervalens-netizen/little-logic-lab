@@ -15,6 +15,7 @@ import {
   getProfile,
   recordAttempt,
   setGameDifficulty,
+  type StoredAttemptWithEvidence,
 } from "../app/appState";
 import {
   speakAndWait,
@@ -130,13 +131,19 @@ export async function runGame(
       });
 
       const updated = getProfile().progressByGame[game.id];
-      const outcomes = (updated?.recentOutcomes ?? []).map((attempt) => ({
-        completed: attempt.completed,
-        correctFirstTry: attempt.correctFirstTry,
-        correctEventually: attempt.correctEventually,
-        hintsUsed: attempt.hintsUsed,
-        wrongAttempts: attempt.wrongAttempts,
-      }));
+      const outcomes = (updated?.recentOutcomes ?? []).map((attempt) => {
+        const withEvidence = attempt as StoredAttemptWithEvidence;
+        return {
+          completed: attempt.completed,
+          correctFirstTry: attempt.correctFirstTry,
+          correctEventually: attempt.correctEventually,
+          hintsUsed: attempt.hintsUsed,
+          wrongAttempts: attempt.wrongAttempts,
+          ...(withEvidence.responseMs === undefined
+            ? {}
+            : { responseMs: withEvidence.responseMs }),
+        };
+      });
       const direction = recommendDifficultyDirection(outcomes);
       if (direction !== 0) {
         const ladderStep = stepLadderDifficulty(
