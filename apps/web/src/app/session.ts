@@ -46,6 +46,23 @@ const PRAISE_LINES = [
   "Ai continuat cu răbdare și ai reușit!",
 ] as const;
 
+function responseLoadFor(
+  recent: readonly { readonly responseMs?: number }[],
+): number {
+  const samples = recent
+    .map((attempt) => attempt.responseMs)
+    .filter(
+      (value): value is number =>
+        value !== undefined &&
+        Number.isFinite(value) &&
+        value >= 0 &&
+        value <= 60_000,
+    );
+  if (samples.length === 0) return 0;
+  const average = samples.reduce((sum, value) => sum + value, 0) / samples.length;
+  return Math.min(1, average / 12_000);
+}
+
 function buildCandidates(): GameCandidate[] {
   const profile = getProfile();
   const unlocked = unlockedGameIds(profile, new Set(GAME_IDS));
@@ -76,6 +93,9 @@ function buildCandidates(): GameCandidate[] {
       recent.length === 0
         ? 0
         : recent.filter((attempt) => attempt.abandoned).length / recent.length;
+    const responseLoad = responseLoadFor(
+      recent as readonly { readonly responseMs?: number }[],
+    );
     const lastPracticed = mastery?.lastPracticedAtLocal ?? null;
     const parsedLastPracticed = lastPracticed ? Date.parse(lastPracticed) : NaN;
     const daysSince = Number.isFinite(parsedLastPracticed)
@@ -87,7 +107,11 @@ function buildCandidates(): GameCandidate[] {
       0.05,
       Math.min(
         1,
-        (1 - mean) * 0.42 + recency * 0.32 + lowEvidence * 0.2 + supportLoad * 0.06,
+        (1 - mean) * 0.42 +
+          recency * 0.3 +
+          lowEvidence * 0.2 +
+          supportLoad * 0.05 +
+          responseLoad * 0.03,
       ),
     );
 
@@ -103,6 +127,7 @@ function buildCandidates(): GameCandidate[] {
       lastPracticedAtLocal: lastPracticed,
       recentSupportLoad: supportLoad,
       recentAbandonRate: abandonRate,
+      recentResponseLoad: responseLoad,
       ageEligible: true,
     };
   });
@@ -124,9 +149,7 @@ async function showSessionEnd(
 }
 
 export interface SessionOptions {
-  /** Disponibil numai din Parent Mode pentru verificarea unei activități. */
   readonly singleGameId?: string;
-  /** Oprește testul adultului după primul nivel, indiferent de timpul rămas. */
   readonly singleLevelOnly?: boolean;
 }
 
