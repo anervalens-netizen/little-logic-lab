@@ -60,7 +60,9 @@ export const sortByColorGame = createSortGame({
     return {
       hex: color.hex,
       badge: garageBadge(color.hex),
-      label: `garajul ${color.label}`,
+      // Menținem termenul din clipul audio actual; pachetul Higgs va putea
+      // schimba împreună copy-ul și asset-ul după auditul nativ.
+      label: `coșul ${color.label}, desenat ca un garaj`,
     };
   },
   itemVisual: (itemId) => {
