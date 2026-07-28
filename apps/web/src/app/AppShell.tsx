@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { ContentPackStatusPortal } from "../screens/ContentPackStatusPortal";
+import { installApplicationLifecycle } from "./lifecycle";
 
 export function AppShell() {
   useEffect(() => {
@@ -13,10 +14,12 @@ export function AppShell() {
     document.addEventListener("touchend", preventAccidentalZoom, {
       passive: false,
     });
+    const uninstallLifecycle = installApplicationLifecycle();
     void import("../screens/splash").then(({ showSplash }) => showSplash());
 
     return () => {
       document.removeEventListener("touchend", preventAccidentalZoom);
+      uninstallLifecycle();
     };
   }, []);
 
