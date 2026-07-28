@@ -40,6 +40,19 @@ function PackRow({ pack }: { readonly pack: AudioPackStatus }) {
           {pack.cachedAssets}/{pack.totalAssets} fișiere ·{" "}
           {formatPackBytes(pack.totalBytes)}
         </p>
+        {!pack.ready && pack.missingPaths.length > 0 ? (
+          <details className="parent-content-pack-details">
+            <summary>Vezi fișierele lipsă sau invalide</summary>
+            <ul>
+              {pack.missingPaths.slice(0, 12).map((pathname) => (
+                <li key={pathname}>{pathname}</li>
+              ))}
+            </ul>
+            {pack.missingPaths.length > 12 ? (
+              <p>Încă {pack.missingPaths.length - 12} fișiere.</p>
+            ) : null}
+          </details>
+        ) : null}
       </div>
       <span className="parent-content-pack-state">
         {pack.ready ? "instalat" : `${pack.missingPaths.length} lipsă`}
@@ -51,11 +64,16 @@ function PackRow({ pack }: { readonly pack: AudioPackStatus }) {
 function ContentPackPanel() {
   const [packs, setPacks] = useState<readonly AudioPackStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       setPacks(await inspectAudioPacks({ includeBytes: true }));
+    } catch (reason) {
+      setPacks([]);
+      setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
       setLoading(false);
     }
@@ -65,9 +83,9 @@ function ContentPackPanel() {
     void refresh();
   }, [refresh]);
 
-  const requiredReady = packs
-    .filter((pack) => pack.requiredAtStartup)
-    .every((pack) => pack.ready);
+  const requiredPacks = packs.filter((pack) => pack.requiredAtStartup);
+  const requiredReady =
+    requiredPacks.length > 0 && requiredPacks.every((pack) => pack.ready);
 
   return (
     <section
@@ -82,14 +100,26 @@ function ContentPackPanel() {
         <span
           className={`parent-privacy-chip${requiredReady ? "" : " is-warning"}`}
         >
-          {loading ? "verific…" : requiredReady ? "pregătit" : "incomplet"}
+          {loading
+            ? "verific…"
+            : error
+              ? "eroare"
+              : requiredReady
+                ? "pregătit"
+                : "incomplet"}
         </span>
       </div>
       <p className="parent-help prominent">
         Verificarea citește numai Cache Storage de pe acest dispozitiv și nu face
         request-uri de rețea.
       </p>
-      <div className="parent-content-pack-list">
+      {error ? (
+        <div className="parent-content-pack-error" role="alert">
+          <strong>Nu am putut verifica pachetele locale.</strong>
+          <p>{error}</p>
+        </div>
+      ) : null}
+      <div className="parent-content-pack-list" aria-busy={loading}>
         {packs.map((pack) => (
           <PackRow key={pack.id} pack={pack} />
         ))}
