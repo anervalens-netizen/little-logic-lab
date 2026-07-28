@@ -19,6 +19,31 @@ const SIMILAR_PAIRS: readonly ShapeId[][] = [
   ["star", "heart"],
 ];
 
+const SHAPE_SPEECH = {
+  circle: "cerc",
+  square: "pătrat",
+  triangle: "triunghi",
+  star: "stea",
+  heart: "inimă",
+  diamond: "romb",
+  oval: "oval",
+  pentagon: "pentagon",
+  cross: "cruce",
+} as const satisfies Record<Exclude<ShapeId, "hexagon">, string>;
+
+function speechForShape(shape: ShapeId):
+  | {
+      readonly speech: string;
+      readonly speechCueId: `shape-${Exclude<ShapeId, "hexagon">}`;
+    }
+  | Record<string, never> {
+  if (shape === "hexagon") return {};
+  return {
+    speech: SHAPE_SPEECH[shape],
+    speechCueId: `shape-${shape}`,
+  };
+}
+
 function outlineOpacity(value: unknown): number {
   if (value === "none") return 0.16;
   if (value === "partial") return 0.56;
@@ -31,6 +56,11 @@ export const insetPuzzleGame = createSpatialFitGame({
   skillId: "spatial_matching",
   domain: "spatial_planning",
   instruction: "Pune fiecare formă în gaura ei!",
+  instructionCueId: "inset-instruction",
+  hintSpeech: "Uite, aici se potrivește!",
+  hintCueId: "inset-hint",
+  helpSpeech: "Hai să le punem împreună!",
+  helpCueId: "inset-help",
   coPlayPrompt: "Căutați acasă capace și cutii care se potrivesc între ele!",
   icon: () => drawWorkshopShape("heart", "#FF9EC6"),
   bubbleColor: "#FF9EC6",
@@ -68,7 +98,7 @@ export const insetPuzzleGame = createSpatialFitGame({
       pieces: shapes.map((shape, index) => ({
         id: shape,
         label: SHAPE_LABELS[shape],
-        speech: SHAPE_LABELS[shape],
+        ...speechForShape(shape),
         pieceSvg: drawWorkshopShape(
           shape,
           colors[index % colors.length]?.hex ?? "#F25C4C",
