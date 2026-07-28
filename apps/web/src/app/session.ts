@@ -151,6 +151,8 @@ async function showSessionEnd(
 export interface SessionOptions {
   readonly singleGameId?: string;
   readonly singleLevelOnly?: boolean;
+  /** Prima oprire promisă vizual de Home; restul sesiunii rămâne adaptiv. */
+  readonly preferredGameId?: string;
 }
 
 export async function runSession(options: SessionOptions = {}): Promise<void> {
@@ -165,13 +167,27 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
   if (options.singleGameId !== undefined) {
     plan = [{ gameId: options.singleGameId }];
   } else {
-    const built = buildSessionPlan(buildCandidates(), {
+    const candidates = buildCandidates();
+    const built = buildSessionPlan(candidates, {
       seed: `session:${nowLocal.slice(0, 10)}:${profile.sessions.length}`,
       maxGames: defaultSessionGameCount(profile.ageMonths),
       includeHybrid: false,
       nowLocal,
     });
-    plan = built.entries;
+    const preferred = options.preferredGameId;
+    if (
+      preferred &&
+      candidates.some((candidate) => candidate.gameId === preferred)
+    ) {
+      plan = [
+        { gameId: preferred },
+        ...built.entries
+          .filter((entry) => entry.gameId !== preferred)
+          .map((entry) => ({ gameId: entry.gameId })),
+      ].slice(0, built.maxGames);
+    } else {
+      plan = built.entries;
+    }
   }
 
   let gamesPlayed = 0;
