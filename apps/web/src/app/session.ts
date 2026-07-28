@@ -1,16 +1,22 @@
 /**
- * Orchestrarea sesiunii: plan adaptiv (din core), limită de minute,
- * card de co-play după fiecare joc, final calm.
+ * Orchestrarea sesiunii: plan adaptiv local, limită de minute,
+ * card de co-play după fiecare joc și final calm.
  */
 
-import { buildSessionPlan, defaultSessionGameCount, type GameCandidate } from "@core";
-import { getProfile, masteryMeanFor, recordSession } from "./appState";
 import {
-  GAME_IDS,
-  loadGame,
-  loadGames,
-} from "../generated/game-registry";
-import { runGame, cancelCurrentGame, resetCancelFlag, cancelFlagPending } from "../games/engine";
+  buildSessionPlan,
+  defaultSessionGameCount,
+  type GameCandidate,
+} from "@core";
+import { getProfile, masteryMeanFor, recordSession } from "./appState";
+import { GAME_IDS, loadGame } from "../generated/game-registry";
+import { GAME_METADATA } from "../generated/game-metadata";
+import {
+  runGame,
+  cancelCurrentGame,
+  resetCancelFlag,
+  cancelFlagPending,
+} from "../games/engine";
 import { buildGameShell } from "../screens/gameScreen";
 import { showScreen } from "./router";
 import { wait } from "../ui/dom";
@@ -29,42 +35,73 @@ import { isGameAgeEligible } from "./content";
 import { unlockedGameIds } from "./unlocks";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
-const SESSION_SECONDS_WARN = 0; // nu afișăm cronometru copilului
+const SESSION_SECONDS_WARN = 0;
 const PRAISE_LINES = [
   "Ai găsit soluția din prima!",
   "Ai continuat cu răbdare și ai reușit!",
 ] as const;
 
-async function buildCandidates(): Promise<GameCandidate[]> {
+function buildCandidates(): GameCandidate[] {
   const profile = getProfile();
   const unlocked = unlockedGameIds(profile, new Set(GAME_IDS));
-  const games = await loadGames(
-    GAME_IDS.filter((gameId) => unlocked.has(gameId)),
-  );
-  return games
-    .filter(
-      (game) =>
-        game.scored &&
-        unlocked.has(game.id) &&
-        isGameAgeEligible(game.id, profile.ageMonths),
-    )
-    .map((game) => {
-      const progress = profile.progressByGame[game.id];
-      const mean = masteryMeanFor(game.skillId);
-      return {
-        gameId: game.id,
-        skillId: game.skillId,
-        mode: "digital" as const,
-        masteryMean: mean,
-        evidenceCount: profile.masteryBySkill[game.skillId]?.evidenceCount ?? 0,
-        timesPlayed: progress?.timesPlayed ?? 0,
-        dueScore: 1 - mean,
-        ageEligible: true,
-      };
-    });
+  const now = Date.now();
+
+  return GAME_METADATA.filter(
+    (game) =>
+      game.scored &&
+      unlocked.has(game.id) &&
+      isGameAgeEligible(game.id, profile.ageMonths),
+  ).map((game) => {
+    const progress = profile.progressByGame[game.id];
+    const mastery = profile.masteryBySkill[game.skillId];
+    const mean = masteryMeanFor(game.skillId);
+    const recent = progress?.recentOutcomes ?? [];
+    const supportLoad =
+      recent.length === 0
+        ? 0
+        : Math.min(
+            1,
+            recent.reduce(
+              (sum, attempt) =>
+                sum + attempt.hintsUsed * 0.32 + attempt.wrongAttempts * 0.16,
+              0,
+            ) / recent.length,
+          );
+    const abandonRate =
+      recent.length === 0
+        ? 0
+        : recent.filter((attempt) => attempt.abandoned).length / recent.length;
+    const lastPracticed = mastery?.lastPracticedAtLocal ?? null;
+    const daysSince = lastPracticed
+      ? Math.max(0, (now - Date.parse(lastPracticed)) / 86_400_000)
+      : 30;
+    const recency = Math.min(1, daysSince / 10);
+    const lowEvidence = (mastery?.evidenceCount ?? 0) < 2 ? 1 : 0;
+    const dueScore = Math.max(
+      0.05,
+      Math.min(
+        1,
+        (1 - mean) * 0.42 + recency * 0.32 + lowEvidence * 0.2 + supportLoad * 0.06,
+      ),
+    );
+
+    return {
+      gameId: game.id,
+      skillId: game.skillId,
+      mode: game.mode,
+      domain: game.domain,
+      masteryMean: mean,
+      evidenceCount: mastery?.evidenceCount ?? 0,
+      timesPlayed: progress?.timesPlayed ?? 0,
+      dueScore,
+      lastPracticedAtLocal: lastPracticed,
+      recentSupportLoad: supportLoad,
+      recentAbandonRate: abandonRate,
+      ageEligible: true,
+    };
+  });
 }
 
-/** Ecranul de final de sesiune: Lumi doarme, calm, fără stimulente. */
 async function showSessionEnd(
   sessionId: string,
   startedAtMs: number,
@@ -80,7 +117,7 @@ async function showSessionEnd(
 }
 
 export interface SessionOptions {
-  /** Dacă e setat, se joacă doar acest joc (ales de pe ecranul principal). */
+  /** Disponibil numai din Parent Mode pentru verificarea unei activități. */
   readonly singleGameId?: string;
 }
 
@@ -90,15 +127,17 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
   const sessionId = crypto.randomUUID();
   const limitMs = profile.settings.sessionMinutes * 60_000;
   const start = Date.now();
+  const nowLocal = new Date().toISOString();
 
   let plan: readonly { gameId: string }[];
   if (options.singleGameId !== undefined) {
     plan = [{ gameId: options.singleGameId }];
   } else {
-    const built = buildSessionPlan(await buildCandidates(), {
-      seed: `session:${new Date().toISOString().slice(0, 10)}`,
+    const built = buildSessionPlan(buildCandidates(), {
+      seed: `session:${nowLocal.slice(0, 10)}:${profile.sessions.length}`,
       maxGames: defaultSessionGameCount(profile.ageMonths),
       includeHybrid: false,
+      nowLocal,
     });
     plan = built.entries;
   }
@@ -131,7 +170,6 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
     while (playAnotherLevel && Date.now() - start < limitMs) {
       shell.setProgress(gamesPlayed, plan.length);
 
-      // Instrucțiunea generală se redă o singură dată la intrarea în joc.
       if (!introductionPlayed) {
         shell.showBubble(game.instruction);
         shell.setLumiMood("think");
@@ -169,11 +207,13 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
         shell.setProgress(gamesPlayed, plan.length);
       }
 
-      // După primul nivel terminat frumos, trecem la jocul următor;
-      // în modul „un singur joc", continuăm niveluri până la limita de timp.
       playAnotherLevel = options.singleGameId !== undefined && result.completed;
 
-      if (!playAnotherLevel && profile.settings.coPlayPrompts && result.completed) {
+      if (
+        !playAnotherLevel &&
+        profile.settings.coPlayPrompts &&
+        result.completed
+      ) {
         await showCoPlayCard(game.coPlayPrompt);
       }
       if (cancelFlagPending()) {
