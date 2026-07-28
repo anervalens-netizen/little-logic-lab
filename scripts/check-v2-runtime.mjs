@@ -69,6 +69,7 @@ const waitForGo = await readSource("games/waitForGo.ts");
 const choice = await readSource("games/choiceGame.ts");
 const sort = await readSource("games/sortGame.ts");
 const samePicture = await readSource("games/samePicture.ts");
+const sortByColor = await readSource("games/sortByColor.ts");
 const insetPuzzle = await readSource("games/insetPuzzle.ts");
 const main = await readSource("main.tsx");
 const scheduler = await readFile(
@@ -95,6 +96,14 @@ const audioPackValidator = await readFile(
   path.join(root, "scripts/validate-audio-packs.mjs"),
   "utf8",
 );
+const speechAudit = await readFile(
+  path.join(root, "scripts/audit-speech-coverage.mjs"),
+  "utf8",
+);
+const productPolicy = await readFile(
+  path.join(root, "scripts/check-product-policy.mjs"),
+  "utf8",
+);
 const packageJson = await readFile(path.join(root, "package.json"), "utf8");
 const workshopCss = await readFile(
   path.join(sourceRoot, "workshop.css"),
@@ -102,6 +111,10 @@ const workshopCss = await readFile(
 );
 const contentPackCss = await readFile(
   path.join(sourceRoot, "content-packs.css"),
+  "utf8",
+);
+const bootstrapFailureCss = await readFile(
+  path.join(sourceRoot, "bootstrap-failure.css"),
   "utf8",
 );
 
@@ -121,6 +134,9 @@ requireText(audioPacks, "REQUIRED_AUDIO_PACKS", "required audio packs");
 requireText(audioPacks, "includeRemaining", "complete audio pack assignment");
 requireText(contentPacks, "responseLooksUsable", "cache response validation");
 requireText(contentPacks, "MAX_CACHE_INSPECTION_CONCURRENCY", "bounded cache scan");
+requireText(contentPacks, "MAX_CACHE_REPAIR_CONCURRENCY", "bounded cache repair");
+requireText(contentPacks, "repairRequiredStartupAudio", "startup pack repair");
+requireText(contentPacks, 'credentials: "same-origin"', "same-origin pack repair");
 requireText(contentPacks, "requiredStartupAudioReady", "startup pack gate");
 requireText(updates, "findCachedResponseByPathname", "revisioned Workbox cache");
 requireText(updates, "requiredStartupAudioReady", "offline pack readiness");
@@ -139,10 +155,15 @@ requireText(session, "recentSupportLoad", "support-aware scheduler input");
 requireText(session, "recentResponseLoad", "response-aware scheduler input");
 requireText(session, "preferredGameId", "promised journey stop");
 requireText(session, "singleLevelOnly", "bounded adult game test");
-requireText(session, "speakCueAndWait", "stable instruction cue");
+requireText(session, "preloadSpeechCues", "stable instruction cue preload");
 requireText(session, "sessionId}`", "unique replayable session seed");
+requireText(session, "demonstrationDelay(320)", "single visual introduction");
+forbidText(session, "speakAndWait(game.instruction", "duplicate session narration");
+forbidText(session, "speakCueAndWait(game.instruction", "duplicate session cue narration");
 requireText(splash, "closeStartupUpdateBoundary", "safe startup update");
-requireText(splash, "ÎNCEARCĂ DIN NOU", "offline fail-closed UI");
+requireText(splash, "repairRequiredStartupAudio", "offline repair action");
+requireText(splash, 'speakCueAndWait("hello-lumi"', "stable splash cue");
+requireText(splash, "REPARĂ ȘI ÎNCEARCĂ DIN NOU", "offline repair UI");
 requireText(home, "CONTINUĂ AVENTURA", "single child journey action");
 requireText(home, "journeyStopArtwork", "premium journey artwork");
 requireText(home, "profile.attempts.filter", "stable journey progress");
@@ -157,6 +178,7 @@ requireText(packPortal, "inspectAudioPacks", "Parent Mode pack status");
 requireText(packPortal, "Cache Storage", "local-only pack explanation");
 requireText(appShell, "ContentPackStatusPortal", "pack status portal mount");
 requireText(appShell, "installApplicationLifecycle", "global lifecycle mount");
+requireText(appShell, "startupError", "dynamic import recovery");
 requireText(lifecycle, 'addEventListener("pagehide"', "pagehide checkpoint");
 requireText(lifecycle, 'addEventListener("freeze"', "freeze checkpoint");
 requireText(lifecycle, "checkpointProfileSynchronously", "sync profile checkpoint");
@@ -178,6 +200,10 @@ requireText(metadataSource, '"version": "1.1.0"', "metadata source version");
 requireText(audioPackSource, '"golden-journey"', "golden audio pack");
 requireText(generator, "p0-game-metadata.json", "metadata generation");
 requireText(audioPackValidator, "includeRemaining", "audio pack validation");
+requireText(speechAudit, "missingCueIds", "stable cue audit");
+requireText(speechAudit, "cuePropertyPattern", "cue property audit");
+requireText(productPolicy, "allowedLocalFetches", "guarded local fetch policy");
+requireText(productPolicy, "approved same-origin asset path", "same-origin policy failure");
 requireText(packageJson, '"validate:audio-packs"', "audio pack command");
 requireText(unlocks, "GOLDEN_JOURNEY_IDS", "non-blocking golden journey");
 requireText(unlocks, "profile.attempts.filter", "stable unlock history");
@@ -191,12 +217,21 @@ requireText(waitForGo, "blockInput: false", "go-no-go exception");
 requireText(choice, "operationGeneration", "choice async lifecycle");
 requireText(choice, "joinTargetOnSuccess", "pair joining feedback");
 requireText(sort, "interactionLocked", "sort input lifecycle");
+requireText(samePicture, "roundSpeechCueId", "stable pair cue");
 requireText(samePicture, "VEHICLES.flatMap", "vehicle matching variants");
-requireText(insetPuzzle, "drawWorkshopShape", "workshop puzzle pieces");
+requireText(sortByColor, 'instructionCueId: "sort-instruction"', "stable sort cue");
+requireText(sortByColor, "speakOnPlaceCueId", "stable color cue");
+requireText(insetPuzzle, 'instructionCueId: "inset-instruction"', "stable puzzle cue");
+requireText(insetPuzzle, "speechCueId", "stable shape cue");
+requireText(insetPuzzle, 'shape === "hexagon"', "missing hexagon cue fallback");
+requireText(main, "RootErrorBoundary", "React root recovery");
+requireText(main, "bootstrapState", "bootstrap diagnostics");
 requireText(main, 'import "./workshop.css"', "workshop visual layer");
 requireText(main, 'import "./content-packs.css"', "pack status styles");
+requireText(main, 'import "./bootstrap-failure.css"', "bootstrap recovery styles");
 requireText(workshopCss, 'data-game-theme="toy-workshop"', "workshop CSS theme");
 requireText(contentPackCss, ".parent-content-pack-row", "pack status CSS");
+requireText(bootstrapFailureCss, ".bootstrap-failure", "bootstrap recovery CSS");
 requireText(music, "activeNotes", "music lifecycle");
 requireText(music, "releaseDiagnostic", "music diagnostics");
 
@@ -205,5 +240,5 @@ if (voices.includes("createOscillator") || voices.includes("createBufferSource")
 }
 
 console.log(
-  `V2 premium runtime valid: ${sourceFiles.length} fișiere verificate; offline packs, emergency persistence, lifecycle, journey, evidence și recovery sunt prezente.`,
+  `V2 premium runtime valid: ${sourceFiles.length} fișiere verificate; repair offline, cue-uri stabile, persistență de urgență, lifecycle, journey, evidence și recovery sunt prezente.`,
 );
