@@ -16,6 +16,7 @@ export interface AudioPackStatus {
   readonly totalAssets: number;
   readonly totalBytes: number | null;
   readonly ready: boolean;
+  /** Include atât căile absente, cât și răspunsurile cache-uite invalide. */
   readonly missingPaths: readonly string[];
 }
 
@@ -24,69 +25,119 @@ interface CachedLocation {
   readonly request: Request;
 }
 
-async function cachedLocations(): Promise<Map<string, CachedLocation>> {
-  const locations = new Map<string, CachedLocation>();
-  if (!("caches" in window)) return locations;
+interface CacheIndex {
+  readonly locationsByPath: ReadonlyMap<string, readonly CachedLocation[]>;
+  readonly cacheByName: ReadonlyMap<string, Cache>;
+}
+
+interface CacheInspection {
+  readonly usablePaths: ReadonlySet<string>;
+  readonly bytesByPath: ReadonlyMap<string, number>;
+}
+
+const MAX_CACHE_INSPECTION_CONCURRENCY = 4;
+
+async function buildCacheIndex(): Promise<CacheIndex> {
+  const locationsByPath = new Map<string, CachedLocation[]>();
+  const cacheByName = new Map<string, Cache>();
+  if (!("caches" in window)) return { locationsByPath, cacheByName };
 
   for (const cacheName of await caches.keys()) {
     const cache = await caches.open(cacheName);
+    cacheByName.set(cacheName, cache);
     for (const request of await cache.keys()) {
       const pathname = new URL(request.url).pathname;
-      locations.set(pathname, { cacheName, request });
+      const locations = locationsByPath.get(pathname) ?? [];
+      locations.push({ cacheName, request });
+      locationsByPath.set(pathname, locations);
     }
   }
-  return locations;
+  return { locationsByPath, cacheByName };
+}
+
+function responseLooksUsable(response: Response | undefined): response is Response {
+  if (!response?.ok) return false;
+  const contentLength = response.headers.get("content-length");
+  if (contentLength === null) return true;
+  const parsed = Number(contentLength);
+  return !Number.isFinite(parsed) || parsed > 0;
+}
+
+async function inspectCachedPaths(
+  paths: readonly string[],
+  index: CacheIndex,
+  includeBytes: boolean,
+): Promise<CacheInspection> {
+  const queue = [...new Set(paths)];
+  const usablePaths = new Set<string>();
+  const bytesByPath = new Map<string, number>();
+  let nextIndex = 0;
+  const workerCount = Math.min(MAX_CACHE_INSPECTION_CONCURRENCY, queue.length);
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < queue.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        const pathname = queue[currentIndex];
+        if (!pathname) continue;
+
+        const locations = index.locationsByPath.get(pathname) ?? [];
+        for (const location of locations) {
+          const cache = index.cacheByName.get(location.cacheName);
+          if (!cache) continue;
+          const response = await cache.match(location.request);
+          if (!responseLooksUsable(response)) continue;
+
+          let bytes: number | null = null;
+          if (includeBytes) {
+            const contentLength = Number(response.headers.get("content-length"));
+            bytes =
+              Number.isFinite(contentLength) && contentLength > 0
+                ? contentLength
+                : (await response.clone().blob()).size;
+            if (bytes <= 0) continue;
+          }
+
+          usablePaths.add(pathname);
+          if (bytes !== null) bytesByPath.set(pathname, bytes);
+          break;
+        }
+      }
+    }),
+  );
+
+  return { usablePaths, bytesByPath };
 }
 
 export async function findCachedResponseByPathname(
   pathname: string,
 ): Promise<Response | undefined> {
-  if (!("caches" in window)) return undefined;
-  const locations = await cachedLocations();
-  const location = locations.get(pathname);
-  if (!location) return undefined;
-  const cache = await caches.open(location.cacheName);
-  return (await cache.match(location.request)) ?? undefined;
-}
-
-async function byteSizeForPaths(
-  paths: readonly string[],
-  locations: ReadonlyMap<string, CachedLocation>,
-): Promise<number> {
-  let total = 0;
-  const queue = paths.filter((pathname) => locations.has(pathname));
-  const workers = Array.from(
-    { length: Math.min(4, queue.length) },
-    async (_, workerIndex) => {
-      for (let index = workerIndex; index < queue.length; index += 4) {
-        const pathname = queue[index];
-        if (!pathname) continue;
-        const location = locations.get(pathname);
-        if (!location) continue;
-        const cache = await caches.open(location.cacheName);
-        const response = await cache.match(location.request);
-        if (!response?.ok) continue;
-        const length = Number(response.headers.get("content-length"));
-        if (Number.isFinite(length) && length >= 0) {
-          total += length;
-        } else {
-          total += (await response.blob()).size;
-        }
-      }
-    },
-  );
-  await Promise.all(workers);
-  return total;
+  const index = await buildCacheIndex();
+  for (const location of index.locationsByPath.get(pathname) ?? []) {
+    const cache = index.cacheByName.get(location.cacheName);
+    if (!cache) continue;
+    const response = await cache.match(location.request);
+    if (responseLooksUsable(response)) return response;
+  }
+  return undefined;
 }
 
 function statusForPack(
   pack: AudioPack,
-  installedPaths: ReadonlySet<string>,
-  totalBytes: number | null,
+  inspection: CacheInspection,
+  includeBytes: boolean,
 ): AudioPackStatus {
   const missingPaths = pack.assetPaths.filter(
-    (pathname) => !installedPaths.has(pathname),
+    (pathname) => !inspection.usablePaths.has(pathname),
   );
+  const totalBytes = includeBytes
+    ? pack.assetPaths.reduce(
+        (total, pathname) => total + (inspection.bytesByPath.get(pathname) ?? 0),
+        0,
+      )
+    : null;
+
   return {
     id: pack.id,
     title: pack.title,
@@ -104,30 +155,31 @@ function statusForPack(
 export async function inspectAudioPacks(
   options: { readonly includeBytes?: boolean } = {},
 ): Promise<readonly AudioPackStatus[]> {
-  const locations = await cachedLocations();
-  const installedPaths = new Set(locations.keys());
-
-  return await Promise.all(
-    AUDIO_PACKS.map(async (pack) => {
-      const totalBytes = options.includeBytes
-        ? await byteSizeForPaths(pack.assetPaths, locations)
-        : null;
-      return statusForPack(pack, installedPaths, totalBytes);
-    }),
+  const includeBytes = options.includeBytes === true;
+  const index = await buildCacheIndex();
+  const inspection = await inspectCachedPaths(
+    AUDIO_PACKS.flatMap((pack) => pack.assetPaths),
+    index,
+    includeBytes,
+  );
+  return AUDIO_PACKS.map((pack) =>
+    statusForPack(pack, inspection, includeBytes),
   );
 }
 
 export async function requiredStartupAudioReady(): Promise<boolean> {
-  const locations = await cachedLocations();
-  const installedPaths = new Set(locations.keys());
-  return REQUIRED_AUDIO_PACKS.every((pack) =>
-    pack.assetPaths.every((pathname) => installedPaths.has(pathname)),
-  );
+  const requiredPaths = REQUIRED_AUDIO_PACKS.flatMap((pack) => pack.assetPaths);
+  if (requiredPaths.length === 0) return false;
+  const index = await buildCacheIndex();
+  const inspection = await inspectCachedPaths(requiredPaths, index, false);
+  return requiredPaths.every((pathname) => inspection.usablePaths.has(pathname));
 }
 
 export function formatPackBytes(bytes: number | null): string {
   if (bytes === null) return "nemăsurat";
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024) {
+    return `${new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 0 }).format(bytes / 1024)} KB`;
+  }
+  return `${new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 1 }).format(bytes / (1024 * 1024))} MB`;
 }
