@@ -27,7 +27,9 @@ import { showScreen } from "./router";
 import { wait } from "../ui/dom";
 import {
   preloadSpeech,
+  preloadSpeechCues,
   speakAndWait,
+  speakCueAndWait,
   stopSpeaking,
 } from "../audio/speech";
 import { showHome } from "../screens/home";
@@ -45,6 +47,7 @@ const PRAISE_LINES = [
   "Ai găsit soluția din prima!",
   "Ai continuat cu răbdare și ai reușit!",
 ] as const;
+const PRAISE_CUE_IDS = ["praise-first-try", "praise-persistence"] as const;
 
 function responseLoadFor(
   recent: readonly { readonly responseMs?: number }[],
@@ -169,7 +172,9 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
   } else {
     const candidates = buildCandidates();
     const built = buildSessionPlan(candidates, {
-      seed: `session:${nowLocal.slice(0, 10)}:${profile.sessions.length}`,
+      // UUID-ul este stocat în attempt/session, deci planul rămâne identificabil,
+      // dar două sesiuni în aceeași zi nu repetă automat aceeași selecție.
+      seed: `session:${nowLocal.slice(0, 10)}:${sessionId}`,
       maxGames: defaultSessionGameCount(profile.ageMonths),
       includeHybrid: false,
       nowLocal,
@@ -200,7 +205,11 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
 
     const nextEntry = plan[planIndex + 1];
     if (nextEntry) void loadGame(nextEntry.gameId);
-    void preloadSpeech([game.instruction, ...PRAISE_LINES]);
+    if (game.instructionCueId) {
+      void preloadSpeechCues([game.instructionCueId, ...PRAISE_CUE_IDS]);
+    } else {
+      void preloadSpeech([game.instruction, ...PRAISE_LINES]);
+    }
 
     let playAnotherLevel = true;
     let quit = false;
@@ -221,10 +230,10 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
       if (!introductionPlayed) {
         shell.showBubble(game.instruction);
         shell.setLumiMood("think");
-        await Promise.all([
-          speakAndWait(game.instruction),
-          wait(demonstrationDelay(1400)),
-        ]);
+        const instruction = game.instructionCueId
+          ? speakCueAndWait(game.instructionCueId, game.instruction)
+          : speakAndWait(game.instruction);
+        await Promise.all([instruction, wait(demonstrationDelay(1400))]);
         if (cancelFlagPending()) {
           stopSpeaking();
           await showHome();
