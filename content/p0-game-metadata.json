@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "games": [
     {
       "id": "same-picture",
@@ -8,7 +8,7 @@
       "domain": "visual_attention",
       "instruction": "Uită-te la imagine! Găsește una la fel!",
       "learningGoal": "Potrivire vizuală și atenție selectivă",
-      "coPlayPrompt": "Hai să căutăm prin casă două lucruri care arată la fel!",
+      "coPlayPrompt": "Alegeți două mașinuțe sau două obiecte care arată la fel și puneți-le împreună.",
       "bubbleColor": "#FFD35C",
       "mode": "digital",
       "scored": true,
@@ -21,7 +21,7 @@
       "domain": "classification",
       "instruction": "Pune fiecare lucru în coșul de aceeași culoare!",
       "learningGoal": "Clasificare după culoare",
-      "coPlayPrompt": "Căutați în cameră lucruri roșii și lucruri albastre.",
+      "coPlayPrompt": "Alegeți mașinuțe sau obiecte roșii și albastre și parcați-le în două locuri diferite.",
       "bubbleColor": "#F25C4C",
       "mode": "digital",
       "scored": true,
