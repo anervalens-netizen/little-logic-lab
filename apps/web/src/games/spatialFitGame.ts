@@ -2,6 +2,7 @@ import type {
   DifficultyAxisSpec,
   DifficultyVector,
 } from "@core";
+import type { SpeechCueId } from "../audio/speech";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { clear, wait } from "../ui/dom";
@@ -17,6 +18,7 @@ export interface SpatialFitPiece {
   readonly rotation?: number;
   readonly targetOpacity?: number;
   readonly speech?: string;
+  readonly speechCueId?: SpeechCueId;
 }
 
 export interface SpatialFitRound {
@@ -30,6 +32,7 @@ interface SpatialFitSpec {
   readonly skillId: string;
   readonly domain: string;
   readonly instruction: string;
+  readonly instructionCueId?: SpeechCueId;
   readonly coPlayPrompt: string;
   readonly icon: () => string;
   readonly bubbleColor: string;
@@ -40,7 +43,9 @@ interface SpatialFitSpec {
     seed: string,
   ) => SpatialFitRound;
   readonly hintSpeech?: string;
+  readonly hintCueId?: SpeechCueId;
   readonly helpSpeech?: string;
+  readonly helpCueId?: SpeechCueId;
 }
 
 export function createSpatialFitGame(spec: SpatialFitSpec): WebGame {
@@ -50,6 +55,9 @@ export function createSpatialFitGame(spec: SpatialFitSpec): WebGame {
     skillId: spec.skillId,
     domain: spec.domain,
     instruction: spec.instruction,
+    ...(spec.instructionCueId
+      ? { instructionCueId: spec.instructionCueId }
+      : {}),
     coPlayPrompt: spec.coPlayPrompt,
     icon: spec.icon,
     bubbleColor: spec.bubbleColor,
@@ -77,8 +85,11 @@ export function createSpatialFitGame(spec: SpatialFitSpec): WebGame {
       for (const batch of batches) {
         const result = await playSpatialFitBatch(ctx, batch, {
           instruction: spec.instruction,
+          instructionCueId: spec.instructionCueId,
           hint: spec.hintSpeech ?? "Uite, aici se potrivește!",
+          hintCueId: spec.hintCueId,
           help: spec.helpSpeech ?? "Hai să le punem împreună!",
+          helpCueId: spec.helpCueId,
         });
         correctFirstTry &&= result.correctFirstTry;
         hintsUsed += result.hintsUsed;
@@ -106,10 +117,28 @@ export function createSpatialFitGame(spec: SpatialFitSpec): WebGame {
   };
 }
 
+interface SpatialFitSpeech {
+  readonly instruction: string;
+  readonly instructionCueId?: SpeechCueId;
+  readonly hint: string;
+  readonly hintCueId?: SpeechCueId;
+  readonly help: string;
+  readonly helpCueId?: SpeechCueId;
+}
+
+function speakWithCue(
+  ctx: GameContext,
+  cueId: SpeechCueId | undefined,
+  text: string,
+  opts: { readonly rate?: number } = {},
+): Promise<void> {
+  return cueId ? ctx.speakCue(cueId, text, opts) : ctx.speak(text, opts);
+}
+
 async function playSpatialFitBatch(
   ctx: GameContext,
   pieces: readonly SpatialFitPiece[],
-  speech: { readonly instruction: string; readonly hint: string; readonly help: string },
+  speech: SpatialFitSpeech,
 ): Promise<PlayResult> {
   clear(ctx.mount);
   const { createPixiDragScene } = await import("../runtime/pixiDragScene");
@@ -120,15 +149,19 @@ async function playSpatialFitBatch(
   let settled = false;
   let inputReady = false;
   let simplifying = false;
+  let operationGeneration = 0;
   let cancelWatch: number | null = null;
   let resolveResult: (result: PlayResult) => void = () => undefined;
   const result = new Promise<PlayResult>((resolve) => {
     resolveResult = resolve;
   });
+  const active = (generation: number) =>
+    generation === operationGeneration && !settled && !ctx.isCancelled();
   const finish = (outcome: PlayResult) => {
     if (settled) return;
     settled = true;
     inputReady = false;
+    operationGeneration += 1;
     if (cancelWatch !== null) window.clearInterval(cancelWatch);
     resolveResult(outcome);
   };
@@ -154,9 +187,12 @@ async function playSpatialFitBatch(
         const verdict = support.registerError();
         if (verdict === "hint") {
           inputReady = false;
-          scene.emphasizeTarget(itemId);
-          void ctx.speak(speech.hint).then(() => {
-            if (!settled && !simplifying && !ctx.isCancelled()) inputReady = true;
+          const generation = ++operationGeneration;
+          window.setTimeout(() => {
+            if (active(generation)) scene.emphasizeTarget(itemId);
+          }, 180);
+          void speakWithCue(ctx, speech.hintCueId, speech.hint).then(() => {
+            if (active(generation)) inputReady = true;
           });
         } else if (verdict === "simplify") {
           simplifying = true;
@@ -171,43 +207,50 @@ async function playSpatialFitBatch(
       sfxPlace();
       playItemVoice(itemId);
       const piece = pieces.find((candidate) => candidate.id === itemId);
-      const pieceSpeech = piece?.speech
-        ? ctx.speak(piece.speech, { rate: 1 })
-        : Promise.resolve();
-      inputReady = false;
+      if (piece?.speech) {
+        void speakWithCue(
+          ctx,
+          piece.speechCueId,
+          piece.speech,
+          { rate: 1 },
+        );
+      }
       if (placed.size >= pieces.length) {
-        void Promise.all([
-          pieceSpeech,
-          wait(ctx.reducedMotion ? 380 : 720),
-        ]).then(() =>
+        inputReady = false;
+        const generation = ++operationGeneration;
+        void wait(ctx.reducedMotion ? 380 : 720).then(() => {
+          if (!active(generation)) return;
           finish({
             completed: true,
             correctFirstTry: support.wasFirstTryClean,
             correctEventually: true,
             hintsUsed: support.hintsUsed,
             wrongAttempts: support.wrongAttempts,
-          }),
-        );
-      } else {
-        void pieceSpeech.then(() => {
-          if (!settled && !simplifying && !ctx.isCancelled()) inputReady = true;
+          });
         });
       }
       return "correct";
     },
   });
-  ctx.onCleanup(scene.destroy);
+  ctx.onCleanup(() => {
+    operationGeneration += 1;
+    scene.destroy();
+  });
 
   async function autoCompleteRemaining(): Promise<void> {
-    await ctx.speak(speech.help);
+    const generation = ++operationGeneration;
+    await speakWithCue(ctx, speech.helpCueId, speech.help);
+    if (!active(generation)) return;
     for (const piece of pieces) {
-      if (ctx.isCancelled()) return;
+      if (!active(generation)) return;
       if (placed.has(piece.id)) continue;
       scene.emphasizeTarget(piece.id);
       placed.add(piece.id);
       await scene.autoPlace(piece.id, piece.id);
+      if (!active(generation)) return;
       await wait(ctx.reducedMotion ? 100 : 280);
     }
+    if (!active(generation)) return;
     finish({
       completed: true,
       correctFirstTry: false,
@@ -218,35 +261,34 @@ async function playSpatialFitBatch(
   }
 
   await Promise.all([
-    ctx.speak(speech.instruction),
+    speakWithCue(ctx, speech.instructionCueId, speech.instruction),
     wait(demonstrationDelay(900)),
   ]);
-  if (ctx.isCancelled()) {
-    scene.destroy();
-    return {
-      completed: false,
-      correctFirstTry: false,
-      correctEventually: false,
-      hintsUsed: 0,
-      wrongAttempts: 0,
-      abandoned: true,
-    };
-  }
+  if (ctx.isCancelled()) return abortedSpatial();
   inputReady = true;
   scene.readyElement.dataset.gameReady = "true";
   cancelWatch = window.setInterval(() => {
-    if (ctx.isCancelled()) {
-      finish({
-        completed: false,
-        correctFirstTry: false,
-        correctEventually: false,
-        hintsUsed: support.hintsUsed,
-        wrongAttempts: support.wrongAttempts,
-        abandoned: true,
-      });
-    }
+    if (!ctx.isCancelled()) return;
+    finish({
+      completed: false,
+      correctFirstTry: false,
+      correctEventually: false,
+      hintsUsed: support.hintsUsed,
+      wrongAttempts: support.wrongAttempts,
+      abandoned: true,
+    });
   }, 200);
-  const outcome = await result;
-  scene.destroy();
-  return outcome;
+
+  return await result;
+}
+
+function abortedSpatial(): PlayResult {
+  return {
+    completed: false,
+    correctFirstTry: false,
+    correctEventually: false,
+    hintsUsed: 0,
+    wrongAttempts: 0,
+    abandoned: true,
+  };
 }
