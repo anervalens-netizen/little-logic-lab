@@ -1,7 +1,8 @@
-/** Inspectează pachetele locale fără request-uri de rețea. */
+/** Inspectează și repară pachetele locale folosind numai asset-uri same-origin. */
 
 import {
   AUDIO_PACKS,
+  AUDIO_PACK_VERSION,
   REQUIRED_AUDIO_PACKS,
   type AudioPack,
 } from "../audio/audioPacks";
@@ -36,6 +37,9 @@ interface CacheInspection {
 }
 
 const MAX_CACHE_INSPECTION_CONCURRENCY = 4;
+const MAX_CACHE_REPAIR_CONCURRENCY = 3;
+const REPAIR_CACHE_PREFIX = "logic-lab-audio-repair-";
+const REPAIR_CACHE_NAME = `${REPAIR_CACHE_PREFIX}${AUDIO_PACK_VERSION}`;
 
 async function buildCacheIndex(): Promise<CacheIndex> {
   const locationsByPath = new Map<string, CachedLocation[]>();
@@ -110,6 +114,10 @@ async function inspectCachedPaths(
   return { usablePaths, bytesByPath };
 }
 
+function requiredAssetPaths(): readonly string[] {
+  return [...new Set(REQUIRED_AUDIO_PACKS.flatMap((pack) => pack.assetPaths))];
+}
+
 export async function findCachedResponseByPathname(
   pathname: string,
 ): Promise<Response | undefined> {
@@ -168,11 +176,78 @@ export async function inspectAudioPacks(
 }
 
 export async function requiredStartupAudioReady(): Promise<boolean> {
-  const requiredPaths = REQUIRED_AUDIO_PACKS.flatMap((pack) => pack.assetPaths);
-  if (requiredPaths.length === 0) return false;
+  const paths = requiredAssetPaths();
+  if (paths.length === 0) return false;
   const index = await buildCacheIndex();
-  const inspection = await inspectCachedPaths(requiredPaths, index, false);
-  return requiredPaths.every((pathname) => inspection.usablePaths.has(pathname));
+  const inspection = await inspectCachedPaths(paths, index, false);
+  return paths.every((pathname) => inspection.usablePaths.has(pathname));
+}
+
+async function removeObsoleteRepairCaches(): Promise<void> {
+  for (const cacheName of await caches.keys()) {
+    if (
+      cacheName.startsWith(REPAIR_CACHE_PREFIX) &&
+      cacheName !== REPAIR_CACHE_NAME
+    ) {
+      await caches.delete(cacheName);
+    }
+  }
+}
+
+/**
+ * Repară numai asset-urile obligatorii lipsă. Parametrul de query evită ca ruta
+ * precache defectă să intercepteze din nou aceeași cheie; răspunsul este salvat
+ * sub pathname-ul canonic într-un cache local versionat.
+ */
+export async function repairRequiredStartupAudio(): Promise<boolean> {
+  if (!("caches" in window) || navigator.onLine === false) return false;
+  const paths = requiredAssetPaths();
+  if (paths.length === 0) return false;
+
+  const beforeIndex = await buildCacheIndex();
+  const before = await inspectCachedPaths(paths, beforeIndex, false);
+  const missing = paths.filter((pathname) => !before.usablePaths.has(pathname));
+  if (missing.length === 0) return true;
+
+  await removeObsoleteRepairCaches();
+  const repairCache = await caches.open(REPAIR_CACHE_NAME);
+  let nextIndex = 0;
+  let failed = false;
+  const workerCount = Math.min(MAX_CACHE_REPAIR_CONCURRENCY, missing.length);
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < missing.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        const pathname = missing[currentIndex];
+        if (!pathname) continue;
+        try {
+          const url = new URL(pathname, window.location.origin);
+          url.searchParams.set("__logic_lab_repair", AUDIO_PACK_VERSION);
+          const response = await fetch(url, {
+            cache: "reload",
+            credentials: "same-origin",
+          });
+          if (!responseLooksUsable(response)) {
+            failed = true;
+            continue;
+          }
+          const size = (await response.clone().blob()).size;
+          if (size <= 0) {
+            failed = true;
+            continue;
+          }
+          await repairCache.put(pathname, response.clone());
+        } catch {
+          failed = true;
+        }
+      }
+    }),
+  );
+
+  if (failed && !(await requiredStartupAudioReady())) return false;
+  return await requiredStartupAudioReady();
 }
 
 export function formatPackBytes(bytes: number | null): string {
