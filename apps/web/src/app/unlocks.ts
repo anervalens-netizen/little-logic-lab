@@ -12,8 +12,7 @@ const GOLDEN_SET = new Set<string>(GOLDEN_JOURNEY_IDS);
 
 /**
  * Child Mode păstrează permanent accesibile cele trei mecanici de bază. Restul
- * catalogului se deschide gradual, dar nu cere perfecțiune și nu pedepsește
- * folosirea sprijinului.
+ * catalogului se deschide gradual, fără perfecțiune obligatorie.
  */
 export function unlockedGameIds(
   profile: StoredProfile,
@@ -45,11 +44,12 @@ export function unlockedGameIds(
   return unlocked;
 }
 
+/** Golden slice-ul nu se relochează după ce a fost parcurs cu succes. */
 export function isGoldenJourneyReady(profile: StoredProfile): boolean {
-  const outcomes = GOLDEN_JOURNEY_IDS.flatMap(
-    (gameId) => profile.progressByGame[gameId]?.recentOutcomes ?? [],
+  const successful = profile.attempts.filter(
+    (attempt) =>
+      GOLDEN_SET.has(attempt.gameId) && isSuccessfulAttempt(attempt),
   );
-  const successful = outcomes.filter(isSuccessfulAttempt);
   const practicedGames = new Set(successful.map((attempt) => attempt.gameId));
 
   return successful.length >= 4 && practicedGames.size >= 2;
