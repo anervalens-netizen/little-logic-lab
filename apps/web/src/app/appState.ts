@@ -21,6 +21,10 @@ import {
   type AttemptOutcome,
 } from "@core";
 
+export type StoredAttemptWithEvidence = StoredAttempt & {
+  readonly responseMs?: number;
+};
+
 let profile: StoredProfile = defaultProfile();
 
 export async function initializeProfile(): Promise<void> {
@@ -101,7 +105,7 @@ function masteryFromStored(
   };
 }
 
-/** Înregistrează o încercare: mastery, jurnal și istoric per joc. */
+/** Înregistrează o încercare: mastery, jurnal, latență și istoric per joc. */
 export function recordAttempt(
   gameId: string,
   skillId: string,
@@ -109,7 +113,7 @@ export function recordAttempt(
   metadata: AttemptMetadata,
 ): void {
   const atLocal = new Date().toISOString();
-  const attempt: StoredAttempt = {
+  const attempt: StoredAttemptWithEvidence = {
     atLocal,
     ...metadata,
     gameId,
@@ -120,6 +124,9 @@ export function recordAttempt(
     hintsUsed: outcome.hintsUsed,
     wrongAttempts: outcome.wrongAttempts,
     abandoned: outcome.abandoned ?? false,
+    ...(outcome.responseMs === undefined
+      ? {}
+      : { responseMs: Math.max(0, Math.round(outcome.responseMs)) }),
   };
 
   const current = masteryFromStored(profile.masteryBySkill[skillId]);
