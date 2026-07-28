@@ -1,12 +1,13 @@
-/** Jocul 1: „Găsește perechea identică" — potrivire vizuală exactă. */
+/** Golden slice 1: perechi de vehicule-jucărie într-o lume coerentă. */
 
 import type { ContentItem } from "@core";
 import { createChoiceGame } from "./choiceGame";
-import { ITEMS, getItem } from "../art/items";
-import { drawItem } from "../art/items";
-import { drawLumi } from "../art/lumi";
+import { ITEMS, getItem, drawItem } from "../art/items";
 
-const CONTENT: readonly ContentItem[] = ITEMS.map((item) => ({
+const VEHICLES = ITEMS.filter((item) => item.category === "vehicle");
+const STARTER_ITEMS = VEHICLES.length >= 6 ? VEHICLES : ITEMS.slice(0, 12);
+
+const CONTENT: readonly ContentItem[] = STARTER_ITEMS.map((item) => ({
   id: item.id,
   attributes: { category: item.category, color: item.color },
 }));
@@ -17,8 +18,9 @@ export const samePictureGame = createChoiceGame({
   skillId: "visual_discrimination",
   domain: "visual_attention",
   instruction: "Uită-te la imagine! Găsește una la fel!",
-  coPlayPrompt: "Hai să căutăm prin casă două lucruri care arată la fel!",
-  icon: () => drawItem("cat"),
+  coPlayPrompt:
+    "Alegeți două mașinuțe sau două obiecte care arată la fel și puneți-le împreună.",
+  icon: () => drawItem("car"),
   bubbleColor: "#FFD35C",
   axes: [
     { name: "choiceCount", values: [2, 3] },
@@ -49,5 +51,3 @@ export const samePictureGame = createChoiceGame({
     };
   },
 });
-
-export { drawLumi };
