@@ -1,6 +1,6 @@
 /**
  * Motorul care rulează un joc în shell:
- * instrucțiune → joc → laudă → mastery → ajustare dificultate (o axă).
+ * instrucțiune → joc → mastery → persistență → laudă → cleanup.
  */
 
 import {
@@ -9,7 +9,12 @@ import {
   type DifficultyVector,
 } from "@core";
 import type { GameContext, WebGame, PlayResult } from "./types";
-import { getProfile, recordAttempt, setGameDifficulty } from "../app/appState";
+import {
+  flushPendingProfileWrites,
+  getProfile,
+  recordAttempt,
+  setGameDifficulty,
+} from "../app/appState";
 import {
   speakAndWait,
   stopSpeaking,
@@ -37,7 +42,6 @@ export function cancelCurrentGame(): void {
   stopSpeaking();
 }
 
-/** Sesiunea resetează flag-ul O DATĂ la start — niciodată între niveluri. */
 export function resetCancelFlag(): void {
   cancelFlag = false;
 }
@@ -67,7 +71,6 @@ export function makeContext(
   };
 }
 
-/** Rulează un nivel: returnează rezultatul; se ocupă de tot ce e transversal. */
 export async function runGame(
   game: WebGame,
   mount: HTMLElement,
@@ -103,14 +106,13 @@ export async function runGame(
         contentVersion: CONTENT_VERSION,
       });
 
-      // Ajustare dificultate: o singură axă, pe baza ultimelor rezultate.
       const updated = getProfile().progressByGame[game.id];
-      const outcomes = (updated?.recentOutcomes ?? []).map((a) => ({
-        completed: a.completed,
-        correctFirstTry: a.correctFirstTry,
-        correctEventually: a.correctEventually,
-        hintsUsed: a.hintsUsed,
-        wrongAttempts: a.wrongAttempts,
+      const outcomes = (updated?.recentOutcomes ?? []).map((attempt) => ({
+        completed: attempt.completed,
+        correctFirstTry: attempt.correctFirstTry,
+        correctEventually: attempt.correctEventually,
+        hintsUsed: attempt.hintsUsed,
+        wrongAttempts: attempt.wrongAttempts,
       }));
       const direction = recommendDifficultyDirection(outcomes);
       if (direction !== 0) {
@@ -133,10 +135,12 @@ export async function runGame(
       } else if (!stored || Object.keys(stored.difficulty).length === 0) {
         setGameDifficulty(game.id, { ...difficulty });
       }
+
+      // Nu blocăm copilul dacă atât IndexedDB, cât și fallback-ul sunt indisponibile;
+      // Parent Mode va afișa starea storage-ului pentru adult.
+      await flushPendingProfileWrites().catch(() => undefined);
     }
 
-    // Un runtime de joc poate rezolva rezultatul după animația vizuală minimă,
-    // dar ultima explicație audio trebuie lăsată să se încheie înaintea laudei.
     await waitForSpeechIdle();
     if (result.completed && !cancelFlag) {
       await praise(shell, { win: result.correctFirstTry });
