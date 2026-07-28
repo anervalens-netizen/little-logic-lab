@@ -30,17 +30,23 @@ function candidateWeight(
   const recency = clamp01(daysSince(candidate.lastPracticedAtLocal, nowMs) / 10);
   const due = clamp01(candidate.dueScore);
   const support = clamp01(candidate.recentSupportLoad ?? 0);
+  const responseLoad = clamp01(candidate.recentResponseLoad ?? 0);
   const abandonPenalty = 1 - clamp01(candidate.recentAbandonRate ?? 0) * 0.65;
   const novelty = candidate.timesPlayed === 0 ? 1 : 0;
 
   let roleFit = 0.35;
   if (role === "warmup") {
     roleFit = clamp01(
-      candidate.masteryMean * 0.65 + (1 - support) * 0.25 + recency * 0.1,
+      candidate.masteryMean * 0.58 +
+        (1 - support) * 0.22 +
+        (1 - responseLoad) * 0.12 +
+        recency * 0.08,
     );
   } else if (role === "growth") {
     const zone = 1 - Math.min(1, Math.abs(candidate.masteryMean - 0.64) / 0.36);
-    roleFit = clamp01(zone * 0.55 + due * 0.3 + recency * 0.15);
+    roleFit = clamp01(
+      zone * 0.52 + due * 0.27 + recency * 0.14 + (1 - responseLoad) * 0.07,
+    );
   } else if (role === "novelty") {
     roleFit = novelty === 1 ? 1 : clamp01(recency * 0.35);
   } else if (role === "transfer") {
@@ -118,7 +124,8 @@ export function buildSessionPlan(
     (candidate) =>
       candidate.timesPlayed > 0 &&
       candidate.masteryMean >= 0.68 &&
-      (candidate.recentSupportLoad ?? 0) <= 0.55,
+      (candidate.recentSupportLoad ?? 0) <= 0.55 &&
+      (candidate.recentResponseLoad ?? 0) <= 0.8,
   );
   const growth = eligible.filter(
     (candidate) =>
