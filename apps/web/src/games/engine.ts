@@ -31,6 +31,12 @@ import {
   stepLadderDifficulty,
 } from "../app/content";
 
+const WORKSHOP_GAMES = new Set([
+  "same-picture",
+  "sort-by-color",
+  "inset-puzzle",
+]);
+
 export interface RunOutcome {
   readonly result: PlayResult;
   readonly cancelled: boolean;
@@ -94,6 +100,13 @@ export async function runGame(
   const ctx = makeContext(mount, shell, (cleanup) => cleanups.push(cleanup));
   const evidence = observeRoundEvidence(mount);
   cleanups.push(evidence.destroy);
+
+  mount.dataset.gameId = game.id;
+  mount.dataset.gameTheme = WORKSHOP_GAMES.has(game.id) ? "toy-workshop" : "meadow";
+  cleanups.push(() => {
+    delete mount.dataset.gameId;
+    delete mount.dataset.gameTheme;
+  });
 
   try {
     const rawResult = await game.play(ctx, difficulty, seed);
