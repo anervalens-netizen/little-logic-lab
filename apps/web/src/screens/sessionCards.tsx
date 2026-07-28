@@ -5,7 +5,11 @@ import { createRoot } from "react-dom/client";
 import { registerScreenCleanup, showScreen } from "../app/router";
 import { drawLumi } from "../art/lumi";
 import { meadowScene, nightScene } from "../art/scenery";
-import { speakAndWait, stopSpeaking } from "../audio/speech";
+import {
+  speakAndWait,
+  speakCueAndWait,
+  stopSpeaking,
+} from "../audio/speech";
 import { sfxSessionEnd } from "../audio/sfx";
 
 function Artwork({
@@ -38,7 +42,6 @@ function mountReactScreen(
   return screen;
 }
 
-/** Card de co-play / transfer în lumea reală, după un joc. */
 export async function showCoPlayCard(prompt: string): Promise<void> {
   let resolveDone: () => void = () => undefined;
   const done = new Promise<void>((resolve) => {
@@ -87,7 +90,6 @@ export async function showCoPlayCard(prompt: string): Promise<void> {
   await done;
 }
 
-/** Final calm; callback-ul persistă sesiunea după ce ecranul este vizibil. */
 export async function showSessionEndCard(onReady: () => void): Promise<void> {
   let resolveDone: () => void = () => undefined;
   const done = new Promise<void>((resolve) => {
@@ -121,9 +123,7 @@ export async function showSessionEndCard(onReady: () => void): Promise<void> {
               <h1 id="session-end-title" className="session-card-title">
                 Gata pentru azi!
               </h1>
-              <p>
-                Lumi se odihnește. Ne jucăm iar mai târziu!
-              </p>
+              <p>Lumi se odihnește. Ne jucăm iar mai târziu!</p>
             </div>
             <button
               type="button"
@@ -138,7 +138,8 @@ export async function showSessionEndCard(onReady: () => void): Promise<void> {
     ),
   );
   sfxSessionEnd();
-  void speakAndWait(
+  void speakCueAndWait(
+    "session-finished",
     "Gata pentru azi! Ai lucrat cu răbdare. Lumi se odihnește acum.",
   );
   onReady();
