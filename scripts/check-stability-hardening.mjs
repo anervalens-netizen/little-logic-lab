@@ -53,8 +53,12 @@ requireText(contentPacks, "repairRequiredStartupAudio", "offline repair API");
 requireText(contentPacks, 'credentials: "same-origin"', "same-origin repair fetch");
 requireText(contentPacks, "bytesByPath.get(pathname)", "required body verification");
 requireText(durableProfile, "writeEmergencyProfileSnapshot", "pre-IDB emergency write");
-requireText(durableProfile, "clearEmergencyProfileSnapshot", "confirmed emergency cleanup");
+requireText(durableProfile, "emergencyToken", "emergency generation propagation");
+requireText(durableProfile, "clearEmergencyProfileSnapshot(emergencyToken)", "matching emergency cleanup");
 requireText(emergencyProfile, "EMERGENCY_PROFILE_KEY", "emergency profile storage");
+requireText(emergencyProfile, "envelopeVersion", "emergency envelope version");
+requireText(emergencyProfile, "expectedToken", "generation-safe emergency cleanup");
+requireText(emergencyProfile, "envelope.token !== expectedToken", "stale confirmation guard");
 requireText(appState, "readEmergencyProfileSnapshot", "emergency boot recovery");
 requireText(appState, "checkpointProfileSynchronously", "sync lifecycle checkpoint");
 requireText(lifecycle, 'addEventListener("pagehide"', "pagehide persistence");
@@ -85,5 +89,5 @@ requireText(speechAudit, "missingCueIds", "stable cue audit");
 requireText(speechAudit, "cuePropertyPattern", "cue property audit");
 
 console.log(
-  "Stability hardening valid: offline repair, audio timeouts, emergency persistence, cleanup isolation, bootstrap recovery and stable golden cues are guarded.",
+  "Stability hardening valid: offline repair, bounded audio, generation-safe emergency persistence, cleanup isolation, bootstrap recovery and stable golden cues are guarded.",
 );
