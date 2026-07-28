@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ContentPackStatusPortal } from "../screens/ContentPackStatusPortal";
 
 export function AppShell() {
   useEffect(() => {
@@ -20,10 +21,13 @@ export function AppShell() {
   }, []);
 
   return (
-    <main
-      id="screen-root"
-      aria-live="polite"
-      aria-label="Minte în joacă"
-    />
+    <>
+      <main
+        id="screen-root"
+        aria-live="polite"
+        aria-label="Minte în joacă"
+      />
+      <ContentPackStatusPortal />
+    </>
   );
 }
