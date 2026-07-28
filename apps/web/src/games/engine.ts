@@ -19,6 +19,7 @@ import {
 } from "../app/appState";
 import {
   speakAndWait,
+  speakCueAndWait,
   stopSpeaking,
   waitForSpeechIdle,
 } from "../audio/speech";
@@ -67,6 +68,8 @@ export function makeContext(
     mount,
     shell,
     speak: (text, opts) => speakAndWait(text, opts),
+    speakCue: (cueId, fallbackText, opts) =>
+      speakCueAndWait(cueId, fallbackText, opts),
     hush: () => stopSpeaking(),
     reducedMotion: isMotionReduced(),
     demonstrate: async (target) => {
@@ -103,7 +106,9 @@ export async function runGame(
   cleanups.push(evidence.destroy);
 
   mount.dataset.gameId = game.id;
-  mount.dataset.gameTheme = WORKSHOP_GAMES.has(game.id) ? "toy-workshop" : "meadow";
+  mount.dataset.gameTheme = WORKSHOP_GAMES.has(game.id)
+    ? "toy-workshop"
+    : "meadow";
   cleanups.push(() => {
     delete mount.dataset.gameId;
     delete mount.dataset.gameTheme;
