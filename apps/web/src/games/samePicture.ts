@@ -3,14 +3,47 @@
 import type { ContentItem } from "@core";
 import { createChoiceGame } from "./choiceGame";
 import { ITEMS, getItem, drawItem } from "../art/items";
+import { LEARN_COLORS, learnColor } from "../art/palette";
 
 const VEHICLES = ITEMS.filter((item) => item.category === "vehicle");
-const STARTER_ITEMS = VEHICLES.length >= 6 ? VEHICLES : ITEMS.slice(0, 12);
+const STARTER_COLORS = LEARN_COLORS.slice(0, 4);
 
-const CONTENT: readonly ContentItem[] = STARTER_ITEMS.map((item) => ({
-  id: item.id,
-  attributes: { category: item.category, color: item.color },
-}));
+const CONTENT: readonly ContentItem[] = VEHICLES.flatMap((item) =>
+  item.recolorable
+    ? STARTER_COLORS.map((color) => ({
+        id: `${item.id}--${color.id}`,
+        attributes: {
+          category: item.category,
+          baseItem: item.id,
+          color: color.id,
+        },
+      }))
+    : [
+        {
+          id: item.id,
+          attributes: {
+            category: item.category,
+            baseItem: item.id,
+            color: item.color,
+          },
+        },
+      ],
+);
+
+function vehicleVisual(id: string): {
+  readonly svg: string;
+  readonly label: string;
+  readonly labelDef: string;
+} {
+  const [baseId, colorId] = id.split("--");
+  const item = getItem(baseId ?? id);
+  const color = colorId ? learnColor(colorId) : null;
+  return {
+    svg: drawItem(item.id, color?.hex),
+    label: color ? `${item.label}, culoare ${color.label}` : item.label,
+    labelDef: item.labelDef,
+  };
+}
 
 export const samePictureGame = createChoiceGame({
   id: "same-picture",
@@ -23,10 +56,10 @@ export const samePictureGame = createChoiceGame({
   icon: () => drawItem("car"),
   bubbleColor: "#FFD35C",
   axes: [
-    { name: "choiceCount", values: [2, 3] },
-    { name: "distractorSimilarity", values: [0, 1] },
-    { name: "targetCueDuration", values: [-1, 2500] },
-    { name: "sceneClutter", values: [0, 1] },
+    { name: "choiceCount", values: [2, 3, 4, 5, 6, 8] },
+    { name: "distractorSimilarity", values: [0, 1, 2, 3, 4] },
+    { name: "targetCueDuration", values: [-1, 2500, 1500, 800, 0] },
+    { name: "sceneClutter", values: [0, 1, 2, 3, 4] },
   ],
   initialDifficulty: {
     choiceCount: 2,
@@ -36,16 +69,17 @@ export const samePictureGame = createChoiceGame({
   },
   renderer: "pixi",
   content: CONTENT,
-  similarityAttribute: "category",
+  similarityAttribute: "baseItem",
   buildRound: (level) => {
-    const target = getItem(level.targetId);
+    const target = vehicleVisual(level.targetId);
     return {
-      targetSvg: drawItem(target.id),
-      targetLabel: target.labelDef,
+      targetSvg: target.svg,
+      targetLabel: target.label,
+      // Clipurile existente identifică obiectul de bază; culoarea rămâne indiciu vizual.
       roundSpeech: `Uită-te! Aici e ${target.labelDef}. Găsește una la fel!`,
       options: level.choiceIds.map((id) => {
-        const item = getItem(id);
-        return { id, svg: drawItem(id), label: item.label };
+        const visual = vehicleVisual(id);
+        return { id, svg: visual.svg, label: visual.label };
       }),
       correctId: level.correctChoiceId,
       joinTargetOnSuccess: true,
