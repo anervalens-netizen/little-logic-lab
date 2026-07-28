@@ -1,7 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
-async function seedSupportedJourneyProgress(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+async function seedJourneyProgress(
+  page: Page,
+  gameIds: readonly string[],
+): Promise<void> {
+  await page.evaluate(async (ids) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("minte-in-joaca");
       request.onerror = () => reject(request.error);
@@ -14,8 +17,9 @@ async function seedSupportedJourneyProgress(page: Page): Promise<void> {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
     });
+    const allAttempts: Record<string, any>[] = [];
 
-    for (const gameId of ["same-picture", "sort-by-color"]) {
+    for (const gameId of ids) {
       const attempts = [0, 1].map((index) => ({
         atLocal: `2026-07-28T10:0${index}:00.000Z`,
         sessionId: `supported-${gameId}-${index}`,
@@ -23,7 +27,9 @@ async function seedSupportedJourneyProgress(page: Page): Promise<void> {
         skillId:
           gameId === "same-picture"
             ? "visual_discrimination"
-            : "classification_color",
+            : gameId === "sort-by-color"
+              ? "classification_color"
+              : "spatial_matching",
         levelSeed: `${gameId}:supported:${index}`,
         ladderStageId: `${gameId}:L001`,
         contentVersion: "1.0.0:1.0.0",
@@ -32,6 +38,7 @@ async function seedSupportedJourneyProgress(page: Page): Promise<void> {
         correctEventually: true,
         hintsUsed: index === 0 ? 0 : 1,
         wrongAttempts: index === 0 ? 0 : 1,
+        responseMs: 3_000 + index * 1_000,
         abandoned: false,
       }));
       profile.progressByGame[gameId] = {
@@ -39,14 +46,16 @@ async function seedSupportedJourneyProgress(page: Page): Promise<void> {
         recentOutcomes: attempts,
         timesPlayed: attempts.length,
       };
+      allAttempts.push(...attempts);
     }
+    profile.attempts = [...profile.attempts, ...allAttempts];
     store.put(profile, "current");
     await new Promise<void>((resolve, reject) => {
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
     db.close();
-  });
+  }, gameIds);
 }
 
 test("current release is cached and speech gates child input", async ({
@@ -95,6 +104,9 @@ test("current release is cached and speech gates child input", async ({
   const playArea = page.locator(".game-play-area");
   await expect(playArea).toBeVisible({ timeout: 8_000 });
   await expect(playArea).toHaveAttribute("inert", "", { timeout: 8_000 });
+  await expect(playArea).toHaveAttribute("data-game-id", "same-picture", {
+    timeout: 12_000,
+  });
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
     timeout: 12_000,
   });
@@ -128,6 +140,34 @@ test("child home exposes one journey action and three visual stops", async ({
   ).toHaveCount(1);
   await expect(page.locator(".home-adventure button")).toHaveCount(1);
   await expect(home).toHaveAttribute("data-unlocked-count", "3");
+  await expect(home).toHaveAttribute("data-journey-stop", "1");
+});
+
+test("the session starts with the journey stop promised by Home", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await seedJourneyProgress(page, ["same-picture"]);
+  await page
+    .getByRole("button", { name: "Atinge și joacă-te!" })
+    .click();
+
+  const home = page.locator(
+    '[data-screen="home"][data-screen-ready="true"]',
+  );
+  await expect(home).toBeVisible({ timeout: 35_000 });
+  await expect(home).toHaveAttribute("data-journey-stop", "2");
+  await expect(
+    page.getByRole("heading", { name: "Coșurile de culori" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Continuă aventura" }).click();
+  await expect(page.locator(".game-play-area")).toHaveAttribute(
+    "data-game-id",
+    "sort-by-color",
+    { timeout: 12_000 },
+  );
 });
 
 test("supported success across two journey games unlocks the next catalog game", async ({
@@ -135,7 +175,7 @@ test("supported success across two journey games unlocks the next catalog game",
 }) => {
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
-  await seedSupportedJourneyProgress(page);
+  await seedJourneyProgress(page, ["same-picture", "sort-by-color"]);
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
     .click();
@@ -145,6 +185,7 @@ test("supported success across two journey games unlocks the next catalog game",
   );
   await expect(home).toBeVisible({ timeout: 35_000 });
   await expect(home).toHaveAttribute("data-unlocked-count", "4");
+  await expect(home).toHaveAttribute("data-journey-stop", "3");
   await expect(page.locator(".home-adventure-stop")).toHaveCount(3);
   await expect(
     page.getByRole("button", { name: "Continuă aventura" }),
