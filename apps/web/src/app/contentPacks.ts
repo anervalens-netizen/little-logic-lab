@@ -179,8 +179,13 @@ export async function requiredStartupAudioReady(): Promise<boolean> {
   const paths = requiredAssetPaths();
   if (paths.length === 0) return false;
   const index = await buildCacheIndex();
-  const inspection = await inspectCachedPaths(paths, index, false);
-  return paths.every((pathname) => inspection.usablePaths.has(pathname));
+  // Startup-ul verifică și corpul fiecărui clip, nu doar cheia și statusul HTTP.
+  const inspection = await inspectCachedPaths(paths, index, true);
+  return paths.every(
+    (pathname) =>
+      inspection.usablePaths.has(pathname) &&
+      (inspection.bytesByPath.get(pathname) ?? 0) > 0,
+  );
 }
 
 async function removeObsoleteRepairCaches(): Promise<void> {
@@ -205,8 +210,12 @@ export async function repairRequiredStartupAudio(): Promise<boolean> {
   if (paths.length === 0) return false;
 
   const beforeIndex = await buildCacheIndex();
-  const before = await inspectCachedPaths(paths, beforeIndex, false);
-  const missing = paths.filter((pathname) => !before.usablePaths.has(pathname));
+  const before = await inspectCachedPaths(paths, beforeIndex, true);
+  const missing = paths.filter(
+    (pathname) =>
+      !before.usablePaths.has(pathname) ||
+      (before.bytesByPath.get(pathname) ?? 0) <= 0,
+  );
   if (missing.length === 0) return true;
 
   await removeObsoleteRepairCaches();
