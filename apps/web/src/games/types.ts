@@ -5,27 +5,28 @@ import type {
   DifficultyVector,
   AttemptOutcome,
 } from "@core";
+import type { SpeechCueId } from "../audio/speech";
 
 export interface PlayResult extends AttemptOutcome {}
 
 export interface GameContext {
-  /** Zona centrală de joc. */
   readonly mount: HTMLElement;
-  /** Întregul ecran (overlay-uri, confetti). */
   readonly shell: HTMLElement;
-  /** Rostește un text local și se rezolvă la finalul real al clipului. */
+  /** Compatibilitate pentru conținutul identificat încă prin text. */
   readonly speak: (
     text: string,
     opts?: { readonly rate?: number; readonly blockInput?: boolean },
   ) => Promise<void>;
-  /** Oprește vocea. */
+  /** Calea premium: clipul este rezolvat exclusiv prin ID stabil. */
+  readonly speakCue: (
+    cueId: SpeechCueId,
+    fallbackText: string,
+    opts?: { readonly rate?: number; readonly blockInput?: boolean },
+  ) => Promise<void>;
   readonly hush: () => void;
   readonly reducedMotion: boolean;
-  /** Mânuță demonstrativă peste un element. */
   readonly demonstrate: (target: HTMLElement) => Promise<void>;
-  /** Înregistrează cleanup idempotent executat de motor la final/anulare. */
   readonly onCleanup: (cleanup: () => void) => void;
-  /** Semnal de așteptare: true dacă jocul a fost întrerupt. */
   readonly isCancelled: () => boolean;
 }
 
@@ -34,20 +35,14 @@ export interface WebGame {
   readonly title: string;
   readonly skillId: string;
   readonly domain: string;
-  /** Instrucțiunea rostită la început de nivel. */
   readonly instruction: string;
-  /** Întrebare/activitate de co-play pentru final. */
+  readonly instructionCueId?: SpeechCueId;
   readonly coPlayPrompt: string;
-  /** Pictograma din bulă, pe ecranul principal. */
   readonly icon: () => string;
   readonly bubbleColor: string;
-  /** Axe de dificultate, în ordinea în care se pot modifica. */
   readonly axes: readonly DifficultyAxisSpec[];
-  /** Dificultatea de pornire. */
   readonly initialDifficulty: DifficultyVector;
-  /** Jocurile hibride/deschise nu influențează mastery. */
   readonly scored: boolean;
-  /** Rulează un nivel complet. */
   play(
     ctx: GameContext,
     difficulty: DifficultyVector,
