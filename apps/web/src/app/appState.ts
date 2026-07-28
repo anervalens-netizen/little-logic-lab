@@ -4,6 +4,11 @@ import type { StoredProfile, StoredAttempt } from "./storage";
 import { loadProfile, defaultProfile, wipeProfile } from "./storage";
 import { sanitizeProfile } from "./profileSanitizer";
 import {
+  clearEmergencyProfileSnapshot,
+  readEmergencyProfileSnapshot,
+  writeEmergencyProfileSnapshot,
+} from "./emergencyProfile";
+import {
   flushProfileWrites,
   profileStorageHealth,
   queueProfileSave,
@@ -30,11 +35,15 @@ let profile: StoredProfile = defaultProfile();
 let profileRepairs: readonly string[] = [];
 
 export async function initializeProfile(): Promise<void> {
-  const loaded = await loadProfile();
+  const emergency = readEmergencyProfileSnapshot();
+  const loaded = emergency ?? (await loadProfile());
   const repaired = sanitizeProfile(loaded);
   profile = repaired.profile;
   profileRepairs = repaired.repairs;
-  if (profileRepairs.length > 0) {
+
+  // Un snapshot de urgență reprezintă o mutație care nu a primit confirmarea
+  // IndexedDB înaintea închiderii. Îl confirmăm înainte de bootstrap-ul UI.
+  if (emergency !== null || profileRepairs.length > 0) {
     queueProfileSave(profile);
     await flushProfileWrites().catch(() => undefined);
   }
@@ -59,6 +68,11 @@ export function persist(): void {
   queueProfileSave(profile);
 }
 
+/** Limită sincronă pentru pagehide/freeze; nu așteaptă IndexedDB. */
+export function checkpointProfileSynchronously(): void {
+  writeEmergencyProfileSnapshot(profile);
+}
+
 export async function flushPendingProfileWrites(): Promise<void> {
   await flushProfileWrites();
 }
@@ -70,6 +84,7 @@ export function getProfileStorageHealth() {
 export async function resetProfile(): Promise<void> {
   await flushProfileWrites().catch(() => undefined);
   await wipeProfile();
+  clearEmergencyProfileSnapshot();
   resetProfileStorageHealth();
   profileRepairs = [];
   profile = defaultProfile(profile.ageMonths);
