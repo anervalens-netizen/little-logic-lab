@@ -14,7 +14,7 @@
     "build": "tsc -p packages/core/tsconfig.json",
     "build:web": "npm run build --workspace @little-logic-lab/web && npm run check:web-build",
     "check:web-build": "node scripts/check-web-build.mjs",
-    "check:v2-runtime": "node scripts/check-v2-runtime.mjs",
+    "check:v2-runtime": "node scripts/check-v2-runtime.mjs && node scripts/check-stability-hardening.mjs",
     "audit:speech": "node scripts/audit-speech-coverage.mjs",
     "audit:speech:strict": "node scripts/audit-speech-coverage.mjs --strict",
     "validate:audio-packs": "node scripts/validate-audio-packs.mjs",
