@@ -53,8 +53,31 @@ const sourceFiles = sourceRoots
   .flatMap(walk)
   .filter((file) => /\.(?:[cm]?[jt]sx?)$/.test(file));
 
+const allowedLocalFetches = new Map([
+  [
+    "apps/web/src/audio/playback.ts",
+    ["fetch(url", 'cache: "force-cache"', "decodeAudioData"],
+  ],
+  [
+    "apps/web/src/app/contentPacks.ts",
+    [
+      "new URL(pathname, window.location.origin)",
+      'credentials: "same-origin"',
+      "__logic_lab_repair",
+      "REPAIR_CACHE_NAME",
+    ],
+  ],
+]);
+
+function guardedLocalFetch(relative, source) {
+  const requiredMarkers = allowedLocalFetches.get(relative);
+  return (
+    requiredMarkers !== undefined &&
+    requiredMarkers.every((marker) => source.includes(marker))
+  );
+}
+
 const prohibitedSourcePatterns = [
-  { pattern: /\bfetch\s*\(/, label: "network fetch" },
   { pattern: /\bXMLHttpRequest\b/, label: "XMLHttpRequest" },
   { pattern: /\bWebSocket\b/, label: "WebSocket" },
   { pattern: /https?:\/\//, label: "remote URL in product source" },
@@ -67,6 +90,13 @@ for (const file of sourceFiles) {
     "",
   );
   const relative = path.relative(root, file);
+
+  if (/\bfetch\s*\(/.test(sourceWithoutStaticNamespaces)) {
+    if (!guardedLocalFetch(relative, sourceWithoutStaticNamespaces)) {
+      errors.push(`${relative}: network fetch is not an approved same-origin asset path`);
+    }
+  }
+
   for (const rule of prohibitedSourcePatterns) {
     if (rule.pattern.test(sourceWithoutStaticNamespaces)) {
       errors.push(`${relative}: ${rule.label} violates offline-first v1`);
@@ -100,4 +130,6 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Product policy check passed across ${sourceFiles.length} source files.`);
+console.log(
+  `Product policy check passed across ${sourceFiles.length} source files; only guarded same-origin asset fetches are permitted.`,
+);
