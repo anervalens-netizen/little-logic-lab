@@ -92,11 +92,12 @@ export interface GameCandidate {
   readonly timesPlayed: number;
   readonly dueScore: number;
   readonly ageEligible: boolean;
-  /** Metadate opționale pentru un scheduler mai variat, fără a rupe consumatorii vechi. */
   readonly domain?: SkillDomain;
   readonly lastPracticedAtLocal?: string | null;
   readonly recentSupportLoad?: number;
   readonly recentAbandonRate?: number;
+  /** 0 = răspuns prompt; 1 = latență ridicată, utilizată numai prudent. */
+  readonly recentResponseLoad?: number;
 }
 
 export type SessionRole = "warmup" | "growth" | "novelty" | "transfer";
