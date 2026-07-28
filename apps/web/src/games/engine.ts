@@ -1,6 +1,6 @@
 /**
  * Motorul care rulează un joc în shell:
- * instrucțiune → joc → mastery → persistență → laudă → cleanup.
+ * instrucțiune → joc → evidence → mastery → persistență → laudă → cleanup.
  */
 
 import {
@@ -9,6 +9,7 @@ import {
   type DifficultyVector,
 } from "@core";
 import type { GameContext, WebGame, PlayResult } from "./types";
+import { observeRoundEvidence } from "./roundEvidence";
 import {
   flushPendingProfileWrites,
   getProfile,
@@ -91,9 +92,18 @@ export async function runGame(
   const seed = `${game.id}:${new Date().toISOString().slice(0, 10)}:${seedSalt}:${stored?.timesPlayed ?? 0}`;
   const cleanups: Array<() => void> = [];
   const ctx = makeContext(mount, shell, (cleanup) => cleanups.push(cleanup));
+  const evidence = observeRoundEvidence(mount);
+  cleanups.push(evidence.destroy);
 
   try {
-    const result = await game.play(ctx, difficulty, seed);
+    const rawResult = await game.play(ctx, difficulty, seed);
+    const measured = evidence.snapshot();
+    const result: PlayResult = {
+      ...rawResult,
+      ...(rawResult.responseMs === undefined && measured.responseMs !== undefined
+        ? { responseMs: measured.responseMs }
+        : {}),
+    };
     if (cancelFlag) {
       return { result: { ...result, abandoned: true }, cancelled: true };
     }
@@ -136,8 +146,6 @@ export async function runGame(
         setGameDifficulty(game.id, { ...difficulty });
       }
 
-      // Nu blocăm copilul dacă atât IndexedDB, cât și fallback-ul sunt indisponibile;
-      // Parent Mode va afișa starea storage-ului pentru adult.
       await flushPendingProfileWrites().catch(() => undefined);
     }
 
