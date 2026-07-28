@@ -2,6 +2,7 @@
 
 import type { StoredProfile, StoredAttempt } from "./storage";
 import { loadProfile, defaultProfile, wipeProfile } from "./storage";
+import { sanitizeProfile } from "./profileSanitizer";
 import {
   flushProfileWrites,
   profileStorageHealth,
@@ -26,9 +27,17 @@ export type StoredAttemptWithEvidence = StoredAttempt & {
 };
 
 let profile: StoredProfile = defaultProfile();
+let profileRepairs: readonly string[] = [];
 
 export async function initializeProfile(): Promise<void> {
-  profile = await loadProfile();
+  const loaded = await loadProfile();
+  const repaired = sanitizeProfile(loaded);
+  profile = repaired.profile;
+  profileRepairs = repaired.repairs;
+  if (profileRepairs.length > 0) {
+    queueProfileSave(profile);
+    await flushProfileWrites().catch(() => undefined);
+  }
 }
 
 export interface AttemptMetadata {
@@ -40,6 +49,10 @@ export interface AttemptMetadata {
 
 export function getProfile(): StoredProfile {
   return profile;
+}
+
+export function getProfileRepairSummary(): readonly string[] {
+  return [...profileRepairs];
 }
 
 export function persist(): void {
@@ -58,6 +71,7 @@ export async function resetProfile(): Promise<void> {
   await flushProfileWrites().catch(() => undefined);
   await wipeProfile();
   resetProfileStorageHealth();
+  profileRepairs = [];
   profile = defaultProfile(profile.ageMonths);
   persist();
   await flushProfileWrites();
@@ -70,7 +84,6 @@ export function updateSettings(patch: Partial<StoredProfile["settings"]>): void 
   applySettings();
 }
 
-/** Deblocarea unei sesiuni noi este disponibilă exclusiv din Parent Mode. */
 export function unlockSession(): void {
   if (!profile.sessionLocked) return;
   profile = { ...profile, sessionLocked: false };
@@ -105,7 +118,6 @@ function masteryFromStored(
   };
 }
 
-/** Înregistrează o încercare: mastery, jurnal, latență și istoric per joc. */
 export function recordAttempt(
   gameId: string,
   skillId: string,
