@@ -1,10 +1,10 @@
-/** „Pune forma la loc" — puzzle spațial pe arhetipul comun spatial-fit. */
+/** Golden slice 3: puzzle spațial pe masa atelierului de jucării. */
 
 import { chooseDistinct, createRng } from "@core";
 import {
   ALL_SHAPES,
-  drawShape,
-  drawShapeHole,
+  drawWorkshopShape,
+  drawWorkshopShapeHole,
   SHAPE_LABELS,
   type ShapeId,
 } from "../art/shapes";
@@ -20,8 +20,8 @@ const SIMILAR_PAIRS: readonly ShapeId[][] = [
 ];
 
 function outlineOpacity(value: unknown): number {
-  if (value === "none") return 0.12;
-  if (value === "partial") return 0.5;
+  if (value === "none") return 0.16;
+  if (value === "partial") return 0.56;
   return 1;
 }
 
@@ -32,7 +32,7 @@ export const insetPuzzleGame = createSpatialFitGame({
   domain: "spatial_planning",
   instruction: "Pune fiecare formă în gaura ei!",
   coPlayPrompt: "Căutați acasă capace și cutii care se potrivesc între ele!",
-  icon: () => drawShape("heart", "#FF9EC6"),
+  icon: () => drawWorkshopShape("heart", "#FF9EC6"),
   bubbleColor: "#FF9EC6",
   axes: [
     { name: "pieceCount", values: [2, 3, 4, 5, 6, 7, 8, 10] },
@@ -69,11 +69,11 @@ export const insetPuzzleGame = createSpatialFitGame({
         id: shape,
         label: SHAPE_LABELS[shape],
         speech: SHAPE_LABELS[shape],
-        pieceSvg: drawShape(
+        pieceSvg: drawWorkshopShape(
           shape,
           colors[index % colors.length]?.hex ?? "#F25C4C",
         ),
-        targetSvg: drawShapeHole(shape),
+        targetSvg: drawWorkshopShapeHole(shape),
         targetOpacity: outlineOpacity(difficulty["outlineSupport"]),
         rotation: rotationEnabled
           ? (rng() > 0.5 ? 1 : -1) * (Math.PI / 8 + rng() * Math.PI / 5)
