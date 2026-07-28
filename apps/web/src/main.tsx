@@ -3,6 +3,7 @@
 import "./styles.css";
 import "./v2.css";
 import "./workshop.css";
+import "./content-packs.css";
 import { createRoot } from "react-dom/client";
 import { applySettings, initializeProfile } from "./app/appState";
 import { initializeAppUpdates } from "./app/update";
