@@ -1,7 +1,6 @@
 /**
  * Fabrică pentru jocuri de tip „alege imaginea corectă":
  * same-picture, shadow-match, listen-find, emotion-match.
- * Mecanica pură vine din core (generateVisualChoice + reduceChoice).
  */
 
 import {
@@ -28,15 +27,14 @@ import { playItemVoice } from "../audio/voices";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 export interface ChoiceRound {
-  /** SVG-ul țintei (modelul); null pentru jocuri doar audio. */
   readonly targetSvg: string | null;
   readonly targetLabel: string;
-  /** Text rostit când începe runda (poate diferi de instrucțiunea jocului). */
   readonly roundSpeech: string;
-  /** Acțiune accesibilă pe reperul central (de ex. repetarea promptului audio). */
   readonly targetActionLabel?: string;
   readonly options: readonly { id: string; svg: string; label: string }[];
   readonly correctId: string;
+  /** Unește vizual modelul cu răspunsul; folosit numai la perechea identică. */
+  readonly joinTargetOnSuccess?: boolean;
 }
 
 export interface ChoiceGameSpec {
@@ -50,11 +48,8 @@ export interface ChoiceGameSpec {
   readonly bubbleColor: string;
   readonly axes: readonly DifficultyAxisSpec[];
   readonly initialDifficulty: DifficultyVector;
-  /** Golden-slice games use the lazy-loaded Pixi renderer. */
   readonly renderer?: "dom" | "pixi";
-  /** Conținutul din care generează core-ul (id + atribute). */
   readonly content: readonly ContentItem[];
-  /** Construiește runda vizuală din nivelul generat. */
   readonly buildRound: (
     level: {
       targetId: string;
@@ -63,9 +58,7 @@ export interface ChoiceGameSpec {
     },
     difficulty: DifficultyVector,
   ) => ChoiceRound;
-  /** Atribut de similitudine pentru distractori (opțional). */
   readonly similarityAttribute?: string;
-  /** Axa care activează distractorii similari; implicit `distractorSimilarity`. */
   readonly similarityAxis?: string;
   readonly similarityAttributeForDifficulty?: (
     difficulty: DifficultyVector,
@@ -124,7 +117,6 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
       const support = new SupportTracker();
 
       clear(ctx.mount);
-
       const layout = el("div", {});
       layout.style.cssText =
         "display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;width:100%;height:100%;gap:8px;";
@@ -321,17 +313,22 @@ async function playPixiRound(
       if (state.completed) {
         inputReady = false;
         support.registerSuccess();
-        scene.markCorrect(optionId);
-        playItemVoice(optionId);
-        void wait(ctx.reducedMotion ? 350 : 950).then(() =>
+        const correctFirstTry = state.correctFirstTry;
+        void (async () => {
+          if (round.joinTargetOnSuccess) {
+            await scene.moveTargetToOption(optionId);
+          }
+          scene.markCorrect(optionId);
+          playItemVoice(optionId);
+          await wait(ctx.reducedMotion ? 350 : 950);
           finish({
             completed: true,
-            correctFirstTry: state.correctFirstTry,
+            correctFirstTry,
             correctEventually: true,
             hintsUsed: support.hintsUsed,
             wrongAttempts: support.wrongAttempts,
-          }),
-        );
+          });
+        })();
         return;
       }
 
@@ -350,7 +347,10 @@ async function playPixiRound(
         void Promise.all([
           ctx.speak("Uite! Aceasta este perechea. Bravo că ai încercat!"),
           wait(1800),
-        ]).then(() => {
+        ]).then(async () => {
+          if (round.joinTargetOnSuccess) {
+            await scene.moveTargetToOption(round.correctId);
+          }
           scene.markCorrect(round.correctId);
           finish({
             completed: true,
