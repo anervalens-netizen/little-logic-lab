@@ -20,6 +20,23 @@ async function readProfile(page: Page): Promise<Record<string, any>> {
   );
 }
 
+async function enterParentData(page: Page): Promise<void> {
+  await page
+    .getByRole("button", { name: "Atinge și joacă-te!" })
+    .click();
+  await expect(
+    page.locator('[data-screen="home"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 35_000 });
+  await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
+  await page
+    .getByRole("button", { name: "Ține apăsat 3 secunde" })
+    .dispatchEvent("pointerdown");
+  await expect(
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 5_000 });
+  await page.getByRole("button", { name: "Date" }).click();
+}
+
 test("partially corrupt local data is repaired without a full reset", async ({
   page,
 }) => {
@@ -131,4 +148,8 @@ test("partially corrupt local data is repaired without a full reset", async ({
         },
       ],
     });
+
+  await enterParentData(page);
+  await expect(page.getByText("Date locale reparate automat")).toBeVisible();
+  await expect(page.getByText(/Au fost corectate \d+ secțiuni/)).toBeVisible();
 });
