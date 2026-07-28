@@ -12,6 +12,9 @@ const ladders = JSON.parse(
 const release = JSON.parse(
   fs.readFileSync(path.join(root, "content/p0-release.json"), "utf8"),
 );
+const gameMetadataPack = JSON.parse(
+  fs.readFileSync(path.join(root, "content/p0-game-metadata.json"), "utf8"),
+);
 const itemPack = JSON.parse(
   fs.readFileSync(path.join(root, "content/themes/p0-items.json"), "utf8"),
 );
@@ -36,7 +39,26 @@ if (missing.length > 0 || unknown.length > 0) {
   );
 }
 
+const metadataIds = gameMetadataPack.games.map((game) => game.id);
+const metadataIdSet = new Set(metadataIds);
+const metadataMissing = releaseIds.filter((id) => !metadataIdSet.has(id));
+const metadataUnknown = metadataIds.filter((id) => !releaseIdSet.has(id));
+if (
+  metadataIds.length !== metadataIdSet.size ||
+  metadataMissing.length > 0 ||
+  metadataUnknown.length > 0
+) {
+  throw new Error(
+    `P0 metadata mismatch. Missing: ${metadataMissing.join(", ") || "none"}; unknown: ${
+      metadataUnknown.join(", ") || "none"
+    }.`,
+  );
+}
+
 const gamesById = new Map(catalog.games.map((game) => [game.id, game]));
+const metadataById = new Map(
+  gameMetadataPack.games.map((game) => [game.id, game]),
+);
 const laddersById = new Map(
   ladders.ladders.map((ladder) => [ladder.gameId, ladder]),
 );
@@ -152,6 +174,26 @@ export function loadAllGames(): Promise<readonly WebGame[]> {
 `;
 fs.writeFileSync(registryOutput, registry);
 
+const metadata = releaseIds.map((id) => metadataById.get(id));
+const metadataOutput = path.join(
+  root,
+  "apps/web/src/generated/game-metadata.ts",
+);
+const metadataManifest = `/** Generat din content/p0-game-metadata.json; nu edita manual. */
+
+export const GAME_METADATA = ${JSON.stringify(metadata, null, 2)} as const;
+
+export type GameMetadata = (typeof GAME_METADATA)[number];
+export type MetadataGameId = GameMetadata["id"];
+
+const BY_ID = new Map(GAME_METADATA.map((game) => [game.id, game]));
+
+export function gameMetadata(id: string): GameMetadata | undefined {
+  return BY_ID.get(id as MetadataGameId);
+}
+`;
+fs.writeFileSync(metadataOutput, metadataManifest);
+
 const itemMetadata = itemPack.items.map(
   ({ id, assetKey, label, labelDef, category, defaultColor, recolorable }) => ({
     id,
@@ -187,5 +229,5 @@ export type ItemCategory = ItemMetadata["category"];
 `;
 fs.writeFileSync(itemManifestOutput, itemManifest);
 console.log(
-  `Generated compact web manifest, lazy registry and ${itemMetadata.length}-item art manifest.`,
+  `Generated compact web manifest, lazy registry, ${metadata.length}-game metadata and ${itemMetadata.length}-item art manifest.`,
 );
