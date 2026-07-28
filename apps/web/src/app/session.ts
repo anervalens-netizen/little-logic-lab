@@ -28,8 +28,6 @@ import { wait } from "../ui/dom";
 import {
   preloadSpeech,
   preloadSpeechCues,
-  speakAndWait,
-  speakCueAndWait,
   stopSpeaking,
 } from "../audio/speech";
 import { showHome } from "../screens/home";
@@ -228,12 +226,11 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
       shell.setProgress(gamesPlayed, plan.length);
 
       if (!introductionPlayed) {
+        // Jocul însuși este sursa audio autoritară. Shell-ul oferă doar o
+        // tranziție vizuală scurtă, evitând două instrucțiuni consecutive.
         shell.showBubble(game.instruction);
         shell.setLumiMood("think");
-        const instruction = game.instructionCueId
-          ? speakCueAndWait(game.instructionCueId, game.instruction)
-          : speakAndWait(game.instruction);
-        await Promise.all([instruction, wait(demonstrationDelay(1400))]);
+        await wait(demonstrationDelay(320));
         if (cancelFlagPending()) {
           stopSpeaking();
           await showHome();
