@@ -8,7 +8,12 @@ import {
   defaultSessionGameCount,
   type GameCandidate,
 } from "@core";
-import { getProfile, masteryMeanFor, recordSession } from "./appState";
+import {
+  flushPendingProfileWrites,
+  getProfile,
+  masteryMeanFor,
+  recordSession,
+} from "./appState";
 import { GAME_IDS, loadGame } from "../generated/game-registry";
 import { GAME_METADATA } from "../generated/game-metadata";
 import {
@@ -72,8 +77,9 @@ function buildCandidates(): GameCandidate[] {
         ? 0
         : recent.filter((attempt) => attempt.abandoned).length / recent.length;
     const lastPracticed = mastery?.lastPracticedAtLocal ?? null;
-    const daysSince = lastPracticed
-      ? Math.max(0, (now - Date.parse(lastPracticed)) / 86_400_000)
+    const parsedLastPracticed = lastPracticed ? Date.parse(lastPracticed) : NaN;
+    const daysSince = Number.isFinite(parsedLastPracticed)
+      ? Math.max(0, (now - parsedLastPracticed) / 86_400_000)
       : 30;
     const recency = Math.min(1, daysSince / 10);
     const lowEvidence = (mastery?.evidenceCount ?? 0) < 2 ? 1 : 0;
@@ -114,11 +120,14 @@ async function showSessionEnd(
     );
     recordSession(sessionId, elapsedMinutes, gamesPlayed);
   });
+  await flushPendingProfileWrites().catch(() => undefined);
 }
 
 export interface SessionOptions {
   /** Disponibil numai din Parent Mode pentru verificarea unei activități. */
   readonly singleGameId?: string;
+  /** Oprește testul adultului după primul nivel, indiferent de timpul rămas. */
+  readonly singleLevelOnly?: boolean;
 }
 
 export async function runSession(options: SessionOptions = {}): Promise<void> {
@@ -207,12 +216,16 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
         shell.setProgress(gamesPlayed, plan.length);
       }
 
-      playAnotherLevel = options.singleGameId !== undefined && result.completed;
+      playAnotherLevel =
+        options.singleGameId !== undefined &&
+        options.singleLevelOnly !== true &&
+        result.completed;
 
       if (
         !playAnotherLevel &&
         profile.settings.coPlayPrompts &&
-        result.completed
+        result.completed &&
+        options.singleLevelOnly !== true
       ) {
         await showCoPlayCard(game.coPlayPrompt);
       }
