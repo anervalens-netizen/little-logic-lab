@@ -34,6 +34,7 @@ function vehicleVisual(id: string): {
   readonly svg: string;
   readonly label: string;
   readonly labelDef: string;
+  readonly speechCueId: `same-${string}`;
 } {
   const [baseId, colorId] = id.split("--");
   const item = getItem(baseId ?? id);
@@ -42,6 +43,7 @@ function vehicleVisual(id: string): {
     svg: drawItem(item.id, color?.hex),
     label: color ? `${item.label}, culoare ${color.label}` : item.label,
     labelDef: item.labelDef,
+    speechCueId: `same-${item.id}`,
   };
 }
 
@@ -75,8 +77,8 @@ export const samePictureGame = createChoiceGame({
     return {
       targetSvg: target.svg,
       targetLabel: target.label,
-      // Clipurile existente identifică obiectul de bază; culoarea rămâne indiciu vizual.
       roundSpeech: `Uită-te! Aici e ${target.labelDef}. Găsește una la fel!`,
+      roundSpeechCueId: target.speechCueId,
       options: level.choiceIds.map((id) => {
         const visual = vehicleVisual(id);
         return { id, svg: visual.svg, label: visual.label };
