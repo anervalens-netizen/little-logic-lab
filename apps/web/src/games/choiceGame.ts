@@ -12,6 +12,7 @@ import {
   type DifficultyVector,
   type Scalar,
 } from "@core";
+import type { SpeechCueId } from "../audio/speech";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { choiceRow, targetStage } from "./widgets";
@@ -30,6 +31,7 @@ export interface ChoiceRound {
   readonly targetSvg: string | null;
   readonly targetLabel: string;
   readonly roundSpeech: string;
+  readonly roundSpeechCueId?: SpeechCueId;
   readonly targetActionLabel?: string;
   readonly options: readonly { id: string; svg: string; label: string }[];
   readonly correctId: string;
@@ -42,6 +44,7 @@ export interface ChoiceGameSpec {
   readonly skillId: string;
   readonly domain: string;
   readonly instruction: string;
+  readonly instructionCueId?: SpeechCueId;
   readonly coPlayPrompt: string;
   readonly icon: () => string;
   readonly bubbleColor: string;
@@ -64,6 +67,12 @@ export interface ChoiceGameSpec {
   ) => string | undefined;
 }
 
+function speakRound(ctx: GameContext, round: ChoiceRound): Promise<void> {
+  return round.roundSpeechCueId
+    ? ctx.speakCue(round.roundSpeechCueId, round.roundSpeech)
+    : ctx.speak(round.roundSpeech);
+}
+
 export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
   return {
     id: spec.id,
@@ -71,6 +80,9 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
     skillId: spec.skillId,
     domain: spec.domain,
     instruction: spec.instruction,
+    ...(spec.instructionCueId
+      ? { instructionCueId: spec.instructionCueId }
+      : {}),
     coPlayPrompt: spec.coPlayPrompt,
     icon: spec.icon,
     bubbleColor: spec.bubbleColor,
@@ -131,7 +143,7 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
       ctx.mount.append(layout);
 
       await Promise.all([
-        ctx.speak(round.roundSpeech),
+        speakRound(ctx, round),
         wait(demonstrationDelay(1300)),
       ]);
       if (ctx.isCancelled()) return aborted();
@@ -206,7 +218,7 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
               showHintGlow(correctCard);
               jelly(correctCard);
               const generation = ++operationGeneration;
-              void ctx.speak("Uite, acesta e la fel!").then(() => {
+              void ctx.speakCue("same-hint", "Uite, acesta e la fel!").then(() => {
                 if (active(generation)) inputReady = true;
               });
             } else if (verdict === "simplify" && correctCard) {
@@ -219,7 +231,8 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
               showHintGlow(correctCard);
               const generation = ++operationGeneration;
               void Promise.all([
-                ctx.speak(
+                ctx.speakCue(
+                  "same-help",
                   "Uite! Aceasta este perechea. Bravo că ai încercat!",
                 ),
                 wait(2200),
@@ -302,7 +315,7 @@ async function playPixiRound(
           onTargetActivate: () => {
             inputReady = false;
             const generation = ++operationGeneration;
-            void ctx.speak(round.roundSpeech).then(() => {
+            void speakRound(ctx, round).then(() => {
               if (active(generation)) inputReady = true;
             });
             repeatsUsed += 1;
@@ -351,7 +364,7 @@ async function playPixiRound(
         inputReady = false;
         scene.emphasize(round.correctId);
         const generation = ++operationGeneration;
-        void ctx.speak("Uite, acesta e la fel!").then(() => {
+        void ctx.speakCue("same-hint", "Uite, acesta e la fel!").then(() => {
           if (active(generation)) inputReady = true;
         });
       } else if (verdict === "simplify") {
@@ -360,7 +373,10 @@ async function playPixiRound(
         scene.emphasize(round.correctId);
         const generation = ++operationGeneration;
         void Promise.all([
-          ctx.speak("Uite! Aceasta este perechea. Bravo că ai încercat!"),
+          ctx.speakCue(
+            "same-help",
+            "Uite! Aceasta este perechea. Bravo că ai încercat!",
+          ),
           wait(1800),
         ]).then(async () => {
           if (!active(generation)) return;
@@ -386,7 +402,7 @@ async function playPixiRound(
   });
 
   await Promise.all([
-    ctx.speak(round.roundSpeech),
+    speakRound(ctx, round),
     wait(demonstrationDelay(900)),
   ]);
   if (ctx.isCancelled()) return aborted();
