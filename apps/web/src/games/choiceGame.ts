@@ -33,7 +33,6 @@ export interface ChoiceRound {
   readonly targetActionLabel?: string;
   readonly options: readonly { id: string; svg: string; label: string }[];
   readonly correctId: string;
-  /** Unește vizual modelul cu răspunsul; folosit numai la perechea identică. */
   readonly joinTargetOnSuccess?: boolean;
 }
 
@@ -99,7 +98,6 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
         choiceCount: Math.max(2, Math.min(choiceCount, spec.content.length)),
         ...(similarityAttribute ? { similarityAttribute } : {}),
       });
-
       const round = spec.buildRound(level.payload, difficulty);
 
       if (spec.renderer === "pixi" && round.targetSvg !== null) {
@@ -115,15 +113,12 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
         level.payload.choiceIds,
       );
       const support = new SupportTracker();
-
       clear(ctx.mount);
+
       const layout = el("div", {});
       layout.style.cssText =
         "display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;width:100%;height:100%;gap:8px;";
-
-      if (round.targetSvg !== null) {
-        layout.append(targetStage(round.targetSvg, ""));
-      }
+      if (round.targetSvg !== null) layout.append(targetStage(round.targetSvg, ""));
 
       const { row, cards } = choiceRow(
         round.options.map((option) => ({
@@ -152,11 +147,15 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
       return await new Promise<PlayResult>((resolve) => {
         let settled = false;
         let inputReady = true;
+        let operationGeneration = 0;
         let cancelWatch: number | null = null;
+        const active = (generation: number) =>
+          generation === operationGeneration && !settled && !ctx.isCancelled();
         const finish = (result: PlayResult) => {
           if (settled) return;
           settled = true;
           inputReady = false;
+          operationGeneration += 1;
           if (cancelWatch !== null) window.clearInterval(cancelWatch);
           resolve(result);
         };
@@ -187,15 +186,17 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
                 cardRect.top - shellRect.top + cardRect.height / 2,
               );
               const correctFirstTry = state.correctFirstTry;
-              void wait(ctx.reducedMotion ? 350 : 1100).then(() =>
+              const generation = ++operationGeneration;
+              void wait(ctx.reducedMotion ? 350 : 1100).then(() => {
+                if (!active(generation)) return;
                 finish({
                   completed: true,
                   correctFirstTry,
                   correctEventually: true,
                   hintsUsed: support.hintsUsed,
                   wrongAttempts: support.wrongAttempts,
-                }),
-              );
+                });
+              });
               return;
             }
 
@@ -204,8 +205,9 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
               inputReady = false;
               showHintGlow(correctCard);
               jelly(correctCard);
+              const generation = ++operationGeneration;
               void ctx.speak("Uite, acesta e la fel!").then(() => {
-                if (!settled && !ctx.isCancelled()) inputReady = true;
+                if (active(generation)) inputReady = true;
               });
             } else if (verdict === "simplify" && correctCard) {
               inputReady = false;
@@ -215,12 +217,14 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
                 }
               }
               showHintGlow(correctCard);
+              const generation = ++operationGeneration;
               void Promise.all([
                 ctx.speak(
                   "Uite! Aceasta este perechea. Bravo că ai încercat!",
                 ),
                 wait(2200),
               ]).then(() => {
+                if (!active(generation)) return;
                 markCorrect(correctCard);
                 finish({
                   completed: true,
@@ -264,6 +268,7 @@ async function playPixiRound(
   );
   let inputReady = false;
   let settled = false;
+  let operationGeneration = 0;
   let cancelWatch: number | null = null;
   let resolveResult: (result: PlayResult) => void = () => undefined;
   let repeatsUsed = 0;
@@ -271,10 +276,13 @@ async function playPixiRound(
   const result = new Promise<PlayResult>((resolve) => {
     resolveResult = resolve;
   });
+  const active = (generation: number) =>
+    generation === operationGeneration && !settled && !ctx.isCancelled();
   const finish = (outcome: PlayResult) => {
     if (settled) return;
     settled = true;
     inputReady = false;
+    operationGeneration += 1;
     if (cancelWatch !== null) window.clearInterval(cancelWatch);
     resolveResult(outcome);
   };
@@ -293,8 +301,9 @@ async function playPixiRound(
           targetActionLabel: round.targetActionLabel,
           onTargetActivate: () => {
             inputReady = false;
+            const generation = ++operationGeneration;
             void ctx.speak(round.roundSpeech).then(() => {
-              if (!settled && !ctx.isCancelled()) inputReady = true;
+              if (active(generation)) inputReady = true;
             });
             repeatsUsed += 1;
             return repeatAvailability !== "limited" || repeatsUsed < 1;
@@ -314,13 +323,17 @@ async function playPixiRound(
         inputReady = false;
         support.registerSuccess();
         const correctFirstTry = state.correctFirstTry;
+        const generation = ++operationGeneration;
         void (async () => {
           if (round.joinTargetOnSuccess) {
             await scene.moveTargetToOption(optionId);
+            if (!active(generation)) return;
           }
+          if (!active(generation)) return;
           scene.markCorrect(optionId);
           playItemVoice(optionId);
           await wait(ctx.reducedMotion ? 350 : 950);
+          if (!active(generation)) return;
           finish({
             completed: true,
             correctFirstTry,
@@ -337,19 +350,23 @@ async function playPixiRound(
       if (verdict === "hint") {
         inputReady = false;
         scene.emphasize(round.correctId);
+        const generation = ++operationGeneration;
         void ctx.speak("Uite, acesta e la fel!").then(() => {
-          if (!settled && !ctx.isCancelled()) inputReady = true;
+          if (active(generation)) inputReady = true;
         });
       } else if (verdict === "simplify") {
         inputReady = false;
         scene.dimExcept(round.correctId);
         scene.emphasize(round.correctId);
+        const generation = ++operationGeneration;
         void Promise.all([
           ctx.speak("Uite! Aceasta este perechea. Bravo că ai încercat!"),
           wait(1800),
         ]).then(async () => {
+          if (!active(generation)) return;
           if (round.joinTargetOnSuccess) {
             await scene.moveTargetToOption(round.correctId);
+            if (!active(generation)) return;
           }
           scene.markCorrect(round.correctId);
           finish({
@@ -363,7 +380,10 @@ async function playPixiRound(
       }
     },
   });
-  ctx.onCleanup(scene.destroy);
+  ctx.onCleanup(() => {
+    operationGeneration += 1;
+    scene.destroy();
+  });
 
   await Promise.all([
     ctx.speak(round.roundSpeech),
@@ -378,7 +398,9 @@ async function playPixiRound(
   const targetCueDuration = Number(difficulty["targetCueDuration"] ?? -1);
   if (targetCueDuration > 0) {
     const hideTargetTimer = window.setTimeout(
-      () => scene.setTargetVisible(false),
+      () => {
+        if (!ctx.isCancelled() && !settled) scene.setTargetVisible(false);
+      },
       targetCueDuration,
     );
     ctx.onCleanup(() => window.clearTimeout(hideTargetTimer));
