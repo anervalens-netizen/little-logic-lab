@@ -1,4 +1,4 @@
-/** Manager de ecrane cu tranziții blânde. */
+/** Manager de ecrane cu tranziții blânde și cleanup izolat. */
 
 import { wait } from "../ui/dom";
 
@@ -21,25 +21,43 @@ export function registerScreenCleanup(
   cleanupByScreen.set(screen, cleanup);
 }
 
+function releaseScreen(screen: HTMLElement): void {
+  try {
+    cleanupByScreen.get(screen)?.();
+  } catch (reason) {
+    document.documentElement.dataset.screenCleanupState = "failed";
+    console.error("Screen cleanup failed", reason);
+  } finally {
+    cleanupByScreen.delete(screen);
+    screen.remove();
+  }
+}
+
 export function showScreen(factory: ScreenFactory): Promise<void> {
   const operation = transition.catch(() => undefined).then(async () => {
+    // Factory-ul rulează înainte să modificăm ecranul curent. Dacă eșuează,
+    // experiența existentă rămâne utilizabilă.
     const next = factory();
     next.classList.add("screen");
     next.setAttribute("data-screen-ready", "false");
     const host = root();
-    if (current) {
-      current.classList.add("leaving");
-      const old = current;
+    const old = current;
+
+    if (old) {
+      old.classList.add("leaving");
       host.append(next);
-      await wait(240);
-      cleanupByScreen.get(old)?.();
-      cleanupByScreen.delete(old);
-      old.remove();
+      try {
+        await wait(240);
+      } finally {
+        releaseScreen(old);
+      }
     } else {
       host.append(next);
     }
+
     current = next;
     next.setAttribute("data-screen-ready", "true");
+    document.documentElement.dataset.screenCleanupState = "healthy";
   });
   transition = operation;
   return operation;
