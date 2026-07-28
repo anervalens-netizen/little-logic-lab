@@ -40,32 +40,49 @@ for (const [filename, content] of sourceEntries) {
   }
 }
 
-const speech = await readFile(path.join(sourceRoot, "audio/speech.ts"), "utf8");
-const playback = await readFile(path.join(sourceRoot, "audio/playback.ts"), "utf8");
-const voices = await readFile(path.join(sourceRoot, "audio/voices.ts"), "utf8");
-const music = await readFile(path.join(sourceRoot, "audio/music.ts"), "utf8");
-const dom = await readFile(path.join(sourceRoot, "ui/dom.ts"), "utf8");
-const engine = await readFile(path.join(sourceRoot, "games/engine.ts"), "utf8");
-const updates = await readFile(path.join(sourceRoot, "app/update.ts"), "utf8");
-const splash = await readFile(path.join(sourceRoot, "screens/splash.tsx"), "utf8");
-const home = await readFile(path.join(sourceRoot, "screens/home.tsx"), "utf8");
-const parent = await readFile(path.join(sourceRoot, "screens/parent.tsx"), "utf8");
-const session = await readFile(path.join(sourceRoot, "app/session.ts"), "utf8");
-const unlocks = await readFile(path.join(sourceRoot, "app/unlocks.ts"), "utf8");
-const durableProfile = await readFile(
-  path.join(sourceRoot, "app/durableProfile.ts"),
-  "utf8",
-);
-const metadata = await readFile(
-  path.join(sourceRoot, "generated/game-metadata.ts"),
-  "utf8",
-);
-const traceRoad = await readFile(path.join(sourceRoot, "games/traceRoad.ts"), "utf8");
-const waitForGo = await readFile(path.join(sourceRoot, "games/waitForGo.ts"), "utf8");
-const choice = await readFile(path.join(sourceRoot, "games/choiceGame.ts"), "utf8");
-const sort = await readFile(path.join(sourceRoot, "games/sortGame.ts"), "utf8");
+const readSource = (relative) => readFile(path.join(sourceRoot, relative), "utf8");
+const speech = await readSource("audio/speech.ts");
+const playback = await readSource("audio/playback.ts");
+const voices = await readSource("audio/voices.ts");
+const music = await readSource("audio/music.ts");
+const dom = await readSource("ui/dom.ts");
+const engine = await readSource("games/engine.ts");
+const roundEvidence = await readSource("games/roundEvidence.ts");
+const updates = await readSource("app/update.ts");
+const splash = await readSource("screens/splash.tsx");
+const home = await readSource("screens/home.tsx");
+const parent = await readSource("screens/parent.tsx");
+const session = await readSource("app/session.ts");
+const unlocks = await readSource("app/unlocks.ts");
+const appState = await readSource("app/appState.ts");
+const durableProfile = await readSource("app/durableProfile.ts");
+const profileSanitizer = await readSource("app/profileSanitizer.ts");
+const metadata = await readSource("generated/game-metadata.ts");
+const traceRoad = await readSource("games/traceRoad.ts");
+const waitForGo = await readSource("games/waitForGo.ts");
+const choice = await readSource("games/choiceGame.ts");
+const sort = await readSource("games/sortGame.ts");
+const samePicture = await readSource("games/samePicture.ts");
+const insetPuzzle = await readSource("games/insetPuzzle.ts");
+const main = await readSource("main.tsx");
 const scheduler = await readFile(
   path.join(root, "packages/core/src/scheduler.ts"),
+  "utf8",
+);
+const difficulty = await readFile(
+  path.join(root, "packages/core/src/difficulty.ts"),
+  "utf8",
+);
+const metadataSource = await readFile(
+  path.join(root, "content/p0-game-metadata.json"),
+  "utf8",
+);
+const generator = await readFile(
+  path.join(root, "scripts/generate-web-content.mjs"),
+  "utf8",
+);
+const workshopCss = await readFile(
+  path.join(sourceRoot, "workshop.css"),
   "utf8",
 );
 
@@ -82,8 +99,14 @@ requireText(playback, "MAX_PRELOAD_CONCURRENCY", "bounded audio preload");
 requireText(dom, "waitForSpeechIdle", "shared timing");
 requireText(engine, "await waitForSpeechIdle()", "praise boundary");
 requireText(engine, "flushPendingProfileWrites", "level persistence boundary");
+requireText(engine, 'gameTheme = WORKSHOP_GAMES.has', "golden workshop theme");
+requireText(engine, "observeRoundEvidence", "local response evidence");
+requireText(roundEvidence, "MutationObserver", "response evidence readiness");
+requireText(roundEvidence, "responseMs", "response evidence payload");
 requireText(session, "GAME_METADATA", "metadata session planning");
-requireText(session, "recentSupportLoad", "evidence-aware scheduler input");
+requireText(session, "recentSupportLoad", "support-aware scheduler input");
+requireText(session, "recentResponseLoad", "response-aware scheduler input");
+requireText(session, "preferredGameId", "promised journey stop");
 requireText(session, "singleLevelOnly", "bounded adult game test");
 requireText(updates, "findPrecachedResponse", "revisioned Workbox cache");
 requireText(updates, "release.commit === htmlIdentity", "offline identity");
@@ -93,24 +116,41 @@ requireText(splash, "closeStartupUpdateBoundary", "safe startup update");
 requireText(splash, "ÎNCEARCĂ DIN NOU", "offline fail-closed UI");
 requireText(home, "CONTINUĂ AVENTURA", "single child journey action");
 requireText(home, "journeyStopArtwork", "premium journey artwork");
+requireText(home, "profile.attempts.filter", "stable journey progress");
+requireText(home, "preferredGameId: activeGame?.id", "promised journey start");
 forbidText(home, "loadGames", "lightweight child home");
 forbidText(home, "GameButton", "single child journey action");
 requireText(parent, "GAME_METADATA", "metadata Parent Mode");
 requireText(parent, '"games", "Jocuri"', "adult-only game catalog");
+requireText(parent, "singleLevelOnly: true", "bounded parent test");
 forbidText(parent, "loadAllGames", "lightweight Parent Mode");
 requireText(metadata, 'id: "same-picture"', "game metadata");
 requireText(metadata, 'id: "sort-by-color"', "game metadata");
 requireText(metadata, 'id: "inset-puzzle"', "game metadata");
+requireText(metadataSource, '"version": "1.1.0"', "metadata source version");
+requireText(generator, "p0-game-metadata.json", "metadata generation");
 requireText(unlocks, "GOLDEN_JOURNEY_IDS", "non-blocking golden journey");
+requireText(unlocks, "profile.attempts.filter", "stable unlock history");
 requireText(unlocks, "isGoldenJourneyReady", "supportive unlock policy");
 requireText(durableProfile, "flushProfileWrites", "durable local persistence");
 requireText(durableProfile, 'status: "fallback"', "storage fallback health");
+requireText(profileSanitizer, "sanitizeProfile", "deep profile recovery");
+requireText(profileSanitizer, "sanitizeAttempt", "attempt recovery");
+requireText(appState, "getProfileRepairSummary", "observable profile recovery");
+requireText(appState, "responseMs", "persisted response evidence");
 requireText(scheduler, "usedDomains", "session domain diversity");
 requireText(scheduler, "recentAbandonRate", "scheduler abandon evidence");
+requireText(scheduler, "recentResponseLoad", "scheduler response evidence");
+requireText(difficulty, "slowResponseCount", "cautious latency guard");
 requireText(traceRoad, "if (!inputReady || settled)", "trace input gate");
 requireText(waitForGo, "blockInput: false", "go-no-go exception");
-requireText(choice, "cancelWatch !== null", "choice cleanup");
+requireText(choice, "operationGeneration", "choice async lifecycle");
+requireText(choice, "joinTargetOnSuccess", "pair joining feedback");
 requireText(sort, "interactionLocked", "sort input lifecycle");
+requireText(samePicture, "VEHICLES.flatMap", "vehicle matching variants");
+requireText(insetPuzzle, "drawWorkshopShape", "workshop puzzle pieces");
+requireText(main, 'import "./workshop.css"', "workshop visual layer");
+requireText(workshopCss, 'data-game-theme="toy-workshop"', "workshop CSS theme");
 requireText(music, "activeNotes", "music lifecycle");
 requireText(music, "releaseDiagnostic", "music diagnostics");
 
@@ -119,5 +159,5 @@ if (voices.includes("createOscillator") || voices.includes("createBufferSource")
 }
 
 console.log(
-  `V2 premium runtime valid: ${sourceFiles.length} fișiere verificate; Home și Parent sunt metadata-driven, schedulerul este evidence-aware, iar persistența are limite durabile.`,
+  `V2 premium runtime valid: ${sourceFiles.length} fișiere verificate; journey, metadata, evidence, recovery și golden workshop sunt prezente.`,
 );
