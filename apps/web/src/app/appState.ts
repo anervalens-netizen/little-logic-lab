@@ -1,7 +1,13 @@
-/** Stare globală: profil + aplicarea setărilor în subsisteme. */
+/** Stare globală: profil, persistență durabilă și aplicarea setărilor. */
 
 import type { StoredProfile, StoredAttempt } from "./storage";
-import { loadProfile, saveProfile, defaultProfile, wipeProfile } from "./storage";
+import { loadProfile, defaultProfile, wipeProfile } from "./storage";
+import {
+  flushProfileWrites,
+  profileStorageHealth,
+  queueProfileSave,
+  resetProfileStorageHealth,
+} from "./durableProfile";
 import { setAudioEnabled } from "../audio/audio";
 import { setVoiceEnabled } from "../audio/speech";
 import { setMotionReduced } from "../ui/feedback";
@@ -33,13 +39,24 @@ export function getProfile(): StoredProfile {
 }
 
 export function persist(): void {
-  saveProfile(profile);
+  queueProfileSave(profile);
+}
+
+export async function flushPendingProfileWrites(): Promise<void> {
+  await flushProfileWrites();
+}
+
+export function getProfileStorageHealth() {
+  return profileStorageHealth();
 }
 
 export async function resetProfile(): Promise<void> {
+  await flushProfileWrites().catch(() => undefined);
   await wipeProfile();
+  resetProfileStorageHealth();
   profile = defaultProfile(profile.ageMonths);
   persist();
+  await flushProfileWrites();
   applySettings();
 }
 
@@ -84,7 +101,7 @@ function masteryFromStored(
   };
 }
 
-/** Înregistrează o încercare: mastery (din core), jurnal, istoric per joc. */
+/** Înregistrează o încercare: mastery, jurnal și istoric per joc. */
 export function recordAttempt(
   gameId: string,
   skillId: string,
@@ -107,9 +124,8 @@ export function recordAttempt(
 
   const current = masteryFromStored(profile.masteryBySkill[skillId]);
   const next = updateMastery(current, outcome, atLocal);
-
   const existing = profile.progressByGame[gameId];
-  const recentOutcomes = [...(existing?.recentOutcomes ?? []), attempt].slice(-6);
+  const recentOutcomes = [...(existing?.recentOutcomes ?? []), attempt].slice(-8);
 
   profile = {
     ...profile,
@@ -130,7 +146,7 @@ export function recordAttempt(
         timesPlayed: (existing?.timesPlayed ?? 0) + 1,
       },
     },
-    attempts: [...profile.attempts, attempt].slice(-400),
+    attempts: [...profile.attempts, attempt].slice(-500),
   };
   persist();
 }
