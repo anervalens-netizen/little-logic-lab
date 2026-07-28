@@ -1,4 +1,4 @@
-/** Voce RO locală, versionată, bufferizată și disponibilă offline. */
+/** Voce RO locală, versionată, bufferizată și adresabilă prin ID stabil. */
 
 import manifest from "./ro-RO-v1.json";
 import { setActiveVoiceElements } from "../runtime/resourceDiagnostics";
@@ -26,12 +26,22 @@ const familyPrompts = manifest.families.flatMap((family) =>
   ),
 );
 
+const prompts = [...manifest.prompts, ...familyPrompts];
 const clipByText = new Map(
-  [...manifest.prompts, ...familyPrompts].map((prompt) => [
+  prompts.map((prompt) => [
     prompt.text,
     `/audio/${manifest.version}/${prompt.id}.mp3`,
   ]),
 );
+const clipById = new Map(
+  prompts.map((prompt) => [
+    prompt.id,
+    `/audio/${manifest.version}/${prompt.id}.mp3`,
+  ]),
+);
+const textById = new Map(prompts.map((prompt) => [prompt.id, prompt.text]));
+
+export type SpeechCueId = string;
 
 function markSpeechState(state: "idle" | "loading" | "playing"): void {
   if (typeof document !== "undefined") {
@@ -57,16 +67,11 @@ function setSpeechActive(value: boolean, blockInput = true): void {
   idleWaiters.clear();
 }
 
-/** Se rezolvă când replica activă la momentul apelului s-a încheiat. */
 export function waitForSpeechIdle(): Promise<void> {
   if (!speechActive) return Promise.resolve();
   return new Promise<void>((resolve) => idleWaiters.add(resolve));
 }
 
-/**
- * Păstrează o durată vizuală minimă și împiedică tranziția înaintea vocii.
- * Este primitiva comună pentru feedback, schimbarea batch-ului și încheiere.
- */
 export async function waitForSpeechBoundary(minimumMs = 0): Promise<void> {
   await Promise.all([
     waitForSpeechIdle(),
@@ -80,7 +85,7 @@ export function setVoiceEnabled(value: boolean): void {
 }
 
 export function voiceAvailable(): boolean {
-  if (typeof window === "undefined" || clipByText.size === 0) return false;
+  if (typeof window === "undefined" || clipById.size === 0) return false;
   return Boolean(
     window.AudioContext ??
       (window as unknown as { webkitAudioContext?: typeof AudioContext })
@@ -91,16 +96,19 @@ export function voiceAvailable(): boolean {
 export interface SpeakOptions {
   readonly rate?: number;
   readonly pitch?: number;
-  /**
-   * Implicit true. Se setează false numai când apăsarea în timpul replicii este
-   * chiar comportamentul evaluat, de exemplu într-un trial go/no-go.
-   */
   readonly blockInput?: boolean;
   readonly onStart?: () => void;
   readonly onEnd?: () => void;
 }
 
-/** Pregătește instrucțiunile apropiate pentru pornire fără latență. */
+export function speechCueText(cueId: SpeechCueId): string | undefined {
+  return textById.get(cueId);
+}
+
+export function speechCueAvailable(cueId: SpeechCueId): boolean {
+  return clipById.has(cueId);
+}
+
 export async function preloadSpeech(texts: readonly string[]): Promise<void> {
   if (!voiceEnabled || !voiceAvailable()) return;
   const urls = texts
@@ -109,28 +117,25 @@ export async function preloadSpeech(texts: readonly string[]): Promise<void> {
   await preloadAudio(urls);
 }
 
-/**
- * Redă și așteaptă durata reală a clipului. O replică nouă întrerupe replica
- * anterioară fără ca vechiul callback să poată avansa jocul.
- */
-export async function speakAndWait(
-  text: string,
-  options: SpeakOptions = {},
+export async function preloadSpeechCues(
+  cueIds: readonly SpeechCueId[],
+): Promise<void> {
+  if (!voiceEnabled || !voiceAvailable()) return;
+  const urls = cueIds
+    .map((cueId) => clipById.get(cueId))
+    .filter((url): url is string => url !== undefined);
+  await preloadAudio(urls);
+}
+
+async function playResolvedSource(
+  source: string | undefined,
+  options: SpeakOptions,
 ): Promise<void> {
   const generation = ++speechGeneration;
   stopAudioPlayback();
   setActiveVoiceElements(0);
 
-  if (!voiceEnabled || !voiceAvailable()) {
-    setSpeechActive(false);
-    markSpeechState("idle");
-    options.onEnd?.();
-    return;
-  }
-
-  const source = clipByText.get(text);
-  if (!source) {
-    // Instrucțiunea vizuală rămâne autoritară; nu apelăm servicii remote.
+  if (!voiceEnabled || !voiceAvailable() || !source) {
     setSpeechActive(false);
     markSpeechState("idle");
     options.onEnd?.();
@@ -156,12 +161,39 @@ export async function speakAndWait(
   options.onEnd?.();
 }
 
-/** Compatibilitate pentru apelurile existente; promisiunea poate fi ignorată. */
+/** Compatibilitate pentru conținutul vechi identificat încă prin text. */
+export function speakAndWait(
+  text: string,
+  options: SpeakOptions = {},
+): Promise<void> {
+  return playResolvedSource(clipByText.get(text), options);
+}
+
+/**
+ * Calea premium. fallbackText este numai pentru demonstrația vizuală/logging;
+ * redarea nu caută din nou după text dacă ID-ul lipsește.
+ */
+export function speakCueAndWait(
+  cueId: SpeechCueId,
+  _fallbackText: string,
+  options: SpeakOptions = {},
+): Promise<void> {
+  return playResolvedSource(clipById.get(cueId), options);
+}
+
 export function speak(
   text: string,
   options: SpeakOptions = {},
 ): Promise<void> {
   return speakAndWait(text, options);
+}
+
+export function speakCue(
+  cueId: SpeechCueId,
+  fallbackText: string,
+  options: SpeakOptions = {},
+): Promise<void> {
+  return speakCueAndWait(cueId, fallbackText, options);
 }
 
 export function stopSpeaking(): void {
