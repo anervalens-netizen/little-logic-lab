@@ -49,6 +49,7 @@ const engine = await readSource("games/engine.ts");
 const roundEvidence = await readSource("games/roundEvidence.ts");
 const updates = await readSource("app/update.ts");
 const contentPacks = await readSource("app/contentPacks.ts");
+const lifecycle = await readSource("app/lifecycle.ts");
 const splash = await readSource("screens/splash.tsx");
 const home = await readSource("screens/home.tsx");
 const parent = await readSource("screens/parent.tsx");
@@ -109,12 +110,14 @@ requireText(engine, "flushPendingProfileWrites", "level persistence boundary");
 requireText(engine, "observeRoundEvidence", "local response evidence");
 requireText(roundEvidence, "MutationObserver", "response evidence readiness");
 requireText(roundEvidence, "responseMs", "response evidence payload");
-requireText(updates, "findCachedResponseByPathname", "revisioned Workbox cache");
+requireText(updates, "findCachedResponsesByPathname", "coexisting Workbox caches");
 requireText(updates, "requiredStartupAudioReady", "offline pack readiness");
 requireText(updates, "release.commit === htmlIdentity", "offline identity");
 requireText(updates, "startupUpdateBoundaryOpen", "safe update boundary");
 requireText(contentPacks, "responseLooksUsable", "cache validation");
+requireText(contentPacks, "isObsoleteRepairCache", "repair cache version isolation");
 requireText(contentPacks, "repairRequiredStartupAudio", "offline repair");
+requireText(lifecycle, "stopSpeaking", "background speech cleanup");
 requireText(splash, "repairRequiredStartupAudio", "repair UI action");
 requireText(splash, 'speakCueAndWait("hello-lumi"', "stable Splash cue");
 requireText(home, "CONTINUĂ AVENTURA", "single child journey action");
@@ -140,9 +143,12 @@ requireText(unlocks, "profile.attempts.filter", "stable unlock history");
 requireText(unlocks, "isGoldenJourneyReady", "supportive unlock policy");
 requireText(durableProfile, "flushProfileWrites", "durable local persistence");
 requireText(durableProfile, "writeEmergencyProfileSnapshot", "emergency write");
+requireText(durableProfile, "IDB_OPEN_TIMEOUT_MS", "bounded IndexedDB open");
+requireText(durableProfile, "IDB_WRITE_TIMEOUT_MS", "bounded IndexedDB write");
 requireText(profileSanitizer, "sanitizeProfile", "deep profile recovery");
 requireText(profileSanitizer, "sanitizeAttempt", "attempt recovery");
 requireText(appState, "readEmergencyProfileSnapshot", "emergency recovery");
+requireText(appState, "PROFILE_BOOTSTRAP_TIMEOUT_MS", "bounded profile bootstrap");
 requireText(appState, "responseMs", "persisted response evidence");
 requireText(scheduler, "usedDomains", "session domain diversity");
 requireText(scheduler, "recentAbandonRate", "scheduler abandon evidence");
@@ -157,6 +163,7 @@ requireText(samePicture, "roundSpeechCueId", "stable pair cue");
 requireText(sortByColor, 'instructionCueId: "sort-instruction"', "stable sort cue");
 requireText(sortByColor, "speakOnPlaceCueId", "stable color cue");
 requireText(insetPuzzle, 'instructionCueId: "inset-instruction"', "stable puzzle cue");
+requireText(insetPuzzle, "SHAPES_WITH_AUDIO", "spoken early puzzle set");
 requireText(insetPuzzle, "speechCueId", "stable shape cue");
 requireText(main, "RootErrorBoundary", "root recovery");
 requireText(main, "bootstrapState", "bootstrap diagnostics");
@@ -177,5 +184,5 @@ if (voices.includes("createOscillator") || voices.includes("createBufferSource")
 }
 
 console.log(
-  `V2 base runtime valid: ${sourceFiles.length} fișiere verificate; audio, offline, journey, persistence, scheduler și golden cues sunt păstrate.`,
+  `V2 base runtime valid: ${sourceFiles.length} fișiere verificate; audio, cache versioning, journey, persistence, scheduler și golden cues sunt păstrate.`,
 );
