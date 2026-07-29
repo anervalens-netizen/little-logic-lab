@@ -11,38 +11,17 @@ import {
 import { LEARN_COLORS } from "../art/palette";
 import { createSpatialFitGame } from "./spatialFitGame";
 
-const EASY: readonly ShapeId[] = ALL_SHAPES;
+// Hexagonul nu are încă un clip local real. Nu îl introducem în nivelurile mici;
+// rămâne disponibil numai în stage-ul maxim până la pachetul Higgs revizuit.
+const SHAPES_WITH_AUDIO: readonly ShapeId[] = ALL_SHAPES.filter(
+  (shape) => shape !== "hexagon",
+);
 const SIMILAR_PAIRS: readonly ShapeId[][] = [
   ["circle", "oval"],
   ["square", "diamond"],
   ["pentagon", "hexagon"],
   ["star", "heart"],
 ];
-
-const SHAPE_SPEECH = {
-  circle: "cerc",
-  square: "pătrat",
-  triangle: "triunghi",
-  star: "stea",
-  heart: "inimă",
-  diamond: "romb",
-  oval: "oval",
-  pentagon: "pentagon",
-  cross: "cruce",
-} as const satisfies Record<Exclude<ShapeId, "hexagon">, string>;
-
-function speechForShape(shape: ShapeId):
-  | {
-      readonly speech: string;
-      readonly speechCueId: `shape-${Exclude<ShapeId, "hexagon">}`;
-    }
-  | Record<string, never> {
-  if (shape === "hexagon") return {};
-  return {
-    speech: SHAPE_SPEECH[shape],
-    speechCueId: `shape-${shape}`,
-  };
-}
 
 function outlineOpacity(value: unknown): number {
   if (value === "none") return 0.16;
@@ -77,14 +56,18 @@ export const insetPuzzleGame = createSpatialFitGame({
     similarity: 0,
   },
   buildRound(difficulty, seed) {
-    const pieceCount = Math.max(2, Number(difficulty["pieceCount"] ?? 2));
+    const requestedCount = Math.max(2, Number(difficulty["pieceCount"] ?? 2));
     const similarity = Number(difficulty["similarity"] ?? 0);
     const rotationEnabled = difficulty["rotationEnabled"] === true;
     const rng = createRng(seed);
-    const count = Math.min(pieceCount, EASY.length);
-    const prioritized = SIMILAR_PAIRS.slice(0, similarity).flat();
+    const availableShapes =
+      requestedCount > SHAPES_WITH_AUDIO.length ? ALL_SHAPES : SHAPES_WITH_AUDIO;
+    const count = Math.min(requestedCount, availableShapes.length);
+    const prioritized = SIMILAR_PAIRS.slice(0, similarity)
+      .flat()
+      .filter((shape) => availableShapes.includes(shape));
     const priority = [...new Set(prioritized)].slice(0, count);
-    const remainder = EASY.filter((shape) => !priority.includes(shape));
+    const remainder = availableShapes.filter((shape) => !priority.includes(shape));
     const shapes = [
       ...priority,
       ...chooseDistinct(remainder, count - priority.length, rng),
@@ -98,7 +81,10 @@ export const insetPuzzleGame = createSpatialFitGame({
       pieces: shapes.map((shape, index) => ({
         id: shape,
         label: SHAPE_LABELS[shape],
-        ...speechForShape(shape),
+        speech: SHAPE_LABELS[shape],
+        ...(shape === "hexagon"
+          ? {}
+          : { speechCueId: `shape-${shape}` }),
         pieceSvg: drawWorkshopShape(
           shape,
           colors[index % colors.length]?.hex ?? "#F25C4C",
