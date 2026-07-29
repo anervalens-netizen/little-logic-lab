@@ -91,6 +91,14 @@ const speechAudit = await readFile(
   path.join(root, "scripts/audit-speech-coverage.mjs"),
   "utf8",
 );
+const webBuildCheck = await readFile(
+  path.join(root, "scripts/check-web-build.mjs"),
+  "utf8",
+);
+const allGamesSmoke = await readFile(
+  path.join(root, "tests/web/all-games-smoke.spec.ts"),
+  "utf8",
+);
 const packageJson = await readFile(path.join(root, "package.json"), "utf8");
 
 requireText(speech, "waitForSpeechIdle", "speech runtime");
@@ -104,10 +112,13 @@ requireText(playback, "decodeAudioData", "buffered playback");
 requireText(playback, "getVoiceBus", "voice bus");
 requireText(playback, "MAX_DECODED_BUFFERS", "bounded audio cache");
 requireText(playback, "MAX_PRELOAD_CONCURRENCY", "bounded audio preload");
+requireText(playback, "findCurrentCachedAssetResponse", "current-release playback cache");
 requireText(dom, "waitForSpeechIdle", "shared timing");
 requireText(engine, "await waitForSpeechIdle()", "praise boundary");
 requireText(engine, "flushPendingProfileWrites", "level persistence boundary");
 requireText(engine, "observeRoundEvidence", "local response evidence");
+requireText(engine, "persistProgress", "preview persistence boundary");
+requireText(engine, "gameCleanupState", "isolated game cleanup diagnostics");
 requireText(roundEvidence, "MutationObserver", "response evidence readiness");
 requireText(roundEvidence, "responseMs", "response evidence payload");
 requireText(updates, "findCachedResponsesByPathname", "coexisting Workbox caches");
@@ -115,6 +126,8 @@ requireText(updates, "requiredStartupAudioReady", "offline pack readiness");
 requireText(updates, "release.commit === htmlIdentity", "offline identity");
 requireText(updates, "startupUpdateBoundaryOpen", "safe update boundary");
 requireText(contentPacks, "responseLooksUsable", "cache validation");
+requireText(contentPacks, "currentReleaseCacheNames", "current release cache scope");
+requireText(contentPacks, "buildCurrentAssetIndex", "current asset index");
 requireText(contentPacks, "isObsoleteRepairCache", "repair cache version isolation");
 requireText(contentPacks, "repairRequiredStartupAudio", "offline repair");
 requireText(lifecycle, "stopSpeaking", "background speech cleanup");
@@ -128,7 +141,8 @@ forbidText(home, "loadGames", "lightweight child home");
 forbidText(home, "GameButton", "single child journey action");
 requireText(parent, "GAME_METADATA", "metadata Parent Mode");
 requireText(parent, '"games", "Jocuri"', "adult game catalog");
-requireText(parent, "singleLevelOnly: true", "bounded adult test");
+requireText(parent, "singleLevelOnly: true", "bounded adult preview");
+requireText(parent, "previewMode: true", "non-persistent adult preview");
 forbidText(parent, "loadAllGames", "lightweight Parent Mode");
 requireText(session, "GAME_METADATA", "metadata session planning");
 requireText(session, "recentSupportLoad", "support-aware scheduler input");
@@ -136,6 +150,8 @@ requireText(session, "recentResponseLoad", "response-aware scheduler input");
 requireText(session, "preloadSpeechCues", "stable cue preload");
 requireText(session, "demonstrationDelay(320)", "single visual introduction");
 requireText(session, "sessionId}`", "unique session seed");
+requireText(session, "previewMode", "preview session contract");
+requireText(session, "persistProgress: options.previewMode !== true", "preview engine boundary");
 forbidText(session, "speakAndWait(game.instruction", "duplicate session narration");
 forbidText(session, "speakCueAndWait(game.instruction", "duplicate session cue narration");
 requireText(unlocks, "GOLDEN_JOURNEY_IDS", "golden journey unlocks");
@@ -174,8 +190,11 @@ requireText(metadataSource, '"version": "1.1.0"', "metadata version");
 requireText(audioPackSource, '"golden-journey"', "golden audio pack");
 requireText(audioPackValidator, "includeRemaining", "audio pack validation");
 requireText(speechAudit, "missingCueIds", "stable cue audit");
+requireText(webBuildCheck, "required audio is absent", "built required audio gate");
+requireText(allGamesSmoke, "all P0 games reach ready", "full catalog smoke");
 requireText(packageJson, '"validate:audio-packs"', "audio pack command");
 requireText(packageJson, "check-stability-hardening.mjs", "stability guard command");
+requireText(packageJson, '"test:web:all-games"', "full catalog command");
 requireText(music, "activeNotes", "music lifecycle");
 requireText(music, "releaseDiagnostic", "music diagnostics");
 
@@ -184,5 +203,5 @@ if (voices.includes("createOscillator") || voices.includes("createBufferSource")
 }
 
 console.log(
-  `V2 base runtime valid: ${sourceFiles.length} fișiere verificate; audio, cache versioning, journey, persistence, scheduler și golden cues sunt păstrate.`,
+  `V2 base runtime valid: ${sourceFiles.length} fișiere verificate; current-release offline assets, preview isolation, cleanup, persistence, scheduler și golden cues sunt păstrate.`,
 );
