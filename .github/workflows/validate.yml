@@ -22,8 +22,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install development dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install locked development dependencies
+        run: npm ci --no-audit --no-fund
       - name: Validate stability, content, compile and core tests
         run: npm test
       - name: Typecheck
