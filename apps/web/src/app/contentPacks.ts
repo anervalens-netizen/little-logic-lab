@@ -48,14 +48,18 @@ function isObsoleteRepairCache(cacheName: string): boolean {
   );
 }
 
-async function buildCacheIndex(): Promise<CacheIndex> {
+function htmlReleaseIdentity(): string | undefined {
+  return document.querySelector<HTMLMetaElement>(
+    'meta[name="logic-lab-release"]',
+  )?.content;
+}
+
+async function buildRawCacheIndex(): Promise<CacheIndex> {
   const locationsByPath = new Map<string, CachedLocation[]>();
   const cacheByName = new Map<string, Cache>();
   if (!("caches" in window)) return { locationsByPath, cacheByName };
 
   for (const cacheName of await caches.keys()) {
-    // Un cache de reparație dintr-o versiune veche nu poate valida asset-urile
-    // curente doar pentru că pathname-ul a rămas identic.
     if (isObsoleteRepairCache(cacheName)) {
       await caches.delete(cacheName);
       continue;
@@ -72,8 +76,56 @@ async function buildCacheIndex(): Promise<CacheIndex> {
   return { locationsByPath, cacheByName };
 }
 
-function responseLooksUsable(response: Response | undefined): response is Response {
+async function currentReleaseCacheNames(
+  index: CacheIndex,
+): Promise<ReadonlySet<string>> {
+  const allowed = new Set<string>([REPAIR_CACHE_NAME]);
+  const expectedCommit = htmlReleaseIdentity();
+  if (!expectedCommit) return allowed;
+
+  for (const location of index.locationsByPath.get("/release.json") ?? []) {
+    const cache = index.cacheByName.get(location.cacheName);
+    if (!cache) continue;
+    const response = await cache.match(location.request);
+    if (!response?.ok) continue;
+    try {
+      const release = (await response.clone().json()) as {
+        readonly commit?: string;
+      };
+      if (release.commit === expectedCommit) allowed.add(location.cacheName);
+    } catch {
+      // Cache-ul cu manifest invalid nu poate furniza asset-uri pentru buildul curent.
+    }
+  }
+  return allowed;
+}
+
+async function buildCurrentAssetIndex(): Promise<CacheIndex> {
+  const raw = await buildRawCacheIndex();
+  const allowedNames = await currentReleaseCacheNames(raw);
+  const cacheByName = new Map<string, Cache>();
+  for (const [cacheName, cache] of raw.cacheByName) {
+    if (allowedNames.has(cacheName)) cacheByName.set(cacheName, cache);
+  }
+  const locationsByPath = new Map<string, CachedLocation[]>();
+  for (const [pathname, locations] of raw.locationsByPath) {
+    const allowed = locations.filter((location) =>
+      allowedNames.has(location.cacheName),
+    );
+    if (allowed.length > 0) locationsByPath.set(pathname, allowed);
+  }
+  return { locationsByPath, cacheByName };
+}
+
+function responseLooksUsable(
+  response: Response | undefined,
+  pathname?: string,
+): response is Response {
   if (!response?.ok) return false;
+  if (pathname?.endsWith(".mp3")) {
+    const type = response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (!type.startsWith("audio/")) return false;
+  }
   const contentLength = response.headers.get("content-length");
   if (contentLength === null) return true;
   const parsed = Number(contentLength);
@@ -104,7 +156,7 @@ async function inspectCachedPaths(
           const cache = index.cacheByName.get(location.cacheName);
           if (!cache) continue;
           const response = await cache.match(location.request);
-          if (!responseLooksUsable(response)) continue;
+          if (!responseLooksUsable(response, pathname)) continue;
 
           let bytes: number | null = null;
           if (includeBytes) {
@@ -131,24 +183,33 @@ function requiredAssetPaths(): readonly string[] {
   return [...new Set(REQUIRED_AUDIO_PACKS.flatMap((pack) => pack.assetPaths))];
 }
 
+/** Manifestele de release sunt căutate în toate cache-urile neînvechite. */
 export async function findCachedResponsesByPathname(
   pathname: string,
 ): Promise<readonly Response[]> {
-  const index = await buildCacheIndex();
+  const index = await buildRawCacheIndex();
   const responses: Response[] = [];
   for (const location of index.locationsByPath.get(pathname) ?? []) {
     const cache = index.cacheByName.get(location.cacheName);
     if (!cache) continue;
     const response = await cache.match(location.request);
-    if (responseLooksUsable(response)) responses.push(response);
+    if (responseLooksUsable(response, pathname)) responses.push(response);
   }
   return responses;
 }
 
-export async function findCachedResponseByPathname(
+/** Asset-urile runtime provin numai din buildul curent sau reparația sa curentă. */
+export async function findCurrentCachedAssetResponse(
   pathname: string,
 ): Promise<Response | undefined> {
-  return (await findCachedResponsesByPathname(pathname))[0];
+  const index = await buildCurrentAssetIndex();
+  for (const location of index.locationsByPath.get(pathname) ?? []) {
+    const cache = index.cacheByName.get(location.cacheName);
+    if (!cache) continue;
+    const response = await cache.match(location.request);
+    if (responseLooksUsable(response, pathname)) return response;
+  }
+  return undefined;
 }
 
 function statusForPack(
@@ -184,7 +245,7 @@ export async function inspectAudioPacks(
   options: { readonly includeBytes?: boolean } = {},
 ): Promise<readonly AudioPackStatus[]> {
   const includeBytes = options.includeBytes === true;
-  const index = await buildCacheIndex();
+  const index = await buildCurrentAssetIndex();
   const inspection = await inspectCachedPaths(
     AUDIO_PACKS.flatMap((pack) => pack.assetPaths),
     index,
@@ -198,8 +259,7 @@ export async function inspectAudioPacks(
 export async function requiredStartupAudioReady(): Promise<boolean> {
   const paths = requiredAssetPaths();
   if (paths.length === 0) return false;
-  const index = await buildCacheIndex();
-  // Startup-ul verifică și corpul fiecărui clip, nu doar cheia și statusul HTTP.
+  const index = await buildCurrentAssetIndex();
   const inspection = await inspectCachedPaths(paths, index, true);
   return paths.every(
     (pathname) =>
@@ -226,7 +286,7 @@ export async function repairRequiredStartupAudio(): Promise<boolean> {
   const paths = requiredAssetPaths();
   if (paths.length === 0) return false;
 
-  const beforeIndex = await buildCacheIndex();
+  const beforeIndex = await buildCurrentAssetIndex();
   const before = await inspectCachedPaths(paths, beforeIndex, true);
   const missing = paths.filter(
     (pathname) =>
@@ -255,7 +315,7 @@ export async function repairRequiredStartupAudio(): Promise<boolean> {
             cache: "reload",
             credentials: "same-origin",
           });
-          if (!responseLooksUsable(response)) {
+          if (!responseLooksUsable(response, pathname)) {
             failed = true;
             continue;
           }
