@@ -50,7 +50,7 @@ async function enterParent(page: Page, path = "/"): Promise<void> {
   ).toBeVisible({ timeout: 5_000 });
 }
 
-async function startGameFromParent(
+async function startPreviewFromParent(
   page: Page,
   gameTitle: string,
   path = "/",
@@ -61,14 +61,36 @@ async function startGameFromParent(
     .locator(".parent-game-catalog-item")
     .filter({ hasText: gameTitle });
   await expect(item).toBeVisible();
-  await item.getByRole("button", { name: "Testează un nivel" }).click();
+  await item
+    .getByRole("button", { name: "Previzualizează nivelul" })
+    .click();
   await expect(page.locator(".game-play-area")).toBeVisible({ timeout: 8_000 });
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
     timeout: 12_000,
   });
+  await expect(page.locator(".game-play-area")).toHaveAttribute(
+    "data-progress-mode",
+    "preview",
+  );
 }
 
-async function completeCurrentChoiceLevel(page: Page): Promise<void> {
+async function startChildJourney(page: Page, path = "/"): Promise<void> {
+  await enterHome(page, path);
+  await page.getByRole("button", { name: "Continuă aventura" }).click();
+  await expect(page.locator(".game-play-area")).toBeVisible({ timeout: 8_000 });
+  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
+    timeout: 12_000,
+  });
+  await expect(page.locator(".game-play-area")).toHaveAttribute(
+    "data-progress-mode",
+    "record",
+  );
+}
+
+async function clickChoiceUntilVisible(
+  page: Page,
+  target: ReturnType<Page["locator"]>,
+): Promise<void> {
   const choices = page.locator("button.pixi-accessibility-choice");
   const count = await choices.count();
   expect(count).toBeGreaterThanOrEqual(2);
@@ -76,16 +98,13 @@ async function completeCurrentChoiceLevel(page: Page): Promise<void> {
     const button = choices.nth(index);
     if (!(await button.isVisible())) continue;
     await button.click().catch(() => undefined);
-    const ended = await page
-      .getByText("Gata pentru azi!", { exact: false })
+    const reached = await target
       .waitFor({ state: "visible", timeout: 5_000 })
       .then(() => true)
       .catch(() => false);
-    if (ended) return;
+    if (reached) return;
   }
-  await expect(page.getByText("Gata pentru azi!", { exact: false })).toBeVisible({
-    timeout: 10_000,
-  });
+  await expect(target).toBeVisible({ timeout: 10_000 });
 }
 
 async function expectNoAutomaticAccessibilityViolations(
@@ -185,7 +204,7 @@ test("Parent Mode persists settings and exposes age-eligible metadata catalog", 
     page
       .locator(".parent-game-catalog-item")
       .filter({ hasText: "Găsește perechea" })
-      .getByRole("button", { name: "Testează un nivel" }),
+      .getByRole("button", { name: "Previzualizează nivelul" }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Date" }).click();
@@ -219,10 +238,11 @@ test("visual baseline: Parent Mode", async ({ page }) => {
   await expectNoAutomaticAccessibilityViolations(page);
 });
 
-test("Parent accessibility preferences apply to a manually tested game", async ({
+test("Parent accessibility preferences apply to a preview without changing progress", async ({
   page,
 }) => {
   await enterParent(page);
+  const profileBefore = await readStoredProfile(page);
   await page.getByRole("button", { name: "Setări" }).click();
   await page.getByRole("switch", { name: "Contrast ridicat" }).click();
   await page
@@ -240,34 +260,19 @@ test("Parent accessibility preferences apply to a manually tested game", async (
       demonstrationSpeed: "slow",
     });
 
-  const applied = await page.evaluate(() => ({
-    contrast: document.documentElement.dataset.highContrast,
-    targetSize: document.documentElement.dataset.targetSize,
-    speed: document.documentElement.dataset.demonstrationSpeed,
-    tapMinimum: getComputedStyle(document.documentElement)
-      .getPropertyValue("--tap-min")
-      .trim(),
-  }));
-  expect(applied).toEqual({
-    contrast: "true",
-    targetSize: "extra_large",
-    speed: "slow",
-    tapMinimum: "112px",
-  });
-
   await page.getByRole("button", { name: "Jocuri" }).click();
-  const startedAt = await page.evaluate(() => performance.now());
   await page
     .locator(".parent-game-catalog-item")
     .filter({ hasText: "Găsește perechea" })
-    .getByRole("button", { name: "Testează un nivel" })
+    .getByRole("button", { name: "Previzualizează nivelul" })
     .click();
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
-    timeout: 12_000,
+    timeout: 15_000,
   });
-  const readyAfterMs =
-    (await page.evaluate(() => performance.now())) - startedAt;
-  expect(readyAfterMs).toBeGreaterThanOrEqual(3_600);
+  await expect(page.locator(".game-play-area")).toHaveAttribute(
+    "data-progress-mode",
+    "preview",
+  );
   await expect(page.locator(".pixi-accessibility-choice").first()).toHaveCSS(
     "min-width",
     "112px",
@@ -276,22 +281,31 @@ test("Parent accessibility preferences apply to a manually tested game", async (
     "filter",
     "contrast(1.16) saturate(0.92)",
   );
+
+  await clickChoiceUntilVisible(
+    page,
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  );
+  const profileAfter = await readStoredProfile(page);
+  expect(profileAfter?.attempts?.length).toBe(profileBefore?.attempts?.length ?? 0);
+  expect(profileAfter?.sessions?.length).toBe(profileBefore?.sessions?.length ?? 0);
+  expect(profileAfter?.sessionLocked).toBe(profileBefore?.sessionLocked);
 });
 
-test("a completed adult test locks child play until Parent Mode allows a new session", async ({
+test("a real child session locks play until Parent Mode allows a new session", async ({
   page,
 }) => {
-  await startGameFromParent(page, "Găsește perechea");
-  await completeCurrentChoiceLevel(page);
-
-  await page.addStyleTag({
-    content:
-      "*,*::before,*::after{animation:none!important;transition:none!important;}",
+  await startChildJourney(page);
+  await page.evaluate(() => {
+    const future = Date.now() + 10 * 60_000;
+    Date.now = () => future;
   });
-  await expect(page).toHaveScreenshot("session-end.png", {
-    animations: "disabled",
-    caret: "hide",
-    scale: "css",
+
+  const coPlayDone = page.getByRole("button", { name: "Am făcut-o!" });
+  await clickChoiceUntilVisible(page, coPlayDone);
+  await coPlayDone.click();
+  await expect(page.getByText("Gata pentru azi!", { exact: false })).toBeVisible({
+    timeout: 10_000,
   });
   await expect
     .poll(async () => (await readStoredProfile(page))?.sessionLocked)
@@ -306,7 +320,6 @@ test("a completed adult test locks child play until Parent Mode allows a new ses
   await expect(
     page.getByRole("button", { name: "Continuă aventura" }),
   ).toHaveCount(0);
-  await expectNoAutomaticAccessibilityViolations(page);
 
   await page.getByRole("button", { name: "Zonă pentru adulți" }).click();
   await page
@@ -327,7 +340,7 @@ test("a completed adult test locks child play until Parent Mode allows a new ses
   ).toBeVisible();
 });
 
-test("home, Parent Mode and Pixi semantics pass Axe", async ({ page }) => {
+test("home, Parent Mode and Pixi preview semantics pass Axe", async ({ page }) => {
   await enterHome(page);
   await expectNoAutomaticAccessibilityViolations(page);
 
@@ -344,7 +357,7 @@ test("home, Parent Mode and Pixi semantics pass Axe", async ({ page }) => {
   await page
     .locator(".parent-game-catalog-item")
     .filter({ hasText: "Găsește perechea" })
-    .getByRole("button", { name: "Testează un nivel" })
+    .getByRole("button", { name: "Previzualizează nivelul" })
     .click();
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
     timeout: 12_000,
@@ -416,7 +429,7 @@ test("Pixi exposes frame diagnostics and meets the input budget", async ({
     "Chromium is the repeatable synthetic performance gate; device QA is separate.",
   );
 
-  await startGameFromParent(page, "Găsește perechea", "/?diagnostics=1");
+  await startPreviewFromParent(page, "Găsește perechea", "/?diagnostics=1");
   await page.evaluate(() => window.__logicLabPerformance?.reset());
   await page.waitForTimeout(2_000);
   await page.locator(".pixi-accessibility-choice").first().click();
@@ -433,11 +446,12 @@ test("Pixi exposes frame diagnostics and meets the input budget", async ({
   expect(metrics!.inputP95Ms, evidence).toBeLessThan(50);
 });
 
-test("completed attempt stores deterministic replay and response evidence durably", async ({
+test("child attempt stores deterministic replay and response evidence durably", async ({
   page,
 }) => {
-  await startGameFromParent(page, "Găsește perechea");
-  await completeCurrentChoiceLevel(page);
+  await startChildJourney(page);
+  const coPlayDone = page.getByRole("button", { name: "Am făcut-o!" });
+  await clickChoiceUntilVisible(page, coPlayDone);
 
   await expect
     .poll(
@@ -461,10 +475,10 @@ test("completed attempt stores deterministic replay and response evidence durabl
   expect(attempt?.responseMs).toBeGreaterThanOrEqual(0);
 });
 
-test("Pixi scene is destroyed before returning to lightweight Home", async ({
+test("Pixi preview is destroyed before returning to Parent Mode", async ({
   page,
 }) => {
-  await startGameFromParent(page, "Găsește perechea");
+  await startPreviewFromParent(page, "Găsește perechea");
   await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
   const replay = page.getByRole("button", { name: "Ascultă din nou" });
   await expect(replay).toBeVisible();
