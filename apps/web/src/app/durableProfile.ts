@@ -8,6 +8,8 @@ const DATABASE_NAME = "minte-in-joaca";
 const PROFILE_STORE = "profiles";
 const CURRENT_PROFILE_KEY = "current";
 const FALLBACK_STORAGE_KEY = "minte-in-joaca/idb-fallback-v4";
+const IDB_OPEN_TIMEOUT_MS = 6_000;
+const IDB_WRITE_TIMEOUT_MS = 8_000;
 
 export type ProfileStorageStatus =
   | "idle"
@@ -32,9 +34,25 @@ let health: ProfileStorageHealth = {
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME);
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error("IndexedDB open timed out"));
+    }, IDB_OPEN_TIMEOUT_MS);
+    const finish = (action: () => void) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      action();
+    };
     request.onerror = () =>
-      reject(request.error ?? new Error("IndexedDB open failed"));
-    request.onsuccess = () => resolve(request.result);
+      finish(() =>
+        reject(request.error ?? new Error("IndexedDB open failed")),
+      );
+    request.onblocked = () =>
+      finish(() => reject(new Error("IndexedDB open was blocked")));
+    request.onsuccess = () => finish(() => resolve(request.result));
   });
 }
 
@@ -47,12 +65,33 @@ async function saveToIndexedDb(profile: StoredProfile): Promise<void> {
         return;
       }
       const transaction = db.transaction(PROFILE_STORE, "readwrite");
+      let settled = false;
+      const timeout = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try {
+          transaction.abort();
+        } catch {
+          // Tranzacția poate fi deja închisă; eroarea de timeout rămâne autoritară.
+        }
+        reject(new Error("IndexedDB write timed out"));
+      }, IDB_WRITE_TIMEOUT_MS);
+      const finish = (action: () => void) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        action();
+      };
       transaction.objectStore(PROFILE_STORE).put(profile, CURRENT_PROFILE_KEY);
-      transaction.oncomplete = () => resolve();
+      transaction.oncomplete = () => finish(resolve);
       transaction.onerror = () =>
-        reject(transaction.error ?? new Error("IndexedDB transaction failed"));
+        finish(() =>
+          reject(transaction.error ?? new Error("IndexedDB transaction failed")),
+        );
       transaction.onabort = () =>
-        reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
+        finish(() =>
+          reject(transaction.error ?? new Error("IndexedDB transaction aborted")),
+        );
     });
   } finally {
     db.close();
