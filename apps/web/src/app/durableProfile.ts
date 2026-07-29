@@ -52,7 +52,13 @@ function openDatabase(): Promise<IDBDatabase> {
       );
     request.onblocked = () =>
       finish(() => reject(new Error("IndexedDB open was blocked")));
-    request.onsuccess = () => finish(() => resolve(request.result));
+    request.onsuccess = () => {
+      if (settled) {
+        request.result.close();
+        return;
+      }
+      finish(() => resolve(request.result));
+    };
   });
 }
 
