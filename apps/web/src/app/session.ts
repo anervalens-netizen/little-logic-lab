@@ -152,6 +152,8 @@ async function showSessionEnd(
 export interface SessionOptions {
   readonly singleGameId?: string;
   readonly singleLevelOnly?: boolean;
+  /** Preview adult: fără attempt, mastery, dificultate, sesiune sau session lock. */
+  readonly previewMode?: boolean;
   /** Prima oprire promisă vizual de Home; restul sesiunii rămâne adaptiv. */
   readonly preferredGameId?: string;
 }
@@ -217,7 +219,8 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
         quit = true;
         cancelCurrentGame();
       },
-      showProgress: options.singleGameId === undefined,
+      showProgress:
+        options.singleGameId === undefined && options.previewMode !== true,
     });
     shell.setProgress(gamesPlayed, plan.length);
     await showScreen(() => shell.screen);
@@ -246,6 +249,7 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
         shell.screen,
         sessionId,
         `${levelSalt}`,
+        { persistProgress: options.previewMode !== true },
       );
       levelSalt += 1;
 
@@ -270,7 +274,8 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
         !playAnotherLevel &&
         profile.settings.coPlayPrompts &&
         result.completed &&
-        options.singleLevelOnly !== true
+        options.singleLevelOnly !== true &&
+        options.previewMode !== true
       ) {
         await showCoPlayCard(game.coPlayPrompt);
       }
@@ -283,6 +288,12 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
   }
 
   stopSpeaking();
+  if (options.previewMode === true) {
+    const { showParentScreen } = await import("../screens/parent");
+    await showParentScreen();
+    return;
+  }
+
   await showSessionEnd(sessionId, start, gamesPlayed);
   if (!(await applyPendingUpdate())) {
     await showHome();
