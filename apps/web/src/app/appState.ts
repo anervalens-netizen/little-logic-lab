@@ -27,6 +27,8 @@ import {
   type AttemptOutcome,
 } from "@core";
 
+const PROFILE_BOOTSTRAP_TIMEOUT_MS = 10_000;
+
 export type StoredAttemptWithEvidence = StoredAttempt & {
   readonly responseMs?: number;
 };
@@ -34,9 +36,26 @@ export type StoredAttemptWithEvidence = StoredAttempt & {
 let profile: StoredProfile = defaultProfile();
 let profileRepairs: readonly string[] = [];
 
+async function loadProfileWithTimeout(): Promise<StoredProfile> {
+  let timeout = 0;
+  try {
+    return await Promise.race([
+      loadProfile(),
+      new Promise<never>((_, reject) => {
+        timeout = window.setTimeout(
+          () => reject(new Error("Local profile bootstrap timed out")),
+          PROFILE_BOOTSTRAP_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 export async function initializeProfile(): Promise<void> {
   const emergency = readEmergencyProfileSnapshot();
-  const loaded = emergency ?? (await loadProfile());
+  const loaded = emergency ?? (await loadProfileWithTimeout());
   const repaired = sanitizeProfile(loaded);
   profile = repaired.profile;
   profileRepairs = repaired.repairs;
