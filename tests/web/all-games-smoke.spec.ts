@@ -116,10 +116,13 @@ test("all P0 games reach ready and cleanly return Home", async ({
     await enterParentGames(page);
     const row = page.locator(".parent-game-catalog-item").filter({ hasText: title });
     await expect(row).toBeVisible();
-    await row.getByRole("button", { name: "Testează un nivel" }).click();
+    await row
+      .getByRole("button", { name: "Previzualizează nivelul" })
+      .click();
 
     const playArea = page.locator(`.game-play-area[data-game-id="${gameId}"]`);
     await expect(playArea).toBeVisible({ timeout: 12_000 });
+    await expect(playArea).toHaveAttribute("data-progress-mode", "preview");
     await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
       timeout: 20_000,
     });
