@@ -1,26 +1,35 @@
 name: Validate architecture and content
 
+# Validarea completă este intenționat manuală. Branch-ul de dezvoltare poate avea
+# multe iterații, iar rularea la fiecare commit ar consuma inutil GitHub Actions.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: manual-validation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - name: Install development dependencies
         run: npm install --no-audit --no-fund
-      - name: Validate, compile and test
+      - name: Validate stability, content, compile and core tests
         run: npm test
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build web release
+        run: npm run build:web
       - name: Regenerate documentation and previews
         run: npm run generate:catalog && npm run preview
       - name: Verify committed generated artifacts
