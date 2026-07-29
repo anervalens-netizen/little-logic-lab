@@ -83,7 +83,7 @@ async function startTraceRoad(page: Page): Promise<void> {
   await page
     .locator(".parent-game-catalog-item")
     .filter({ hasText: "Urmează drumul" })
-    .getByRole("button", { name: "Testează un nivel" })
+    .getByRole("button", { name: "Previzualizează nivelul" })
     .click();
 }
 
@@ -106,6 +106,10 @@ test("trace road follows continuous Pixi pointer input to the goal", async ({
     '[data-game-ready="true"][data-trace-points="3"]',
   );
   await expect(trace).toBeVisible({ timeout: 12_000 });
+  await expect(page.locator(".game-play-area")).toHaveAttribute(
+    "data-progress-mode",
+    "preview",
+  );
   const canvas = await page.locator("canvas.pixi-stage").boundingBox();
   expect(canvas).not.toBeNull();
 
@@ -173,30 +177,8 @@ test("trace road follows continuous Pixi pointer input to the goal", async ({
     touchPoints: [],
   });
 
-  await expect
-    .poll(async () =>
-      page.evaluate(
-        () =>
-          new Promise<boolean>((resolve, reject) => {
-            const request = indexedDB.open("minte-in-joaca");
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-              const db = request.result;
-              const transaction = db.transaction("profiles", "readonly");
-              const read = transaction.objectStore("profiles").get("current");
-              read.onerror = () => reject(read.error);
-              read.onsuccess = () => {
-                resolve(
-                  (read.result?.attempts ?? []).some(
-                    (attempt: { gameId?: string }) =>
-                      attempt.gameId === "trace-road",
-                  ),
-                );
-                db.close();
-              };
-            };
-          }),
-      ),
-    )
-    .toBe(true);
+  await expect(
+    page.locator('[data-screen="parent"][data-screen-ready="true"]'),
+  ).toBeVisible({ timeout: 12_000 });
+  await expect(page.locator("canvas.pixi-stage")).toHaveCount(0);
 });
