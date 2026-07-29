@@ -41,12 +41,25 @@ const MAX_CACHE_REPAIR_CONCURRENCY = 3;
 const REPAIR_CACHE_PREFIX = "logic-lab-audio-repair-";
 const REPAIR_CACHE_NAME = `${REPAIR_CACHE_PREFIX}${AUDIO_PACK_VERSION}`;
 
+function isObsoleteRepairCache(cacheName: string): boolean {
+  return (
+    cacheName.startsWith(REPAIR_CACHE_PREFIX) &&
+    cacheName !== REPAIR_CACHE_NAME
+  );
+}
+
 async function buildCacheIndex(): Promise<CacheIndex> {
   const locationsByPath = new Map<string, CachedLocation[]>();
   const cacheByName = new Map<string, Cache>();
   if (!("caches" in window)) return { locationsByPath, cacheByName };
 
   for (const cacheName of await caches.keys()) {
+    // Un cache de reparație dintr-o versiune veche nu poate valida asset-urile
+    // curente doar pentru că pathname-ul a rămas identic.
+    if (isObsoleteRepairCache(cacheName)) {
+      await caches.delete(cacheName);
+      continue;
+    }
     const cache = await caches.open(cacheName);
     cacheByName.set(cacheName, cache);
     for (const request of await cache.keys()) {
@@ -118,17 +131,24 @@ function requiredAssetPaths(): readonly string[] {
   return [...new Set(REQUIRED_AUDIO_PACKS.flatMap((pack) => pack.assetPaths))];
 }
 
-export async function findCachedResponseByPathname(
+export async function findCachedResponsesByPathname(
   pathname: string,
-): Promise<Response | undefined> {
+): Promise<readonly Response[]> {
   const index = await buildCacheIndex();
+  const responses: Response[] = [];
   for (const location of index.locationsByPath.get(pathname) ?? []) {
     const cache = index.cacheByName.get(location.cacheName);
     if (!cache) continue;
     const response = await cache.match(location.request);
-    if (responseLooksUsable(response)) return response;
+    if (responseLooksUsable(response)) responses.push(response);
   }
-  return undefined;
+  return responses;
+}
+
+export async function findCachedResponseByPathname(
+  pathname: string,
+): Promise<Response | undefined> {
+  return (await findCachedResponsesByPathname(pathname))[0];
 }
 
 function statusForPack(
@@ -190,10 +210,7 @@ export async function requiredStartupAudioReady(): Promise<boolean> {
 
 async function removeObsoleteRepairCaches(): Promise<void> {
   for (const cacheName of await caches.keys()) {
-    if (
-      cacheName.startsWith(REPAIR_CACHE_PREFIX) &&
-      cacheName !== REPAIR_CACHE_NAME
-    ) {
+    if (isObsoleteRepairCache(cacheName)) {
       await caches.delete(cacheName);
     }
   }
