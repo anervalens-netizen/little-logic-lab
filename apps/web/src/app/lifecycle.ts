@@ -13,12 +13,14 @@ function persistBestEffort(): void {
 
 /**
  * Leagă limitele browserului de persistența locală și lifecycle-ul audio.
- * Nu anulează nivelul la o simplă minimizare; scena poate fi reluată de browser.
+ * Nivelul nu este anulat la minimizare, dar vocea și muzica sunt oprite pentru
+ * ca revenirea să nu păstreze un speech gate sau un nod audio suspendat.
  */
 export function installApplicationLifecycle(): () => void {
   const onVisibilityChange = () => {
     if (document.visibilityState === "hidden") {
       persistBestEffort();
+      stopSpeaking();
       stopMusic();
       return;
     }
@@ -33,6 +35,7 @@ export function installApplicationLifecycle(): () => void {
 
   const onFreeze = () => {
     persistBestEffort();
+    stopSpeaking();
     stopMusic();
   };
 
