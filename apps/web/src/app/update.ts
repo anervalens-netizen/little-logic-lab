@@ -1,6 +1,6 @@
 import { registerSW } from "virtual:pwa-register";
 import {
-  findCachedResponseByPathname,
+  findCachedResponsesByPathname,
   requiredStartupAudioReady,
 } from "./contentPacks";
 
@@ -45,14 +45,22 @@ async function waitForController(timeoutMs: number): Promise<boolean> {
 async function cachedReleaseMatchesCurrentBuild(): Promise<boolean> {
   const htmlIdentity = htmlReleaseIdentity();
   if (!htmlIdentity) return false;
-  const response = await findCachedResponseByPathname("/release.json");
-  if (!response?.ok) return false;
-  try {
-    const release = (await response.json()) as { readonly commit?: string };
-    return release.commit === htmlIdentity;
-  } catch {
-    return false;
+
+  // În timpul unui update pot coexista temporar cache-ul vechi și cel nou.
+  // Acceptăm numai un release.json al cărui commit corespunde HTML-ului curent,
+  // nu primul răspuns găsit după ordinea Cache Storage.
+  const responses = await findCachedResponsesByPathname("/release.json");
+  for (const response of responses) {
+    try {
+      const release = (await response.clone().json()) as {
+        readonly commit?: string;
+      };
+      if (release.commit === htmlIdentity) return true;
+    } catch {
+      // Continuăm cu următorul cache; un release invalid nu invalidează unul bun.
+    }
   }
+  return false;
 }
 
 async function probeOfflineReadiness(): Promise<boolean> {
