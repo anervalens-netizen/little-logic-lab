@@ -122,7 +122,6 @@ function ParentScreen() {
   const [deleting, setDeleting] = useState(false);
   const [launchingGameId, setLaunchingGameId] = useState<string | null>(null);
 
-  // renderVersion este incrementat după orice mutație locală.
   void renderVersion;
   const profile = getProfile();
   const settings = profile.settings;
@@ -188,10 +187,13 @@ function ParentScreen() {
     if (!unlocked.has(game.id) || launchingGameId !== null) return;
     setLaunchingGameId(game.id);
     sfxTap();
-    if (getProfile().sessionLocked) unlockSession();
     await flushPendingProfileWrites().catch(() => undefined);
     const { runSession } = await import("../app/session");
-    await runSession({ singleGameId: game.id, singleLevelOnly: true });
+    await runSession({
+      singleGameId: game.id,
+      singleLevelOnly: true,
+      previewMode: true,
+    });
   };
 
   const exportData = async () => {
@@ -379,8 +381,8 @@ function ParentScreen() {
               <p className="parent-eyebrow">Catalog controlat de adult</p>
               <h2 id="parent-games-title">Jocuri disponibile</h2>
               <p className="parent-help prominent">
-                Copilul vede aventura ghidată. De aici poți testa un singur nivel
-                dintr-un joc deja deblocat.
+                Copilul vede aventura ghidată. De aici poți previzualiza un singur
+                nivel fără să modifici progresul sau sesiunea copilului.
               </p>
               <div className="parent-game-catalog">
                 {catalogGames.map((game) => {
@@ -410,7 +412,7 @@ function ParentScreen() {
                         >
                           {launchingGameId === game.id
                             ? "Pornesc…"
-                            : "Testează un nivel"}
+                            : "Previzualizează nivelul"}
                         </button>
                       ) : (
                         <span className="parent-game-status">
@@ -472,7 +474,7 @@ function ParentScreen() {
                 value={settings.voiceEnabled}
                 onChange={(voiceEnabled) => {
                   changeSettings({ voiceEnabled });
-                  if (voiceEnabled) speak("Vocea este pornită! Salut!");
+                  if (voiceEnabled) void speak("Vocea este pornită! Salut!");
                 }}
               />
               <p className="parent-help">
