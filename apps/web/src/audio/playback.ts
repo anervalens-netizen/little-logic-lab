@@ -1,7 +1,7 @@
 /** Redare audio locală, bufferizată, cu lifecycle și final determinist. */
 
 import { getAudioContext, getVoiceBus } from "./audio";
-import { AUDIO_PACK_VERSION } from "./audioPacks";
+import { findCurrentCachedAssetResponse } from "../app/contentPacks";
 
 export interface AudioPlaybackOptions {
   readonly playbackRate?: number;
@@ -18,8 +18,6 @@ const MAX_PRELOAD_CONCURRENCY = 3;
 const AUDIO_FETCH_TIMEOUT_MS = 8_000;
 const AUDIO_DECODE_TIMEOUT_MS = 8_000;
 const PLAYBACK_END_GRACE_MS = 1_500;
-const REPAIR_CACHE_PREFIX = "logic-lab-audio-repair-";
-const CURRENT_REPAIR_CACHE = `${REPAIR_CACHE_PREFIX}${AUDIO_PACK_VERSION}`;
 const bufferByUrl = new Map<string, Promise<AudioBuffer>>();
 let activePlayback: ActivePlayback | null = null;
 let playbackGeneration = 0;
@@ -38,31 +36,11 @@ function rememberBuffer(
   return buffer;
 }
 
-async function cachedAudioResponse(url: string): Promise<Response | undefined> {
-  if (!("caches" in window)) return undefined;
-  const pathname = new URL(url, window.location.origin).pathname;
-  for (const cacheName of await caches.keys()) {
-    if (
-      cacheName.startsWith(REPAIR_CACHE_PREFIX) &&
-      cacheName !== CURRENT_REPAIR_CACHE
-    ) {
-      continue;
-    }
-    const cache = await caches.open(cacheName);
-    const request = (await cache.keys()).find(
-      (candidate) => new URL(candidate.url).pathname === pathname,
-    );
-    if (!request) continue;
-    const response = await cache.match(request);
-    if (response?.ok) return response;
-  }
-  return undefined;
-}
-
 async function fetchLocalAudio(url: string): Promise<Response> {
-  // Cache Storage este verificat explicit pentru ca un asset reparat în cache-ul
-  // local să poată fi redat și în airplane mode, independent de ruta Workbox.
-  const cached = await cachedAudioResponse(url);
+  const pathname = new URL(url, window.location.origin).pathname;
+  // Aceeași selecție de cache este folosită de gate-ul offline și de playback.
+  // Un asset reparat poate fi redat în airplane mode, iar un cache vechi este exclus.
+  const cached = await findCurrentCachedAssetResponse(pathname);
   if (cached) return cached;
 
   const controller = new AbortController();
