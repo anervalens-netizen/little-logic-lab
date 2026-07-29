@@ -20,15 +20,15 @@ async function readProfile(page: Page): Promise<Record<string, any> | null> {
   );
 }
 
-async function mutateCurrentProfile(
+async function writePreviousProfileVersion(
   page: Page,
-  mutate: (profile: Record<string, any>) => void,
+  options: {
+    readonly schemaVersion: 2 | 3;
+    readonly ageMonths?: number;
+    readonly sessionLocked?: boolean;
+  },
 ): Promise<void> {
-  await page.evaluate(async (mutationSource) => {
-    const mutateProfile = new Function(
-      "profile",
-      `return (${mutationSource})(profile);`,
-    ) as (profile: Record<string, any>) => void;
+  await page.evaluate(async (migration) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("minte-in-joaca");
       request.onerror = () => reject(request.error);
@@ -41,14 +41,27 @@ async function mutateCurrentProfile(
       read.onerror = () => reject(read.error);
       read.onsuccess = () => resolve(read.result);
     });
-    mutateProfile(profile);
+
+    profile.schemaVersion = migration.schemaVersion;
+    if (migration.ageMonths !== undefined) {
+      profile.ageMonths = migration.ageMonths;
+    }
+    if (migration.schemaVersion === 2) {
+      delete profile.sessionLocked;
+    } else {
+      profile.sessionLocked = migration.sessionLocked === true;
+    }
+    delete profile.settings.highContrast;
+    delete profile.settings.targetSize;
+    delete profile.settings.demonstrationSpeed;
+
     store.put(profile, "current");
     await new Promise<void>((resolve, reject) => {
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
     db.close();
-  }, mutate.toString());
+  }, options);
 }
 
 test("legacy localStorage v1 migrates without losing settings", async ({ page }) => {
@@ -98,13 +111,9 @@ test("IndexedDB v2 migrates to the current accessibility schema", async ({
 }) => {
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
-  await mutateCurrentProfile(page, (profile) => {
-    profile.schemaVersion = 2;
-    profile.ageMonths = 47;
-    delete profile.sessionLocked;
-    delete profile.settings.highContrast;
-    delete profile.settings.targetSize;
-    delete profile.settings.demonstrationSpeed;
+  await writePreviousProfileVersion(page, {
+    schemaVersion: 2,
+    ageMonths: 47,
   });
 
   await page.reload();
@@ -126,12 +135,9 @@ test("IndexedDB v3 preserves the session lock during migration", async ({
 }) => {
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
-  await mutateCurrentProfile(page, (profile) => {
-    profile.schemaVersion = 3;
-    profile.sessionLocked = true;
-    delete profile.settings.highContrast;
-    delete profile.settings.targetSize;
-    delete profile.settings.demonstrationSpeed;
+  await writePreviousProfileVersion(page, {
+    schemaVersion: 3,
+    sessionLocked: true,
   });
 
   await page.reload();
