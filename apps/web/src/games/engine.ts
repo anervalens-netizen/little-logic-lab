@@ -44,6 +44,11 @@ export interface RunOutcome {
   readonly cancelled: boolean;
 }
 
+export interface RunGameOptions {
+  /** Preview-ul adultului nu modifică mastery, dificultatea sau profilul. */
+  readonly persistProgress?: boolean;
+}
+
 let cancelFlag = false;
 
 export function cancelCurrentGame(): void {
@@ -88,7 +93,9 @@ export async function runGame(
   shell: HTMLElement,
   sessionId: string,
   seedSalt: string,
+  options: RunGameOptions = {},
 ): Promise<RunOutcome> {
+  const persistProgress = options.persistProgress !== false;
   const profile = getProfile();
   const stored = profile.progressByGame[game.id];
   const storedOrInitial: DifficultyVector =
@@ -109,9 +116,11 @@ export async function runGame(
   mount.dataset.gameTheme = WORKSHOP_GAMES.has(game.id)
     ? "toy-workshop"
     : "meadow";
+  mount.dataset.progressMode = persistProgress ? "record" : "preview";
   cleanups.push(() => {
     delete mount.dataset.gameId;
     delete mount.dataset.gameTheme;
+    delete mount.dataset.progressMode;
   });
 
   try {
@@ -127,7 +136,7 @@ export async function runGame(
       return { result: { ...result, abandoned: true }, cancelled: true };
     }
 
-    if (game.scored) {
+    if (game.scored && persistProgress) {
       recordAttempt(game.id, game.skillId, result, {
         sessionId,
         levelSeed: seed,
@@ -181,6 +190,17 @@ export async function runGame(
     await wait(250);
     return { result, cancelled: false };
   } finally {
-    for (const cleanup of cleanups.reverse()) cleanup();
+    let cleanupFailed = false;
+    for (const cleanup of cleanups.reverse()) {
+      try {
+        cleanup();
+      } catch (reason) {
+        cleanupFailed = true;
+        console.error("Game cleanup failed", reason);
+      }
+    }
+    document.documentElement.dataset.gameCleanupState = cleanupFailed
+      ? "failed"
+      : "healthy";
   }
 }
