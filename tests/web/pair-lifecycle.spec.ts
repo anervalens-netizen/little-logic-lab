@@ -20,7 +20,7 @@ async function openSamePictureTest(page: Page): Promise<void> {
   await page
     .locator(".parent-game-catalog-item")
     .filter({ hasText: "Găsește perechea" })
-    .getByRole("button", { name: "Testează un nivel" })
+    .getByRole("button", { name: "Previzualizează nivelul" })
     .click();
   await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
     timeout: 12_000,
