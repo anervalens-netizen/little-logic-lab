@@ -22,6 +22,7 @@
     "test:web": "playwright test",
     "test:web:performance": "LOGIC_LAB_PERF=1 playwright test --grep \"Pixi exposes frame diagnostics\" --project chromium-touch --workers=1",
     "test:web:trace-touch": "LOGIC_LAB_TRACE_TOUCH=1 playwright test --grep \"trace road follows continuous\" --project chromium-touch --workers=1",
+    "test:web:all-games": "LOGIC_LAB_ALL_GAMES=1 playwright test --grep \"all P0 games reach ready\" --project chromium-touch --workers=1",
     "test": "npm run generate:curriculum && npm run generate:ladders && npm run generate:content && npm run validate && npm run validate:audio && npm run validate:audio-packs && npm run check:v2-runtime && npm run policy:check && npm run build && node --test packages/core/test/*.test.mjs",
     "preview": "npm run build && node scripts/generate-level-preview.mjs",
     "generate:ladders": "node scripts/generate-level-ladders.mjs",
