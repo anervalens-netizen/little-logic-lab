@@ -49,20 +49,26 @@ requireText(playback, "bytes.byteLength === 0", "empty audio rejection");
 requireText(playback, "source.stop()", "playback watchdog stop");
 requireText(contentPacks, "MAX_CACHE_INSPECTION_CONCURRENCY", "bounded cache inspection");
 requireText(contentPacks, "MAX_CACHE_REPAIR_CONCURRENCY", "bounded cache repair");
+requireText(contentPacks, "isObsoleteRepairCache", "repair cache version isolation");
+requireText(contentPacks, "findCachedResponsesByPathname", "coexisting release caches");
 requireText(contentPacks, "repairRequiredStartupAudio", "offline repair API");
 requireText(contentPacks, 'credentials: "same-origin"', "same-origin repair fetch");
 requireText(contentPacks, "bytesByPath.get(pathname)", "required body verification");
 requireText(durableProfile, "writeEmergencyProfileSnapshot", "pre-IDB emergency write");
 requireText(durableProfile, "emergencyToken", "emergency generation propagation");
 requireText(durableProfile, "clearEmergencyProfileSnapshot(emergencyToken)", "matching emergency cleanup");
+requireText(durableProfile, "IDB_OPEN_TIMEOUT_MS", "bounded IndexedDB open");
+requireText(durableProfile, "IDB_WRITE_TIMEOUT_MS", "bounded IndexedDB write");
 requireText(emergencyProfile, "EMERGENCY_PROFILE_KEY", "emergency profile storage");
 requireText(emergencyProfile, "envelopeVersion", "emergency envelope version");
 requireText(emergencyProfile, "expectedToken", "generation-safe emergency cleanup");
 requireText(emergencyProfile, "envelope.token !== expectedToken", "stale confirmation guard");
 requireText(appState, "readEmergencyProfileSnapshot", "emergency boot recovery");
 requireText(appState, "checkpointProfileSynchronously", "sync lifecycle checkpoint");
+requireText(appState, "PROFILE_BOOTSTRAP_TIMEOUT_MS", "bounded profile bootstrap");
 requireText(lifecycle, 'addEventListener("pagehide"', "pagehide persistence");
 requireText(lifecycle, 'addEventListener("freeze"', "freeze persistence");
+requireText(lifecycle, "stopSpeaking", "background speech cleanup");
 requireText(router, "releaseScreen", "isolated screen cleanup");
 requireText(router, "finally", "cleanup finalization");
 requireText(router, "screenCleanupState", "cleanup diagnostics");
@@ -78,8 +84,8 @@ requireText(samePicture, "roundSpeechCueId", "stable pair cue");
 requireText(sortByColor, 'instructionCueId: "sort-instruction"', "stable sort cue");
 requireText(sortByColor, "speakOnPlaceCueId", "stable color cue");
 requireText(insetPuzzle, 'instructionCueId: "inset-instruction"', "stable puzzle cue");
+requireText(insetPuzzle, "SHAPES_WITH_AUDIO", "spoken early puzzle set");
 requireText(insetPuzzle, "speechCueId", "stable shape cue");
-requireText(insetPuzzle, 'shape === "hexagon"', "honest missing cue fallback");
 requireText(main, "RootErrorBoundary", "root React recovery");
 requireText(main, "bootstrapState", "bootstrap diagnostics");
 requireText(appShell, "startupError", "dynamic import recovery");
@@ -89,5 +95,5 @@ requireText(speechAudit, "missingCueIds", "stable cue audit");
 requireText(speechAudit, "cuePropertyPattern", "cue property audit");
 
 console.log(
-  "Stability hardening valid: offline repair, bounded audio, generation-safe emergency persistence, cleanup isolation, bootstrap recovery and stable golden cues are guarded.",
+  "Stability hardening valid: versioned offline repair, bounded audio/IndexedDB, generation-safe emergency persistence, cleanup isolation, bootstrap recovery and stable golden cues are guarded.",
 );
