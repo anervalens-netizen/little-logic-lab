@@ -494,7 +494,7 @@ function ParentScreen({ games }: { readonly games: readonly WebGame[] }) {
               <p className="parent-eyebrow">Principii</p>
               <h2 id="parent-about">Despre</h2>
               <p className="parent-about-copy">
-                Minte în joacă exersează abilități concrete prin jocuri scurte
+                Logic Lab exersează abilități concrete prin jocuri scurte
                 și blânde. Nu este un test și nu promite „creșterea IQ-ului”.
                 Recomandat: sesiuni scurte, împreună cu un adult, fără să
                 înlocuiască somnul, mișcarea și joaca liberă.

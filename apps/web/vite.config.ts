@@ -110,8 +110,8 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ["icons/icon-180.png"],
       manifest: {
-        name: "Minte în joacă",
-        short_name: "Minte în joacă",
+        name: "Logic Lab",
+        short_name: "Logic Lab",
         description:
           "Jocuri logice blânde pentru copii mici. Offline, fără reclame, fără cont.",
         lang: "ro",

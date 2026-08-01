@@ -103,7 +103,7 @@ function HomeScreen({
 
       <div className="home-content">
         <header className="home-topbar">
-          <h1 className="home-title">Minte în joacă</h1>
+          <h1 className="home-title">Logic Lab</h1>
           <button
             type="button"
             className="btn-icon"

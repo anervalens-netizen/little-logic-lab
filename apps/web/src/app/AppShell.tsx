@@ -23,7 +23,7 @@ export function AppShell() {
     <main
       id="screen-root"
       aria-live="polite"
-      aria-label="Minte în joacă"
+      aria-label="Logic Lab"
     />
   );
 }

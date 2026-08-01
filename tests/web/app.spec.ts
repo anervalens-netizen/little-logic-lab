@@ -30,7 +30,7 @@ async function seedCleanProgress(
   gameIds: readonly string[],
 ): Promise<void> {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByText("Logic Lab", { exact: true })).toBeVisible();
   await page.evaluate(async (ids) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("minte-in-joaca");
@@ -137,7 +137,7 @@ async function placeVisiblePixiSortItems(
 
 async function enterHome(page: Page, path = "/"): Promise<void> {
   await page.goto(path);
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByText("Logic Lab", { exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
     .click();
@@ -540,7 +540,7 @@ test("Romanian voice is bundled and cached for offline use", async ({
   context,
 }, testInfo) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByText("Logic Lab", { exact: true })).toBeVisible();
   await page.locator("body").click({ position: { x: 20, y: 20 } });
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
@@ -2074,7 +2074,7 @@ test("legacy local profile migrates without losing progress", async ({ page }) =
   });
 
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByText("Logic Lab", { exact: true })).toBeVisible();
   const result = {
     current: await readStoredProfile(page),
     ...(await page.evaluate(() => ({
@@ -2131,7 +2131,7 @@ test("IndexedDB v2 profile migrates to the current accessibility schema", async 
   );
 
   await page.reload();
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByText("Logic Lab", { exact: true })).toBeVisible();
   await expect
     .poll(async () => await readStoredProfile(page))
     .toMatchObject({
@@ -2181,7 +2181,7 @@ test("IndexedDB v3 session lock survives the accessibility migration", async ({
   );
 
   await page.reload();
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByText("Logic Lab", { exact: true })).toBeVisible();
   await expect
     .poll(async () => await readStoredProfile(page))
     .toMatchObject({
@@ -2237,10 +2237,10 @@ test("installed build reloads with the network disabled", async ({
       }
       return undefined;
     });
-    expect(cachedHtml).toContain("Minte în joacă");
+    expect(cachedHtml).toContain("Logic Lab");
   } else {
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+    await expect(page.getByText("Logic Lab", { exact: true })).toBeVisible();
     await page.locator("body").click({ position: { x: 20, y: 20 } });
     await expect(
       page.locator('[data-screen="home"][data-screen-ready="true"]'),

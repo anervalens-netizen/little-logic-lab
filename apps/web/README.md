@@ -1,4 +1,4 @@
-# Minte în joacă — PWA React/Pixi
+# Logic Lab — PWA React/Pixi
 
 Aplicația P0 este live la `https://logic-lab.astancu.eu/`. Producția servește
 build-ul static Vite prin Cloudflare Tunnel → Caddy; nu folosește un backend.

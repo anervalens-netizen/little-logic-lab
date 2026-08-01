@@ -1,4 +1,4 @@
-# Little Logic Lab / „Minte în joacă”
+# Logic Lab
 
 Aplicație web/PWA și bibliotecă de jocuri logice pentru aproximativ
 **2 ani și 6 luni – 6 ani**.

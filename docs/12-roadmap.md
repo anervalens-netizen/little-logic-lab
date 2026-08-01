@@ -1,4 +1,4 @@
-# Roadmap canonic — „Minte în joacă”
+# Roadmap canonic — „Logic Lab”
 
 Status: activ
 

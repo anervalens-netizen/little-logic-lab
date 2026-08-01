@@ -70,7 +70,7 @@ function SplashScreen() {
             className="splash-lumi lumi happy lll-float"
           />
           <h1 id="splash-title" className="splash-title">
-            Minte în joacă
+            Logic Lab
           </h1>
           <p className="splash-subtitle">
             Jocuri logice blânde pentru cei mici
