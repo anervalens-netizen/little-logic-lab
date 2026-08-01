@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 packages/core/dist/
 .expo/
 dist/

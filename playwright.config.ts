@@ -3,7 +3,10 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/web",
   fullyParallel: true,
-  workers: 2,
+  timeout: 60_000,
+  // Pixi/WebGL scenes share the host GPU; serial workers keep the release gate
+  // deterministic instead of measuring renderer contention between tests.
+  workers: 1,
   retries: 0,
   reporter: "line",
   use: {

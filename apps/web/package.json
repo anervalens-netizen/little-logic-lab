@@ -1,6 +1,6 @@
 {
   "name": "@little-logic-lab/web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Minte în joacă — jocuri logice offline pentru copii de 2,5–6 ani (web/PWA).",

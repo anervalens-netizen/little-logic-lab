@@ -21,7 +21,6 @@ import {
   showSessionEndCard,
 } from "../screens/sessionCards";
 import { applyPendingUpdate } from "./update";
-import { isGameAgeEligible } from "./content";
 import { unlockedGameIds } from "./unlocks";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
@@ -34,19 +33,19 @@ async function buildCandidates(): Promise<GameCandidate[]> {
     GAME_IDS.filter((gameId) => unlocked.has(gameId)),
   );
   return games
-    .filter(
-      (game) =>
-        game.scored &&
-        unlocked.has(game.id) &&
-        isGameAgeEligible(game.id, profile.ageMonths),
-    )
+    .filter((game) => unlocked.has(game.id))
     .map((game) => {
       const progress = profile.progressByGame[game.id];
       const mean = masteryMeanFor(game.skillId);
       return {
         gameId: game.id,
         skillId: game.skillId,
-        mode: "digital" as const,
+        mode:
+          game.domain === "hybrid_transfer"
+            ? ("hybrid" as const)
+            : game.scored
+              ? ("digital" as const)
+              : ("open_ended" as const),
         masteryMean: mean,
         evidenceCount: profile.masteryBySkill[game.skillId]?.evidenceCount ?? 0,
         timesPlayed: progress?.timesPlayed ?? 0,
@@ -90,7 +89,7 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
     const built = buildSessionPlan(await buildCandidates(), {
       seed: `session:${new Date().toISOString().slice(0, 10)}`,
       maxGames: defaultSessionGameCount(profile.ageMonths),
-      includeHybrid: false,
+      includeHybrid: true,
     });
     plan = built.entries;
   }
@@ -112,6 +111,7 @@ export async function runSession(options: SessionOptions = {}): Promise<void> {
       },
       showProgress: options.singleGameId === undefined,
     });
+    shell.screen.dataset.gameId = entry.gameId;
     shell.setProgress(gamesPlayed, plan.length);
     await showScreen(() => shell.screen);
 

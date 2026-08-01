@@ -152,7 +152,7 @@ export default defineConfig({
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         globPatterns: [
-          "**/*.{js,css,html,json,woff2,png,svg,mp3,webmanifest}",
+          "**/*.{js,css,html,json,woff2,png,webp,svg,mp3,webmanifest}",
         ],
         globIgnores: ["icons/**/*", "manifest.webmanifest"],
         navigateFallback: "/index.html",

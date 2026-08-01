@@ -9,6 +9,8 @@ Proiectul este construit pentru un copil real, dar repo-ul nu conține nume, fot
 
 - **80 familii de jocuri**, grupate în 19 arhetipuri reutilizabile și 10 domenii: atenție vizuală, clasificare, memorie de lucru, control inhibitor, flexibilitate, secvențe, raționament spațial, numerație, limbaj/social, coordonare și activități în lumea reală.
 - **1.030 ancore de progresie** generate automat, fiecare schimbând o singură axă; nivelurile sunt parametrice și deterministe, nu o listă rigidă: fiecare joc are axe precum număr de opțiuni, similitudinea distractorilor, lungimea secvenței, numărul de reguli sau gradul de ajutor.
+- **15 jocuri P0 complet implementate și deblocate direct**, vizibile în ordinea canonică de la prima pornire; progresul adaptează dificultatea, nu accesul la joc.
+- **3 fundaluri storybook originale, optimizate WebP**, pentru dimineață, apus și noapte, păstrate integral în cache-ul offline al PWA.
 - Un nucleu TypeScript pur pentru progres, dificultate, planificarea sesiunilor, opt generatoare și state-machine-uri de referință pentru primele arhetipuri.
 - Specificație completă pentru un agent Codex: arhitectură, UX, animații, audio, privacy, testare, roadmap, task-uri executabile și criterii de acceptare.
 - Cercetare și limite explicite ale afirmațiilor.

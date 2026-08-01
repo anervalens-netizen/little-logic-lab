@@ -195,6 +195,42 @@ html[data-high-contrast="true"] .pixi-stage {
   z-index: 0;
 }
 
+.splash-scenery {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 249, 238, 0.16)),
+    url("/backgrounds/magic-meadow-v1.webp") center / cover no-repeat;
+}
+
+.bg-sunset .session-card-scenery {
+  background:
+    linear-gradient(180deg, rgba(255, 240, 225, 0.04), rgba(108, 53, 84, 0.08)),
+    url("/backgrounds/sunset-garden-v1.webp") center / cover no-repeat;
+}
+
+.bg-night .session-card-scenery {
+  background:
+    linear-gradient(180deg, rgba(31, 31, 93, 0.06), rgba(18, 24, 75, 0.18)),
+    url("/backgrounds/moonlit-meadow-v1.webp") center / cover no-repeat;
+}
+
+.splash-scenery::after,
+.session-card-scenery::after {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 47%,
+    rgba(255, 255, 255, 0.02) 0 30%,
+    rgba(36, 30, 56, 0.1) 100%
+  );
+  content: "";
+}
+
+.splash-scenery > svg,
+.session-card-scenery > svg {
+  opacity: 0.1;
+  mix-blend-mode: soft-light;
+}
+
 .splash-ambient-host {
   z-index: 1;
 }
@@ -499,6 +535,23 @@ html[data-high-contrast="true"] .pixi-stage {
 
 .home-scenery {
   z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(53, 111, 76, 0.08)),
+    url("/backgrounds/magic-meadow-v1.webp") center / cover no-repeat;
+}
+
+.home-scenery::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 35%),
+    radial-gradient(circle at 50% 45%, transparent 0 42%, rgba(30, 72, 52, 0.1) 100%);
+  content: "";
+}
+
+.home-scenery > svg {
+  opacity: 0.08;
+  mix-blend-mode: soft-light;
 }
 
 .home-ambient-host {
@@ -523,6 +576,15 @@ html[data-high-contrast="true"] .pixi-stage {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: min(100%, 780px);
+  min-height: 64px;
+  margin: 0 auto;
+  padding: 7px 9px 7px 18px;
+  border: 2px solid rgba(255, 255, 255, 0.58);
+  border-radius: 32px;
+  background: rgba(255, 253, 247, 0.58);
+  box-shadow: 0 8px 24px rgba(55, 78, 57, 0.11);
+  backdrop-filter: blur(9px) saturate(1.12);
   gap: 10px;
 }
 
@@ -559,14 +621,16 @@ html[data-high-contrast="true"] .pixi-stage {
   position: absolute;
   z-index: -1;
   inset: 14px 0 8px;
-  border: 3px solid rgba(255, 255, 255, 0.54);
+  border: 3px solid rgba(255, 255, 255, 0.68);
   border-radius: 44px;
   background: linear-gradient(
     120deg,
-    rgba(255, 255, 255, 0.52),
-    rgba(255, 249, 238, 0.24)
+    rgba(255, 255, 255, 0.68),
+    rgba(255, 249, 238, 0.34)
   );
-  box-shadow: 0 8px 24px rgba(74, 63, 53, 0.08);
+  box-shadow:
+    0 8px 0 rgba(82, 101, 67, 0.08),
+    0 18px 36px rgba(55, 78, 57, 0.12);
   content: "";
   backdrop-filter: blur(4px);
 }
@@ -626,12 +690,18 @@ html[data-high-contrast="true"] .pixi-stage {
   align-items: center;
   flex: 0 0 auto;
   gap: 12px;
-  margin: 2px 0 0;
-  color: var(--ink-soft);
+  margin: 4px 0 0;
+  padding: 5px 14px;
+  border: 2px solid rgba(255, 255, 255, 0.52);
+  border-radius: 999px;
+  background: rgba(255, 253, 247, 0.54);
+  color: var(--ink);
   font-size: clamp(17px, 2.5vw, 21px);
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(7px) saturate(1.1);
 }
 
 .home-library-title::before,
@@ -643,11 +713,29 @@ html[data-high-contrast="true"] .pixi-stage {
   flex: 1;
 }
 
+.home-library-count {
+  display: grid;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 2px solid rgba(74, 63, 53, 0.08);
+  border-radius: 999px;
+  background: var(--sun);
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  place-items: center;
+  box-shadow: 0 3px 0 rgba(74, 63, 53, 0.08);
+}
+
 .home-game-grid {
   display: grid;
   flex: 1;
   grid-template-columns: repeat(auto-fit, minmax(132px, 160px));
+  grid-auto-rows: max-content;
   align-content: start;
+  align-items: start;
   justify-content: center;
   min-height: 0;
   padding: 12px 4px 20px;
@@ -673,9 +761,23 @@ html[data-high-contrast="true"] .pixi-stage {
   padding: 12px;
   animation-delay: var(--home-delay, 0ms);
   box-shadow:
-    0 7px 0 rgba(74, 63, 53, 0.11),
-    0 14px 30px rgba(74, 63, 53, 0.10);
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 7px 0 rgba(74, 63, 53, 0.1),
+    0 16px 34px rgba(42, 73, 52, 0.15);
+  overflow: hidden;
   will-change: transform;
+}
+
+.home-game-card::after {
+  position: absolute;
+  top: 7px;
+  right: 11px;
+  left: 11px;
+  height: 34%;
+  border-radius: 999px 999px 48% 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent);
+  content: "";
+  pointer-events: none;
 }
 
 .home-game-grid[data-game-count="1"] .home-game-card {
@@ -686,6 +788,8 @@ html[data-high-contrast="true"] .pixi-stage {
 }
 
 .home-game-art {
+  position: relative;
+  z-index: 1;
   display: block;
   flex: 1;
   width: 82%;
@@ -699,11 +803,14 @@ html[data-high-contrast="true"] .pixi-stage {
 }
 
 .home-game-name {
+  position: relative;
+  z-index: 1;
   color: var(--ink);
   font-size: clamp(14px, 2vmin, 17px);
   font-weight: 800;
   line-height: 1.05;
   text-align: center;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.74);
 }
 
 @media (max-height: 600px) and (orientation: landscape) {

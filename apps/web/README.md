@@ -38,9 +38,11 @@ nu se atribuie Cloudflare înainte de verificarea permisiunilor din container.
 
 - TypeScript 7 strict, React 19 pentru Splash/Home/tranziții/shell/Parent Mode,
   PixiJS 8/WebGL pentru scene și Vite 8;
-- 15/15 familii P0 funcționale, cu toate stage-urile ladder consumate;
+- 15/15 familii P0 funcționale și selectabile direct de la prima pornire, cu
+  toate stage-urile ladder consumate;
 - registry TypeScript generat din catalog + ordinea P0, fără listă manuală;
-- 36 ilustrații procedurale originale, cu metadate canonice și ID-uri tipizate;
+- 36 ilustrații procedurale originale, cu metadate canonice și ID-uri tipizate,
+  plus trei fundaluri storybook WebP originale și precached;
 - jocurile și runtime-urile Pixi sunt chunk-uri lazy, precached pentru offline;
 - profil, replay, progres și setări în IndexedDB cu migrări/recovery;
 - snapshot local v4, migrări v1/v2/v3 și blocare calmă după sesiune,

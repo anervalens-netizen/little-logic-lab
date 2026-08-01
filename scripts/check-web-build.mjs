@@ -95,6 +95,17 @@ for (const gameId of release.gameIds) {
   }
 }
 
+const requiredBackgrounds = [
+  "magic-meadow-v1.webp",
+  "moonlit-meadow-v1.webp",
+  "sunset-garden-v1.webp",
+];
+for (const background of requiredBackgrounds) {
+  if (!serviceWorker.includes(`url:"backgrounds/${background}"`)) {
+    throw new Error(`${background}: background is absent from PWA precache.`);
+  }
+}
+
 console.log(
-  `Web build valid: ${(initialGzipBytes / 1024).toFixed(2)} KiB initial JS gzip, ${release.gameIds.length} lazy P0 chunks precached, release ${expectedCommit.slice(0, 12)} verified.`,
+  `Web build valid: ${(initialGzipBytes / 1024).toFixed(2)} KiB initial JS gzip, ${release.gameIds.length} lazy P0 chunks and ${requiredBackgrounds.length} story backgrounds precached, release ${expectedCommit.slice(0, 12)} verified.`,
 );

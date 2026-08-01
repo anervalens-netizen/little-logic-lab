@@ -47,10 +47,11 @@ livrărilor și porțile de acceptare. Arhitectura detaliată este în
   vizuale cu seed și ceas fixe sunt integrate. Feedback-ul implicit descrie
   strategia/efortul, nu identitatea copilului. Lipsesc revizia umană a vocii,
   validarea observată și verificarea manuală pe iOS.
-- R3 engineering: complet; 15/15 familii P0 consumă ladder-ele, scheduler-ul și
-  unlock policy, iar finalul de sesiune blochează persistent continuarea în
-  Child Mode. Numai Parent Mode poate permite o sesiune nouă. Pilotul privat
-  rămâne condiționat de porțile externe de mai sus.
+- R3 engineering: complet; 15/15 familii P0 consumă ladder-ele și sunt
+  selectabile direct fără prag de vârstă/mastery. Scheduler-ul adaptează
+  ordinea și dificultatea fără să ascundă jocuri. Finalul de sesiune blochează
+  persistent continuarea în Child Mode. Numai Parent Mode poate permite o
+  sesiune nouă. Pilotul privat rămâne condiționat de porțile externe de mai sus.
 - R3 accessibility automation: complet; profilul local v4 migrează fără
   pierderi v1/v2/v3 și expune în Parent Mode contrast ridicat, ținte tactile de
   112 px și demonstrații 1,5× mai lente. Setările au efect în shell, overlay-ul
@@ -347,8 +348,9 @@ Pipeline:
 7. review vizual și audio;
 8. bundle local.
 
-Vârsta selectează doar intrarea conservatoare. Avansarea vine din dovezi;
-aplicația nu deblochează automat tot catalogul.
+Vârsta selectează doar intrarea conservatoare pentru dificultate. Avansarea
+vine din dovezi, dar toate familiile implementate sunt vizibile și selectabile
+direct în instalarea personală; catalogul neimplementat rămâne în afara UI.
 
 ## 9. Persistență și replay
 

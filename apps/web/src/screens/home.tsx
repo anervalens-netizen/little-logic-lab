@@ -143,7 +143,10 @@ function HomeScreen({
         {!sessionLocked ? (
           <section className="home-library" aria-labelledby="home-library-title">
             <h2 id="home-library-title" className="home-library-title">
-              Alege o aventură
+              <span>Toate aventurile</span>
+              <span className="home-library-count" aria-label={`${games.length} jocuri`}>
+                {games.length}
+              </span>
             </h2>
             <div
               className="home-game-grid"
@@ -157,7 +160,7 @@ function HomeScreen({
                   aria-label={game.title}
                   style={
                     {
-                      background: `${game.bubbleColor}26`,
+                      background: `linear-gradient(155deg, rgba(255,255,255,0.82), ${game.bubbleColor}3d)`,
                       borderColor: game.bubbleColor,
                       "--home-delay": `${index * 40}ms`,
                     } as CSSProperties

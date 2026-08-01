@@ -72,6 +72,10 @@ Close the remaining human gates before R4:
 3. parent-supervised child observation and remediation;
 4. P1 expansion through existing archetypes only after P0 findings are closed.
 
+For the private owner deployment, every implemented game is visible and
+selectable from first launch. Age and mastery adapt difficulty and scheduling;
+they do not gate access to implemented games.
+
 Canonical status and acceptance criteria are in `docs/12-roadmap.md`.
 
 ## Quality gate
