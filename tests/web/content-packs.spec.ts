@@ -25,7 +25,7 @@ async function enterParentData(page: Page): Promise<void> {
 test("Parent Mode reports required audio packs as locally installed", async ({
   page,
 }) => {
-  test.fixme(
+  test.skip(
     true,
     "FIXME (validare 2026-08-06): enterHome intra in home dar testul esueaza - probabil data-unlocked-count sau profile state bug. Vezi VALIDATION-REPORT.md.",
   );
@@ -63,7 +63,7 @@ test("a missing required clip blocks Child Mode and can be repaired locally", as
     testInfo.project.name !== "chromium-touch",
     "Cache mutation is verified on the repeatable Chromium service-worker target.",
   );
-  test.fixme(
+  test.skip(
     true,
     "FIXME (validare 2026-08-06): testul sterge un clip din cache si asteapta ca Child Mode sa se blocheze. Timeout 30s sub chromium 1234 - probabil repararea sau blocarea nu reuseste in timp util.",
   );

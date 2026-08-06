@@ -98,7 +98,7 @@ test("trace road follows continuous Pixi pointer input to the goal", async ({
     testInfo.project.name !== "chromium-touch",
     "Trusted continuous touch injection is available on Chromium.",
   );
-  test.fixme(
+  test.skip(
     true,
     "FIXME (validare 2026-08-06): seedTraceAccess + Pixi pointer path nu reuseste sa finalizeze pe chromium 1234. Probabil legat de timing si pointer-events pe canvas Pixi.",
   );

@@ -30,7 +30,7 @@ async function openSamePictureTest(page: Page): Promise<void> {
 test("leaving during pair-joining feedback destroys the scene without late errors", async ({
   page,
 }) => {
-  test.fixme(
+  test.skip(
     true,
     "FIXME (validare 2026-08-06): data-game-ready visibility timing flakes sub chromium 1234 / Playwright 1.62.0; necesita investigare vezi VALIDATION-REPORT.md § \"data-game-ready ascuns\".",
   );
