@@ -49,18 +49,31 @@ async function seedJourneyProgress(
       allAttempts.push(...attempts);
     }
     profile.attempts = [...profile.attempts, ...allAttempts];
+    transaction.oncomplete = () => {
+      db.close();
+    };
+    transaction.onerror = () => {
+      db.close();
+    };
     store.put(profile, "current");
     await new Promise<void>((resolve, reject) => {
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
-    db.close();
   }, gameIds);
+  // Asigurăm un interval scurt pentru ca IndexedDB să persisteze tranzacția
+  // înainte de page.reload().
+  await page.waitForTimeout(300);
   // Profilul este citit și cached în memorie la bootstrap. Fără reîncărcare,
   // getProfile() din shell-ul V2 returnează în continuare profilul vechi,
   // iar data-unlocked-count / data-journey-stop rămân incorecte.
   await page.reload();
-  await page.waitForTimeout(500);
+  // Așteptăm ca bootstrap-ul noului page să citească profilul din IDB și
+  // să afișeze Home înainte de a continua.
+  await page
+    .locator('[data-screen="home"][data-screen-ready="true"]')
+    .waitFor({ timeout: 15_000 })
+    .catch(() => undefined);
 }
 
 test("current release is cached and speech gates child input", async ({
