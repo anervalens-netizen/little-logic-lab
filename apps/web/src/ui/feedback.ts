@@ -1,11 +1,18 @@
-/** Feedback vizual: confetti, scântei, laude mari, mânuță demonstrativă. */
+/** Feedback vizual: confetti, scântei, laude și demonstrația cu mânuța. */
 
 import { el, svgEl, wait } from "./dom";
 import { sfxSuccess, sfxWin, sfxGentleNo, sfxHint } from "../audio/sfx";
-import { speak } from "../audio/speech";
+import { speakCueAndWait } from "../audio/speech";
 import { demonstrationDelay } from "./accessibilityPreferences";
 
-const CONFETTI_COLORS = ["#F25C4C", "#FFD35C", "#7FC86B", "#4FA8E8", "#9B8CF2", "#FF9EC6"];
+const CONFETTI_COLORS = [
+  "#F25C4C",
+  "#FFD35C",
+  "#7FC86B",
+  "#4FA8E8",
+  "#9B8CF2",
+  "#FF9EC6",
+];
 
 let motionReduced = false;
 export function setMotionReduced(value: boolean): void {
@@ -22,9 +29,13 @@ export function confettiBurst(container: HTMLElement, count = 36): void {
     const piece = el("div", { className: "confetti-piece" });
     piece.style.left = `${Math.random() * 100}%`;
     piece.style.top = "-3%";
-    piece.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length] ?? "#FFD35C";
+    piece.style.background =
+      CONFETTI_COLORS[i % CONFETTI_COLORS.length] ?? "#FFD35C";
     piece.style.setProperty("--fall-ms", `${1300 + Math.random() * 1400}ms`);
-    piece.style.setProperty("--spin", `${(Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 540)}deg`);
+    piece.style.setProperty(
+      "--spin",
+      `${(Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 540)}deg`,
+    );
     piece.style.animationDelay = `${Math.random() * 350}ms`;
     if (i % 3 === 0) piece.style.borderRadius = "50%";
     container.append(piece);
@@ -32,7 +43,12 @@ export function confettiBurst(container: HTMLElement, count = 36): void {
   }
 }
 
-export function sparklesAt(container: HTMLElement, x: number, y: number, count = 8): void {
+export function sparklesAt(
+  container: HTMLElement,
+  x: number,
+  y: number,
+  count = 8,
+): void {
   if (motionReduced) return;
   for (let i = 0; i < count; i += 1) {
     const star = svgEl(
@@ -48,7 +64,6 @@ export function sparklesAt(container: HTMLElement, x: number, y: number, count =
   }
 }
 
-/** Laudă text mare + sunet; verbal opțional. */
 export async function praise(
   container: HTMLElement,
   opts: { text?: string; voice?: boolean; win?: boolean } = {},
@@ -58,17 +73,22 @@ export async function praise(
     (opts.win
       ? "Ai găsit soluția din prima!"
       : "Ai continuat cu răbdare și ai reușit!");
+  const cueId = opts.win ? "praise-first-try" : "praise-persistence";
   const overlay = el("div", { className: "praise-overlay" });
   overlay.append(el("div", { className: "praise-text" }, text));
   container.append(overlay);
   if (opts.win) sfxWin();
   else sfxSuccess();
-  if (opts.voice !== false) speak(text, { rate: 1 });
-  await wait(motionReduced ? 500 : 1500);
+
+  await Promise.all([
+    opts.voice === false
+      ? Promise.resolve()
+      : speakCueAndWait(cueId, text, { rate: 1 }),
+    wait(motionReduced ? 500 : 1500),
+  ]);
   overlay.remove();
 }
 
-/** Feedback blând pentru greșeală — niciodată pedepsitor. */
 export function gentleNo(card?: HTMLElement | null): void {
   sfxGentleNo();
   if (card) {
@@ -82,7 +102,10 @@ export function gentleNo(card?: HTMLElement | null): void {
 export function markCorrect(card: HTMLElement): void {
   card.classList.add("correct-flash");
   const rect = card.getBoundingClientRect();
-  const parent = card.offsetParent instanceof HTMLElement ? card.offsetParent : card.parentElement;
+  const parent =
+    card.offsetParent instanceof HTMLElement
+      ? card.offsetParent
+      : card.parentElement;
   if (parent) {
     const parentRect = parent.getBoundingClientRect();
     sparklesAt(
@@ -99,7 +122,6 @@ export function showHintGlow(card: HTMLElement): void {
   setTimeout(() => card.classList.remove("hint-glow"), 2700);
 }
 
-/** Gelatină pe un element (retriggerabil). */
 export function jelly(node: HTMLElement): void {
   node.classList.remove("lll-jelly");
   void node.offsetWidth;
@@ -107,7 +129,6 @@ export function jelly(node: HTMLElement): void {
   setTimeout(() => node.classList.remove("lll-jelly"), 620);
 }
 
-/** Particule colorate care urcă dintr-un punct (steluțe/buline). */
 export function particlesAt(
   container: HTMLElement,
   x: number,
@@ -119,14 +140,17 @@ export function particlesAt(
   const colors = ["#FFD35C", "#FF9EC6", "#7FC86B", "#4FA8E8", "#9B8CF2"];
   for (let i = 0; i < count; i += 1) {
     const p = opts.hearts
-      ? svgEl(`<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 21 C 4 14 1 9 1 6 C 1 2.5 4 1 6.5 1 C 8.5 1 10.5 2.5 12 5 C 13.5 2.5 15.5 1 17.5 1 C 20 1 23 2.5 23 6 C 23 9 20 14 12 21 Z" fill="${colors[i % colors.length]}"/></svg>`)
+      ? svgEl(
+          `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 21 C4 14 1 9 1 6 C1 2.5 4 1 6.5 1 C8.5 1 10.5 2.5 12 5 C13.5 2.5 15.5 1 17.5 1 C20 1 23 2.5 23 6 C23 9 20 14 12 21 Z" fill="${colors[i % colors.length]}"/></svg>`,
+        )
       : el("div", {});
     if (!opts.hearts) {
       const size = 8 + Math.random() * 8;
       p.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:${colors[i % colors.length]};`;
     }
     p.classList.add("lll-particle");
-    const angle = (i / count) * Math.PI - Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+    const angle =
+      (i / count) * Math.PI - Math.PI / 2 + (Math.random() - 0.5) * 0.5;
     const dist = 30 + Math.random() * 50;
     p.style.left = `${x + Math.cos(angle) * dist - 10}px`;
     p.style.top = `${y + Math.sin(angle) * dist * 0.4 - 10}px`;
@@ -136,7 +160,6 @@ export function particlesAt(
   }
 }
 
-/** Obiectul corect prinde viață: dansează; sunetul lui îl redă jocul. */
 export function danceItem(node: HTMLElement): void {
   node.classList.remove("lll-dance");
   void node.offsetWidth;
@@ -144,11 +167,10 @@ export function danceItem(node: HTMLElement): void {
   setTimeout(() => node.classList.remove("lll-dance"), 1700);
 }
 
-/** Mânuță desenată care arată unde să apeși — demonstrații fără citit. */
 export function demoHand(): HTMLElement {
   const hand = svgEl(`
     <svg viewBox="0 0 80 80" width="72" height="72">
-      <path d="M 40 8 Q 46 8 46 16 L 46 34 L 52 30 Q 58 27 60 33 L 66 42 Q 70 48 66 56 Q 60 70 44 70 Q 30 70 24 58 L 16 42 Q 13 36 19 34 Q 24 32 27 38 L 32 46 L 32 16 Q 32 8 40 8 Z"
+      <path d="M40 8 Q46 8 46 16 L46 34 L52 30 Q58 27 60 33 L66 42 Q70 48 66 56 Q60 70 44 70 Q30 70 24 58 L16 42 Q13 36 19 34 Q24 32 27 38 L32 46 L32 16 Q32 8 40 8 Z"
         fill="#FFFDF7" stroke="#4A3F35" stroke-width="3.5" stroke-linejoin="round"/>
     </svg>`);
   hand.classList.add("demo-hand");
@@ -156,7 +178,6 @@ export function demoHand(): HTMLElement {
   return hand;
 }
 
-/** Mișcă mânuța peste un element și simulează atingerea. */
 export async function demoTap(
   container: HTMLElement,
   target: HTMLElement,

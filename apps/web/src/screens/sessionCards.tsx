@@ -5,7 +5,11 @@ import { createRoot } from "react-dom/client";
 import { registerScreenCleanup, showScreen } from "../app/router";
 import { drawLumi } from "../art/lumi";
 import { meadowScene, nightScene } from "../art/scenery";
-import { speak } from "../audio/speech";
+import {
+  speakAndWait,
+  speakCueAndWait,
+  stopSpeaking,
+} from "../audio/speech";
 import { sfxSessionEnd } from "../audio/sfx";
 
 function Artwork({
@@ -38,12 +42,15 @@ function mountReactScreen(
   return screen;
 }
 
-/** Card de co-play / transfer în lumea reală, după un joc. */
 export async function showCoPlayCard(prompt: string): Promise<void> {
   let resolveDone: () => void = () => undefined;
   const done = new Promise<void>((resolve) => {
     resolveDone = resolve;
   });
+  const finish = () => {
+    stopSpeaking();
+    resolveDone();
+  };
 
   await showScreen(() =>
     mountReactScreen(
@@ -70,7 +77,7 @@ export async function showCoPlayCard(prompt: string): Promise<void> {
             <button
               type="button"
               className="btn-big green session-card-button"
-              onClick={resolveDone}
+              onClick={finish}
             >
               Am făcut-o!
             </button>
@@ -79,16 +86,19 @@ export async function showCoPlayCard(prompt: string): Promise<void> {
       </>,
     ),
   );
-  speak(prompt);
+  void speakAndWait(prompt);
   await done;
 }
 
-/** Final calm; callback-ul persistă sesiunea după ce ecranul este vizibil. */
 export async function showSessionEndCard(onReady: () => void): Promise<void> {
   let resolveDone: () => void = () => undefined;
   const done = new Promise<void>((resolve) => {
     resolveDone = resolve;
   });
+  const finish = () => {
+    stopSpeaking();
+    resolveDone();
+  };
 
   await showScreen(() =>
     mountReactScreen(
@@ -113,14 +123,12 @@ export async function showSessionEndCard(onReady: () => void): Promise<void> {
               <h1 id="session-end-title" className="session-card-title">
                 Gata pentru azi!
               </h1>
-              <p>
-                Lumi se odihnește. Ne jucăm iar mai târziu!
-              </p>
+              <p>Lumi se odihnește. Ne jucăm iar mai târziu!</p>
             </div>
             <button
               type="button"
               className="btn-big blue session-card-button"
-              onClick={resolveDone}
+              onClick={finish}
             >
               Înapoi acasă
             </button>
@@ -130,7 +138,10 @@ export async function showSessionEndCard(onReady: () => void): Promise<void> {
     ),
   );
   sfxSessionEnd();
-  speak("Gata pentru azi! Ai lucrat cu răbdare. Lumi se odihnește acum.");
+  void speakCueAndWait(
+    "session-finished",
+    "Gata pentru azi! Ai lucrat cu răbdare. Lumi se odihnește acum.",
+  );
   onReady();
   await done;
 }

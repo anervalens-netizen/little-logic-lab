@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
+import { expandAudioPrompts } from "./audio-manifest.mjs";
 
 const root = path.resolve(new URL("..", import.meta.url).pathname);
 const dist = path.join(root, "apps/web/dist");
@@ -13,6 +14,12 @@ const releaseIdentityBytes = readFileSync(path.join(dist, "release.json"));
 const releaseIdentity = JSON.parse(releaseIdentityBytes.toString("utf8"));
 const release = JSON.parse(
   readFileSync(path.join(root, "content/p0-release.json"), "utf8"),
+);
+const audioManifest = JSON.parse(
+  readFileSync(path.join(root, "apps/web/src/audio/ro-RO-v1.json"), "utf8"),
+);
+const audioPackDefinitions = JSON.parse(
+  readFileSync(path.join(root, "content/audio-packs.json"), "utf8"),
 );
 const assetFiles = readdirSync(assets);
 const git = (...arguments_) =>
@@ -95,17 +102,33 @@ for (const gameId of release.gameIds) {
   }
 }
 
-const requiredBackgrounds = [
-  "magic-meadow-v1.webp",
-  "moonlit-meadow-v1.webp",
-  "sunset-garden-v1.webp",
-];
-for (const background of requiredBackgrounds) {
-  if (!serviceWorker.includes(`url:"backgrounds/${background}"`)) {
-    throw new Error(`${background}: background is absent from PWA precache.`);
+const allCueIds = expandAudioPrompts(audioManifest).map((prompt) => prompt.id);
+const assignedCueIds = new Set();
+const requiredCueIds = [];
+for (const pack of audioPackDefinitions.packs) {
+  const selected = new Set(pack.includeIds ?? []);
+  for (const prefix of pack.includePrefixes ?? []) {
+    for (const cueId of allCueIds) {
+      if (cueId.startsWith(prefix)) selected.add(cueId);
+    }
+  }
+  if (pack.includeRemaining === true) {
+    for (const cueId of allCueIds) {
+      if (!assignedCueIds.has(cueId)) selected.add(cueId);
+    }
+  }
+  const unique = [...selected].filter((cueId) => !assignedCueIds.has(cueId));
+  unique.forEach((cueId) => assignedCueIds.add(cueId));
+  if (pack.requiredAtStartup === true) requiredCueIds.push(...unique);
+}
+
+for (const cueId of requiredCueIds) {
+  const audioPath = `audio/${audioManifest.version}/${cueId}.mp3`;
+  if (!serviceWorker.includes(audioPath)) {
+    throw new Error(`${audioPath}: required audio is absent from PWA precache.`);
   }
 }
 
 console.log(
-  `Web build valid: ${(initialGzipBytes / 1024).toFixed(2)} KiB initial JS gzip, ${release.gameIds.length} lazy P0 chunks and ${requiredBackgrounds.length} story backgrounds precached, release ${expectedCommit.slice(0, 12)} verified.`,
+  `Web build valid: ${(initialGzipBytes / 1024).toFixed(2)} KiB initial JS gzip, ${release.gameIds.length} lazy P0 chunks and ${requiredCueIds.length} required audio clips precached, release ${expectedCommit.slice(0, 12)} verified.`,
 );

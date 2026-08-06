@@ -1,17 +1,23 @@
-/** Ecranul React de pornire; prima atingere deblochează audio. */
+/** Ecranul React de pornire; prima atingere deblochează audio și build-ul offline. */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { registerScreenCleanup, showScreen } from "../app/router";
+import {
+  closeStartupUpdateBoundary,
+  waitForOfflineReady,
+} from "../app/update";
+import { repairRequiredStartupAudio } from "../app/contentPacks";
 import { drawLumi } from "../art/lumi";
 import { meadowScene } from "../art/scenery";
 import { getAudioContext } from "../audio/audio";
-import { speak } from "../audio/speech";
+import { speakCueAndWait } from "../audio/speech";
 import { showHome } from "./home";
-import { sfxWin } from "../audio/sfx";
+import { sfxTap } from "../audio/sfx";
 import { attachAmbient } from "../ui/ambient";
 
 const START_ICON = `<svg viewBox="0 0 48 48"><path d="M17 11 L39 24 L17 37 Z" fill="#4A3F35"/></svg>`;
+const GREETING = "Salut! Eu sunt Lumi! Hai să ne jucăm împreună!";
 
 function Artwork({
   markup,
@@ -32,6 +38,9 @@ function Artwork({
 function SplashScreen() {
   const started = useRef(false);
   const ambientHost = useRef<HTMLDivElement>(null);
+  const [starting, setStarting] = useState(false);
+  const [repairing, setRepairing] = useState(false);
+  const [offlineIssue, setOfflineIssue] = useState(false);
 
   useEffect(() => {
     const host = ambientHost.current;
@@ -40,17 +49,45 @@ function SplashScreen() {
     return () => host.replaceChildren();
   }, []);
 
-  const start = () => {
+  const start = async () => {
     if (started.current) return;
+    const shouldRepair = offlineIssue;
     started.current = true;
+    setStarting(true);
+    setRepairing(shouldRepair);
+    setOfflineIssue(false);
     getAudioContext();
-    sfxWin();
-    speak("Salut! Eu sunt Lumi! Hai să ne jucăm împreună!");
-    void showHome();
+    sfxTap();
+
+    const greeting = speakCueAndWait("hello-lumi", GREETING);
+    if (shouldRepair) {
+      await repairRequiredStartupAudio().catch(() => false);
+    }
+    const readyOffline = await waitForOfflineReady();
+    await greeting;
+
+    if (!readyOffline) {
+      started.current = false;
+      setStarting(false);
+      setRepairing(false);
+      setOfflineIssue(true);
+      return;
+    }
+    setRepairing(false);
+    closeStartupUpdateBoundary();
+    await showHome();
   };
 
+  const subtitle = starting
+    ? repairing
+      ? "Repar pachetul local pentru folosire fără internet…"
+      : "Pregătesc joaca pentru a funcționa și fără internet…"
+    : offlineIssue
+      ? "Pachetul local este incomplet. Conectează telefonul la internet și încearcă din nou."
+      : "Jocuri logice blânde pentru cei mici";
+
   return (
-    <div className="splash-interaction" onPointerDown={start}>
+    <div className="splash-interaction" onPointerDown={() => void start()}>
       <div
         aria-hidden="true"
         className="splash-scenery"
@@ -66,22 +103,36 @@ function SplashScreen() {
         <section className="splash-brand-card" aria-labelledby="splash-title">
           <div className="splash-lumi-halo" aria-hidden="true" />
           <Artwork
-            markup={drawLumi("happy", 190)}
-            className="splash-lumi lumi happy lll-float"
+            markup={drawLumi(
+              starting ? "think" : offlineIssue ? "sleepy" : "happy",
+              190,
+            )}
+            className={`splash-lumi lumi ${
+              starting ? "think" : offlineIssue ? "sleepy" : "happy"
+            } lll-float`}
           />
           <h1 id="splash-title" className="splash-title">
             Logic Lab
           </h1>
-          <p className="splash-subtitle">
-            Jocuri logice blânde pentru cei mici
+          <p className="splash-subtitle" role="status" aria-live="polite">
+            {subtitle}
           </p>
           <button
             type="button"
             className="btn-big sun splash-start-button pop-in"
-            onClick={start}
+            disabled={starting}
+            onClick={() => void start()}
           >
             <Artwork markup={START_ICON} className="splash-start-icon" />
-            <span>Atinge și joacă-te!</span>
+            <span>
+              {starting
+                ? repairing
+                  ? "REPAR…"
+                  : "PREGĂTESC…"
+                : offlineIssue
+                  ? "REPARĂ ȘI ÎNCEARCĂ DIN NOU"
+                  : "Atinge și joacă-te!"}
+            </span>
           </button>
         </section>
       </div>

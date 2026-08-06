@@ -1,7 +1,19 @@
-/** Stare globală: profil + aplicarea setărilor în subsisteme. */
+/** Stare globală: profil, persistență durabilă și aplicarea setărilor. */
 
 import type { StoredProfile, StoredAttempt } from "./storage";
-import { loadProfile, saveProfile, defaultProfile, wipeProfile } from "./storage";
+import { loadProfile, defaultProfile, wipeProfile } from "./storage";
+import { sanitizeProfile } from "./profileSanitizer";
+import {
+  clearEmergencyProfileSnapshot,
+  readEmergencyProfileSnapshot,
+  writeEmergencyProfileSnapshot,
+} from "./emergencyProfile";
+import {
+  flushProfileWrites,
+  profileStorageHealth,
+  queueProfileSave,
+  resetProfileStorageHealth,
+} from "./durableProfile";
 import { setAudioEnabled } from "../audio/audio";
 import { setVoiceEnabled } from "../audio/speech";
 import { setMotionReduced } from "../ui/feedback";
@@ -15,10 +27,45 @@ import {
   type AttemptOutcome,
 } from "@core";
 
+const PROFILE_BOOTSTRAP_TIMEOUT_MS = 10_000;
+
+export type StoredAttemptWithEvidence = StoredAttempt & {
+  readonly responseMs?: number;
+};
+
 let profile: StoredProfile = defaultProfile();
+let profileRepairs: readonly string[] = [];
+
+async function loadProfileWithTimeout(): Promise<StoredProfile> {
+  let timeout = 0;
+  try {
+    return await Promise.race([
+      loadProfile(),
+      new Promise<never>((_, reject) => {
+        timeout = window.setTimeout(
+          () => reject(new Error("Local profile bootstrap timed out")),
+          PROFILE_BOOTSTRAP_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
 
 export async function initializeProfile(): Promise<void> {
-  profile = await loadProfile();
+  const emergency = readEmergencyProfileSnapshot();
+  const loaded = emergency ?? (await loadProfileWithTimeout());
+  const repaired = sanitizeProfile(loaded);
+  profile = repaired.profile;
+  profileRepairs = repaired.repairs;
+
+  // Un snapshot de urgență reprezintă o mutație care nu a primit confirmarea
+  // IndexedDB înaintea închiderii. Îl confirmăm înainte de bootstrap-ul UI.
+  if (emergency !== null || profileRepairs.length > 0) {
+    queueProfileSave(profile);
+    await flushProfileWrites().catch(() => undefined);
+  }
 }
 
 export interface AttemptMetadata {
@@ -32,14 +79,36 @@ export function getProfile(): StoredProfile {
   return profile;
 }
 
+export function getProfileRepairSummary(): readonly string[] {
+  return [...profileRepairs];
+}
+
 export function persist(): void {
-  saveProfile(profile);
+  queueProfileSave(profile);
+}
+
+/** Limită sincronă pentru pagehide/freeze; nu așteaptă IndexedDB. */
+export function checkpointProfileSynchronously(): void {
+  writeEmergencyProfileSnapshot(profile);
+}
+
+export async function flushPendingProfileWrites(): Promise<void> {
+  await flushProfileWrites();
+}
+
+export function getProfileStorageHealth() {
+  return profileStorageHealth();
 }
 
 export async function resetProfile(): Promise<void> {
+  await flushProfileWrites().catch(() => undefined);
   await wipeProfile();
+  clearEmergencyProfileSnapshot();
+  resetProfileStorageHealth();
+  profileRepairs = [];
   profile = defaultProfile(profile.ageMonths);
   persist();
+  await flushProfileWrites();
   applySettings();
 }
 
@@ -49,7 +118,6 @@ export function updateSettings(patch: Partial<StoredProfile["settings"]>): void 
   applySettings();
 }
 
-/** Deblocarea unei sesiuni noi este disponibilă exclusiv din Parent Mode. */
 export function unlockSession(): void {
   if (!profile.sessionLocked) return;
   profile = { ...profile, sessionLocked: false };
@@ -84,7 +152,6 @@ function masteryFromStored(
   };
 }
 
-/** Înregistrează o încercare: mastery (din core), jurnal, istoric per joc. */
 export function recordAttempt(
   gameId: string,
   skillId: string,
@@ -92,7 +159,7 @@ export function recordAttempt(
   metadata: AttemptMetadata,
 ): void {
   const atLocal = new Date().toISOString();
-  const attempt: StoredAttempt = {
+  const attempt: StoredAttemptWithEvidence = {
     atLocal,
     ...metadata,
     gameId,
@@ -103,13 +170,15 @@ export function recordAttempt(
     hintsUsed: outcome.hintsUsed,
     wrongAttempts: outcome.wrongAttempts,
     abandoned: outcome.abandoned ?? false,
+    ...(outcome.responseMs === undefined
+      ? {}
+      : { responseMs: Math.max(0, Math.round(outcome.responseMs)) }),
   };
 
   const current = masteryFromStored(profile.masteryBySkill[skillId]);
   const next = updateMastery(current, outcome, atLocal);
-
   const existing = profile.progressByGame[gameId];
-  const recentOutcomes = [...(existing?.recentOutcomes ?? []), attempt].slice(-6);
+  const recentOutcomes = [...(existing?.recentOutcomes ?? []), attempt].slice(-8);
 
   profile = {
     ...profile,
@@ -130,7 +199,7 @@ export function recordAttempt(
         timesPlayed: (existing?.timesPlayed ?? 0) + 1,
       },
     },
-    attempts: [...profile.attempts, attempt].slice(-400),
+    attempts: [...profile.attempts, attempt].slice(-500),
   };
   persist();
 }

@@ -8,7 +8,7 @@ import {
 } from "@core";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { clear, wait } from "../ui/dom";
-import { speak } from "../audio/speech";
+import { waitForSpeechIdle } from "../audio/speech";
 import { sfxGo, sfxGentleNo } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { drawItem } from "../art/items";
@@ -80,12 +80,14 @@ export const waitForGoGame: WebGame = {
     );
     let state = initializeGoNoGo(level.payload.trials);
 
-    speak(
-      ruleComplexity === 2
-        ? "Atinge soarele sau verdele! La lună sau roșu, așteaptă!"
-        : "Atinge SOARELE! La LUNĂ, așteaptă!",
-    );
-    await wait(ctx.reducedMotion ? 500 : 1_000);
+    await Promise.all([
+      ctx.speak(
+        ruleComplexity === 2
+          ? "Atinge soarele sau verdele! La lună sau roșu, așteaptă!"
+          : "Atinge SOARELE! La LUNĂ, așteaptă!",
+      ),
+      wait(ctx.reducedMotion ? 500 : 1_000),
+    ]);
 
     for (
       let index = 0;
@@ -98,13 +100,18 @@ export const waitForGoGame: WebGame = {
       clear(ctx.mount);
       const isGo = trial.expectedAction === "tap";
       const reversed =
-        ruleComplexity === 3 && index >= Math.floor(level.payload.trials.length / 2);
+        ruleComplexity === 3 &&
+        index >= Math.floor(level.payload.trials.length / 2);
       if (
         ruleComplexity === 3 &&
         index === Math.floor(level.payload.trials.length / 2)
       ) {
-        speak("Schimbăm regula! Acum atinge luna și așteaptă la soare!");
-        await wait(ctx.reducedMotion ? 650 : 1_350);
+        await Promise.all([
+          ctx.speak(
+            "Schimbăm regula! Acum atinge luna și așteaptă la soare!",
+          ),
+          wait(ctx.reducedMotion ? 650 : 1_350),
+        ]);
       }
       if (signalDelayMs > 0) {
         await wait(signalDelayMs);
@@ -174,7 +181,12 @@ export const waitForGoGame: WebGame = {
       if (isGo) {
         sfxGo();
       } else {
-        speak("Așteaptă!", { rate: 1.05 });
+        // Copilul trebuie să poată apăsa în timpul promptului; altfel trialul
+        // no-go ar fi blocat artificial și nu ar mai măsura inhibiția.
+        void ctx.speak("Așteaptă!", {
+          rate: 1.05,
+          blockInput: false,
+        });
       }
       timeout = window.setTimeout(
         () => finishTrial("wait"),
@@ -185,6 +197,8 @@ export const waitForGoGame: WebGame = {
       }, 100);
 
       const observed = await observedResult;
+      if (observed === "tap") ctx.hush();
+      else await waitForSpeechIdle();
       scene.destroy();
       state = reduceGoNoGo(state, {
         type: "resolve_trial",
@@ -194,12 +208,12 @@ export const waitForGoGame: WebGame = {
       if (observed !== trial.expectedAction) {
         if (observed === "tap") {
           sfxGentleNo();
-          speak("La lună așteptăm!", { rate: 1 });
+          await ctx.speak("La lună așteptăm!", { rate: 1 });
         } else {
-          speak("Când vezi soarele, atinge-l!", { rate: 1 });
+          await ctx.speak("Când vezi soarele, atinge-l!", { rate: 1 });
         }
       } else if (!isGo) {
-        speak("Ai așteptat. Bravo!", { rate: 1 });
+        await ctx.speak("Ai așteptat. Bravo!", { rate: 1 });
       }
       await wait(ctx.reducedMotion ? 120 : 360);
     }

@@ -1,67 +1,82 @@
-# Technical architecture
+# Arhitectura tehnică V2
 
-## Decision summary
+Status: activ pe `agent/v2-runtime-reboot`  
+Actualizat: 27 iulie 2026
 
-Use a web/PWA-first application with a React semantic shell and PixiJS game
-scenes. Keep learning logic in a pure TypeScript package and render games
-through plugins. TypeScript 7 is the workspace compiler.
+## 1. Decizie
 
-The system is offline-first and has no runtime backend in v1.
+Aplicația rămâne web/PWA-first, cu React pentru shell și semantică, PixiJS pentru
+scene interactive și `@little-logic-lab/core` pentru logica pedagogică pură.
+Nu există backend în runtime, cont, sincronizare cloud sau analytics.
 
-Topologia publică actuală este Cloudflare Tunnel → Caddy static →
-`/opt/websites/logic-lab/dist`; Cloudflare Pages rămâne opțional, fără schimbări
-în artefactul PWA.
+V2 schimbă în principal trei zone:
 
-## Layering
+- pregătirea offline devine o poartă explicită înainte de Child Mode;
+- vocea este bufferizată și controlează timeline-ul rundelor;
+- primele trei jocuri formează golden slice-ul produsului și sunt dezvoltate
+  înaintea extinderii catalogului.
+
+Decizia detaliată este în
+`docs/decisions/2026-07-27-v2-runtime-reboot.md`.
+
+## 2. Stratificare
 
 ```text
-┌──────────────────────────────────────────────┐
-│ React web shell                              │
-│ child home · session · parent gate · settings│
-├──────────────────────────────────────────────┤
-│ Game renderers                               │
-│ PixiJS WebGL + accessible DOM overlay        │
-├──────────────────────────────────────────────┤
-│ Game runtime                                 │
-│ plugin state machines · hints · evaluation   │
-├──────────────────────────────────────────────┤
-│ @little-logic-lab/core                       │
-│ generation · mastery · adaptation · scheduler│
-├──────────────────────────────────────────────┤
-│ Content                                      │
-│ JSON catalog · presets · assets · audio      │
-├──────────────────────────────────────────────┤
-│ Local platform services                      │
-│ IndexedDB · bundled audio · PWA cache         │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ React application shell                              │
+│ Splash · Home · Session · Parent Mode · settings    │
+├──────────────────────────────────────────────────────┤
+│ Round/runtime orchestration                          │
+│ prepare · speech · demo · input · feedback · cleanup│
+├──────────────────────────────────────────────────────┤
+│ Game renderers                                       │
+│ PixiJS/WebGL + DOM accessibility overlay             │
+├──────────────────────────────────────────────────────┤
+│ Game plugins                                         │
+│ generate · initialize · reduce · evaluate · hint     │
+├──────────────────────────────────────────────────────┤
+│ @little-logic-lab/core                               │
+│ generators · mastery · adaptation · scheduler        │
+├──────────────────────────────────────────────────────┤
+│ Local platform services                              │
+│ IndexedDB · audio buffers · Cache Storage · SW       │
+├──────────────────────────────────────────────────────┤
+│ Bundled content                                      │
+│ catalog · ladders · illustrations · Romanian audio   │
+└──────────────────────────────────────────────────────┘
 ```
 
-Dependencies point downward. The core package never imports React, PixiJS,
-IndexedDB or browser APIs.
+Dependențele merg în jos. Core-ul nu importă React, PixiJS, IndexedDB, Web Audio
+sau alte API-uri de browser.
 
-## Suggested monorepo target
+## 3. Structura curentă
 
 ```text
 apps/web/
-packages/core/
-packages/game-runtime/
-packages/game-renderers/
-packages/content/
-packages/storage/
-packages/testing/
+  src/
+    app/                 profil, sesiuni, offline/update
+    audio/               buses, buffering, speech manifest
+    games/               plugins și runtime-uri comune
+    runtime/             scene Pixi, lifecycle, diagnostics
+    screens/             Splash, Home, joc, Parent Mode
+    ui/                  input, feedback, timing comun
+    generated/           registry și manifesturi tipizate
+    art/                 asset-uri procedurale existente
+    v2.css               stratul vizual nou
+packages/core/           logică pură și deterministă
+content/                 catalog, ladder-e și release manifests
+schemas/                 contracte de date
+scripts/                 generare și quality gates
+tests/web/               Playwright, Axe, vizual, performanță
 ```
 
-Implementarea curentă are `apps/web`, `packages/core`, un manifest P0 și un
-registry TypeScript generate din catalog + `content/p0-release.json`.
-Implementările jocurilor și runtime-urile Pixi sunt lazy-loaded; home încarcă
-numai jocurile deblocate. Parent Mode și orchestratorul sesiunii sunt de
-asemenea importuri dinamice, încărcate numai după acțiunea utilizatorului;
-build-ul verifică precache-ul fiecărui chunk de joc.
-Pachetele separate se extrag numai când al doilea consumator justifică granița.
+Pachete precum `game-runtime`, `game-renderers`, `content` sau `storage` se extrag
+numai când există mai mult de un consumator real. Nu se fragmentează monorepo-ul
+doar pentru simetrie arhitecturală.
 
-## Game plugin contract
+## 4. Contractul jocului
 
-Every game family maps to an archetype plugin:
+Fiecare familie se bazează pe un plugin determinist:
 
 ```ts
 interface GamePlugin<TConfig, TState, TAction, TPayload> {
@@ -74,154 +89,205 @@ interface GamePlugin<TConfig, TState, TAction, TPayload> {
 }
 ```
 
-Responsibilities:
+Responsabilități:
 
-- `generate`: creates a solvable level;
-- `initialize`: starts a serializable state machine;
-- `reduce`: processes child actions;
-- `evaluate`: reports task-specific correctness;
-- `getHint`: provides graded support;
-- renderer: presents state and emits actions only.
+- generatorul creează un nivel rezolvabil și replayable;
+- reducerul decide corectitudinea;
+- rendererul prezintă starea și emite acțiuni;
+- coordonatele, tween-urile și callback-urile vizuale nu decid mastery;
+- persistarea nu conține decizii pedagogice.
 
-Correctness must never be calculated from animation callbacks or UI coordinates.
+## 5. Timeline-ul unei runde
 
-## Runtime state machine
-
-Recommended common states:
+Ținta V2 este o mașină de stări comună:
 
 ```text
-loading
-→ demonstration
-→ ready
-→ playing
-→ feedback
-→ hint
-→ simplified
-→ completed
-→ transfer_prompt
-→ closed
+PREPARE
+  → INSTRUCTION
+  → DEMONSTRATION
+  → INPUT
+  → FEEDBACK
+  → TRANSITION
 ```
 
-Any state can transition to `closed` through parent stop, session limit or distress.
+Orice fază poate trece la `CANCELLED` prin Home, limita sesiunii sau întreruperea
+aplicației.
 
-## Rendering strategy
+Implementarea branch-ului V2 este o etapă intermediară:
 
-Use React/DOM for:
+- `GameContext.speak()` este awaitable;
+- `speakAndWait()` se rezolvă la finalul real al clipului;
+- `wait()` păstrează durata vizuală minimă, dar așteaptă și vocea activă;
+- `data-game-ready="true"` trebuie să apară numai după terminarea instrucțiunii;
+- o replică nouă invalidează complet replica veche;
+- cleanup-ul oprește vocea și eliberează scena.
 
-- navigation;
-- buttons;
-- shell-ul comun al jocurilor și lifecycle-ul controalelor;
-- parent mode;
-- textual settings;
-- accessibility semantics;
-- simple card grids and sorting.
+R2 din roadmap va extrage explicit `RoundTimeline` și va elimina semantica de
+tranziție rămasă în timeout-uri locale.
 
-Use PixiJS with the production WebGL renderer for:
+## 6. Arhitectura audio
 
-- animated 2D scenes;
-- paths, tracing and mazes;
-- drag-heavy shape puzzles;
-- controlled particle or character animation.
+```text
+Romanian text / stable prompt ID
+            │
+            ▼
+     speech manifest
+            │
+            ▼
+fetch local asset → decodeAudioData → AudioBuffer cache
+            │
+            ▼
+       voice bus ───────────────┐
+                                ├─ output → device
+Web Audio SFX → SFX bus ────────┘
+                   ▲
+                   └─ ducked while voice is active
+```
 
-Keep an accessible DOM overlay for every actionable canvas object. Do not
-sacrifice VoiceOver/TalkBack for visual convenience.
+Reguli:
 
-Nivelurile consecutive din același joc reutilizează un singur shell React și
-un singur `Application` Pixi/WebGL per host. Fiecare scenă își elimină copiii,
-listenerii, ticker callbacks și lease-urile la final; contextul GPU este distrus
-definitiv când shell-ul părăsește ecranul.
+- nu se folosește `new Audio()` pentru vocea copilului;
+- poate exista maximum un clip verbal activ;
+- clipurile apropiate se preîncarcă, nu întregul catalog în memoria RAM;
+- vocea și SFX au magistrale separate;
+- SFX sunt reduse în timpul vocii;
+- lipsa unui clip păstrează demonstrația vizuală și nu produce request remote;
+- vocile procedurale ale animalelor și obiectelor sunt dezactivate;
+- viitorul pachet Higgs este generat offline și schimbă asset-urile, nu runtime-ul.
 
-## State management
+Identificarea curentă prin text exact este tranzitorie. R5 va introduce ID-uri
+stabile, durată, hash și audit auditiv per clip.
 
-Prefer small explicit stores:
+## 7. Pornirea offline
 
-- session state;
-- local profile/settings;
-- game runtime state;
-- content registry.
+Fluxul de producție:
 
-Avoid a global store that mixes animation state, persistence and pedagogy. The game reducer should be testable as a pure function.
+```text
+bootstrap
+  → register service worker
+  → navigator.serviceWorker.ready
+  → page controlled by service worker
+  → /release.json found in Cache Storage
+  → data-offline-state="ready"
+  → Child Home
+```
 
-## Persistence
+Dacă browserul refuză service worker-ul, există timeout și aplicația poate rămâne
+utilizabilă online, dar starea devine `unavailable`. Child Mode nu trebuie să
+prezinte drept instalat un joc al cărui pachet nu este disponibil local.
 
-Modelul R1 curent:
+Build-ul actual precache-uiește toate MP3-urile. Aceasta asigură offline complet,
+dar poate încetini prima instalare. R1 măsoară costul real și poate separa shell,
+pachet P0 și pachete opționale instalate numai din Parent Mode.
+
+## 8. Rendering și lifecycle
+
+React/DOM:
+
+- navigație și ecrane;
+- Parent Mode;
+- controale semantice;
+- accessibility overlays;
+- layout și feedback textual.
+
+PixiJS/WebGL:
+
+- scene interactive;
+- drag, snap, trace, reorder;
+- mișcare contextuală;
+- particule controlate.
+
+Nivelurile consecutive pot reutiliza același `Application` Pixi pe același host.
+Fiecare scenă trebuie să elimine:
+
+- copii din stage;
+- listeneri pointer;
+- callback-uri ticker;
+- timere și tweens;
+- DOM overlay;
+- lease-uri pentru texturi;
+- audio activ.
+
+La ieșirea din shell, contextul GPU este distrus. După cinci cicluri complete,
+diagnostics trebuie să revină la zero.
+
+## 9. Persistență
 
 ```text
 IndexedDB: minte-in-joaca / profiles
-  current          -> snapshot schema v4 + session lock + accessibility
-  recovery-latest  -> ultimul payload invalid, păstrat pentru recovery
+  current          → snapshot schema v4
+  recovery-latest  → ultimul payload invalid pentru recovery
 ```
 
-IndexedDB characteristics:
+Caracteristici:
 
-- stare sincronă în memorie și scrieri IndexedDB serializate;
-- migrare automată din `localStorage` v1/v2, apoi eliminarea cheilor vechi;
-- migrare fără pierderi din snapshot-urile IndexedDB v2/v3 la v4;
-- fallback local numai când IndexedDB nu este disponibil;
-- schema migrations are versioned and tested;
-- delete/export from parent mode;
-- optional display name only;
-- no cloud identifier;
-- no exact date of birth required; birth month/year is optional and local.
-- o sesiune încheiată setează persistent `sessionLocked`; numai Parent Mode îl
-  poate elimina pentru a permite o sesiune nouă.
-- setările v4 persistă Reduced Motion, contrast ridicat, ținte
-  `large`/`extra_large` și demonstrații `normal`/`slow`.
+- stare sincronă în memorie și scrieri serializate;
+- migrare din localStorage și snapshot-uri v2/v3;
+- recovery fără pierderea setărilor;
+- export și delete în Parent Mode;
+- nume opțional, numai local;
+- fără identificator cloud sau dată exactă obligatorie;
+- `sessionLocked` persistent, eliminat numai din Parent Mode;
+- setări locale pentru Reduced Motion, contrast, ținte și viteza demonstrației.
 
-## Content pipeline
+Datele pedagogice rămân locale. Coordonatele brute, audio-ul și identificatorii
+externi nu se persistă.
 
-1. Author or edit a game definition.
-2. Add the implementation to the release order when it becomes eligible.
-3. Generate the typed lazy registry, compact ladder manifest and typed item
-   manifest from `content/themes/p0-items.json`.
-4. Validate against JSON Schema.
-5. Validate age-band axes and guardrails.
-6. Generate deterministic preview levels.
-7. Run solvability/property tests.
-8. Review Romanian copy/audio.
-9. Bundle approved content and precache every lazy chunk.
+## 10. Content pipeline
 
-Content updates in v1 ship through normal app releases. Avoid remote configuration or OTA content until privacy implications are reviewed.
+1. Editează definiția jocului sau asset manifestul.
+2. Generează ladder-ele și registry-ul tipizat.
+3. Validează JSON Schema și guardrail-urile de vârstă.
+4. Generează preview-uri deterministe.
+5. Rulează teste de solvabilitate/property.
+6. Verifică implementarea rendererului.
+7. Revizuiește copy-ul și audio-ul românesc.
+8. Bundle-uiește asset-urile aprobate.
+9. Verifică precache-ul și identitatea release-ului.
+10. Testează pe dispozitiv și în airplane mode.
 
-## Audio and assets
+Nu se folosește remote configuration sau OTA content în Child Mode.
 
-- Bundle all child-facing assets.
-- `content/themes/p0-items.json` is the source of truth for the 36 procedural
-  item IDs, Romanian labels, categories, colors and recoloring capability.
-- `apps/web/src/art/items.ts` owns drawing functions only; TypeScript requires
-  one renderer for every generated item ID.
-- Prefer recorded Romanian narration by a consistent adult voice.
-- Keep prompts short and replayable.
-- Use asset manifests with stable IDs.
-- Do not use remote image URLs.
-- Avoid copyrighted characters or third-party art without licenses.
+## 11. Stack curent
 
-## Stack
+- TypeScript 7 strict;
+- React 19.2.8;
+- PixiJS 8.19.0/WebGL;
+- Vite 8;
+- `idb` 8.0.3;
+- Workbox prin `vite-plugin-pwa`;
+- Web Audio cu voice/SFX buses;
+- Playwright 1.62, Axe și teste Node/property;
+- Cloudflare Tunnel + Caddy pentru livrare statică.
 
-- TypeScript 7 native in strict mode.
-- React 19.2.8 for shell and semantic UI.
-- PixiJS 8.19.0/WebGL for game scenes and controlled motion.
-- IndexedDB prin `idb` 8.0.3, cu repository și migrări versionate.
-- Bundled Romanian audio plus Web Audio.
-- JSON Schema/Zod at boundaries.
-- Node/Vitest/property tests and Playwright for critical flows.
-- Vite 8, Cloudflare Tunnel and Caddy for static delivery.
+Un eventual wrapper Capacitor/TWA poate împacheta aceeași aplicație numai după
+închiderea porților PWA. Nu poate duplica logica sau adăuga permisiuni inutile.
 
-Exact versions and rationale are in ADR 005.
+## 12. Failure modes
 
-## Security boundaries
+- Cache incomplet: păstrează Splash în pregătire, apoi raportează starea corectă.
+- Asset audio lipsă: continuă vizual, fără serviciu remote.
+- Redare întreruptă: generația veche nu poate avansa runda.
+- IndexedDB corupt: recovery și explicație în Parent Mode.
+- Content invalid: nu afișa nivelul.
+- Eroare Pixi: logica pură rămâne validă și resursele sunt eliberate.
+- App suspendată: oprește buclele vizuale și revino la o singură scenă.
+- Update disponibil: aplică numai la limita sigură a sesiunii.
 
-- Child mode has no links, purchases, permission prompts or settings.
-- Parent mode is behind an adult-level gate.
-- Network calls are absent in production code.
-- A CI rule should scan dependencies and permissions.
-- Release testing includes airplane mode and packet inspection.
-- Debug logging contains no child name or free text.
+## 13. Porți de validare
 
-## Failure modes
+Branch-ul V2 a fost scris prin conexiune GitHub și nu este considerat compilat
+până la execuția pe server:
 
-- Corrupt local DB: preserve settings if possible, reset progress only with parent explanation.
-- Invalid content: quarantine definition; never show an unsolvable level.
-- Missing audio: show visual demonstration; do not crash.
-- Animation failure: game logic remains operable.
-- App interrupted: resume at session boundary, not mid-feedback loop.
+```bash
+npm run check:v2-runtime
+npm test
+npm run typecheck
+npm run build:web
+npm run test:web -- --project chromium-touch
+npm run test:web -- --project webkit-touch
+```
+
+Urmează verificare reală pe Android, airplane mode, suspend/resume,
+TalkBack/VoiceOver și observație copil–adult. Criteriile complete sunt în
+`docs/12-roadmap.md`.

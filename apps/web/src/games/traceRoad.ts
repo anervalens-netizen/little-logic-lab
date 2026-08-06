@@ -10,7 +10,7 @@ import {
 } from "@core";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { clear, wait } from "../ui/dom";
-import { speak } from "../audio/speech";
+import { waitForSpeechBoundary } from "../audio/speech";
 import { sfxTap } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { drawItem } from "../art/items";
@@ -90,8 +90,8 @@ export const traceRoadGame: WebGame = {
       "../runtime/pixiTraceScene"
     );
     let settled = false;
+    let inputReady = false;
     let cancelWatch: number | null = null;
-    let completionTimer: number | null = null;
     let resolveResult: (result: PlayResult) => void = () => undefined;
     const result = new Promise<PlayResult>((resolve) => {
       resolveResult = resolve;
@@ -99,8 +99,8 @@ export const traceRoadGame: WebGame = {
     const finish = (outcome: PlayResult) => {
       if (settled) return;
       settled = true;
+      inputReady = false;
       if (cancelWatch !== null) window.clearInterval(cancelWatch);
-      if (completionTimer !== null) window.clearTimeout(completionTimer);
       resolveResult(outcome);
     };
 
@@ -112,7 +112,7 @@ export const traceRoadGame: WebGame = {
       goalSvg: drawItem("house"),
       reducedMotion: ctx.reducedMotion,
       onAdvance(pointIndex) {
-        if (settled) return false;
+        if (!inputReady || settled) return false;
         const before = state;
         state = reduceMaze(state, {
           type: "move_to",
@@ -121,30 +121,30 @@ export const traceRoadGame: WebGame = {
         if (state === before || state.pathIndex !== pointIndex) return false;
         sfxTap();
         if (state.completed) {
-          speak("Acasă! Bravo!");
+          inputReady = false;
+          void ctx.speak("Acasă! Bravo!");
           playItemVoice("rabbit");
-          completionTimer = window.setTimeout(
-            () =>
-              finish({
-                completed: true,
-                correctFirstTry: state.correctFirstTry,
-                correctEventually: true,
-                hintsUsed: state.hintsUsed,
-                wrongAttempts: state.wrongAttempts,
-              }),
-            ctx.reducedMotion ? 300 : 720,
+          void waitForSpeechBoundary(ctx.reducedMotion ? 300 : 720).then(() =>
+            finish({
+              completed: true,
+              correctFirstTry: state.correctFirstTry,
+              correctEventually: true,
+              hintsUsed: state.hintsUsed,
+              wrongAttempts: state.wrongAttempts,
+            }),
           );
         }
         return true;
       },
     });
     ctx.onCleanup(scene.destroy);
-    scene.readyElement.dataset.gameReady = "true";
     scene.readyElement.dataset.tracePoints = String(
       level.payload.points.length,
     );
-    speak("Urmează drumul cu degetul și du iepurașul acasă!");
-    await wait(demonstrationDelay(ctx.reducedMotion ? 350 : 700));
+    await Promise.all([
+      ctx.speak("Urmează drumul cu degetul și du iepurașul acasă!"),
+      wait(demonstrationDelay(ctx.reducedMotion ? 350 : 700)),
+    ]);
     if (ctx.isCancelled()) {
       scene.destroy();
       return {
@@ -157,6 +157,8 @@ export const traceRoadGame: WebGame = {
       };
     }
     if (guideStrength === "full") scene.emphasizeNext();
+    inputReady = true;
+    scene.readyElement.dataset.gameReady = "true";
     cancelWatch = window.setInterval(() => {
       if (!ctx.isCancelled()) return;
       finish({

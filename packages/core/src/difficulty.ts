@@ -11,6 +11,14 @@ function scalarEquals(left: Scalar, right: Scalar): boolean {
   return typeof left === typeof right && left === right;
 }
 
+function usableResponseMs(outcome: AttemptOutcome): number | null {
+  const value = outcome.responseMs;
+  if (value === undefined || !Number.isFinite(value) || value < 0 || value > 60_000) {
+    return null;
+  }
+  return value;
+}
+
 export function recommendDifficultyDirection(
   recentOutcomes: readonly AttemptOutcome[],
 ): -1 | 0 | 1 {
@@ -27,8 +35,20 @@ export function recommendDifficultyDirection(
   const recent = recentOutcomes.slice(-3);
   const anyDistress = recent.some((outcome) => outcome.distressSignal === true);
   const highHintLoad = recent.reduce((sum, outcome) => sum + outcome.hintsUsed, 0) >= 3;
+  const responseSamples = recent
+    .map(usableResponseMs)
+    .filter((value): value is number => value !== null);
+  const slowResponseCount = responseSamples.filter((value) => value >= 12_000).length;
 
-  if (anyDistress || average < 0.45 || highHintLoad) {
+  // Latența singură nu scade dificultatea. Devine semnal numai împreună cu
+  // dovezi slabe sau sprijin ridicat, pentru a nu confunda ritmul copilului cu
+  // lipsa înțelegerii.
+  if (
+    anyDistress ||
+    average < 0.45 ||
+    highHintLoad ||
+    (slowResponseCount >= 2 && average < 0.65)
+  ) {
     return -1;
   }
 
@@ -38,7 +58,8 @@ export function recommendDifficultyDirection(
       (outcome) =>
         outcome.correctFirstTry &&
         outcome.hintsUsed === 0 &&
-        outcome.wrongAttempts === 0,
+        outcome.wrongAttempts === 0 &&
+        (usableResponseMs(outcome) ?? 0) < 10_000,
     );
 
   return lastThreeStrong && average >= 0.88 ? 1 : 0;

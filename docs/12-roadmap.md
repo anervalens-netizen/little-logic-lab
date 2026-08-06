@@ -1,422 +1,1328 @@
-# Roadmap canonic — „Logic Lab”
+# Roadmap canonic V2 — „Minte în joacă”
 
-Status: activ
+Status: activ — **NO-GO pentru merge, server, pilot sau release**  
+Actualizat: 29 iulie 2026  
+Branch: `agent/v2-runtime-reboot`  
+Bază `main`: `3b8f0c92ec49f1098c262d6ed8abba5970ab1651`  
+Audit autoritativ: `docs/17-final-audit-2026-07-29.md`
 
-Actualizat: 26 iulie 2026
-Țintă: PWA premium, offline-first, pentru aproximativ 30–72 luni
+Acest document este sursa canonică pentru ordinea de dezvoltare, validare și
+livrare. Documentele anterioare rămân istoric și explicație, dar în caz de conflict
+se urmează această ordine:
 
-Acest document este sursa canonică pentru direcția produsului, ordinea
-livrărilor și porțile de acceptare. Arhitectura detaliată este în
-`docs/05-architecture.md`; regulile obligatorii sunt în `AGENTS.md`.
+1. `AGENTS.md` și regulile de siguranță/privacy;
+2. `docs/17-final-audit-2026-07-29.md`;
+3. acest roadmap;
+4. `tasks/20-v2-server-handoff.md`;
+5. ADR-urile și documentele istorice.
 
-## Status de execuție
+---
 
-- R0 engineering: complet; repository privat, TypeScript 7, PWA versionat,
-  replay, age gating, migrare și E2E sunt verificate.
-- R0 release: live la `https://logic-lab.astancu.eu/`; build verificat din `main`
-  este servit static prin Cloudflare Tunnel + Caddy, cu CSP strict.
-- R1: automat complet; React deține Splash, Home, tranzițiile de sesiune,
-  shell-ul și Parent Mode, profilul este în IndexedDB, iar catalogul + ordinea P0
-  generează manifestul compact și
-  registry-ul TypeScript lazy. Cele 36 de ilustrații procedurale originale au
-  manifest canonic, ID-uri tipizate și mapare completă renderer–asset.
-  Parent Mode și orchestratorul sesiunii sunt lazy, iar shell-ul inițial este
-  69,98 KiB gzip, sub bugetul de 100 KiB; toate cele 15 chunk-uri de joc sunt
-  precached, iar scenele Pixi au lifecycle și overlay semantic.
-  Exit-ul de performanță și traversarea semantică asistată TalkBack sunt închise
-  pe OnePlus 6T real; porțile umane rămân.
-- R2: primul pass funcțional există pentru golden slice, iar `drag-and-fit`
-  rulează pe același arhetip `spatial-fit`, inclusiv stage-ul de 10 piese în
-  batch-uri fără canvas rezidual. `shadow-match` reutilizează rendererul
-  `choice`, iar `emotion-match` consumă același renderer cu opt emoții în două
-  perspective vizuale. Familia `sort` folosește batch-uri responsive până la
-  12 obiecte/4 coșuri pentru culoare, formă și mărime. `listen-find` consumă
-  toate cele 16 stage-uri pe rendererul `choice`, cu indiciu audio și replay
-  semantic fără expunerea răspunsului. `one-to-one-count` consumă toate cele
-  19 stage-uri, până la 20 de prieteni, într-un singur context WebGL paginat.
-  `daily-order` consumă toate cele 14 stage-uri, până la șase pași și trei
-  distractori, inclusiv distanța cauzală și suportul verbal. `real-color-hunt`
-  consumă toate cele 13 stage-uri, până la șase misiuni, două reguli și 40 s
-  de memorie, fără punctarea copilului. `peek-and-find` consumă toate cele 22
-  stage-uri, cu nouă locații, întârziere și transformări, ascunzând răspunsul
-  vizual și semantic înainte de alegere. `wait-for-go`
-  consumă toate cele 19 stage-uri, inclusiv semnale întârziate și schimbarea
-  regulii. `trace-road` folosește generator determinist în core și tracking
-  nativ de pointer pe canvas pentru toate cele 17 stage-uri. Toate cele 15
-  familii P0 sunt acum Pixi. 321 clipuri RO locale, Axe și 42 baseline-uri
-  vizuale cu seed și ceas fixe sunt integrate. Feedback-ul implicit descrie
-  strategia/efortul, nu identitatea copilului. Lipsesc revizia umană a vocii,
-  validarea observată și verificarea manuală pe iOS.
-- R3 engineering: complet; 15/15 familii P0 consumă ladder-ele și sunt
-  selectabile direct fără prag de vârstă/mastery. Scheduler-ul adaptează
-  ordinea și dificultatea fără să ascundă jocuri. Finalul de sesiune blochează
-  persistent continuarea în Child Mode. Numai Parent Mode poate permite o
-  sesiune nouă. Pilotul privat rămâne condiționat de porțile externe de mai sus.
-- R3 accessibility automation: complet; profilul local v4 migrează fără
-  pierderi v1/v2/v3 și expune în Parent Mode contrast ridicat, ținte tactile de
-  112 px și demonstrații 1,5× mai lente. Setările au efect în shell, overlay-ul
-  Pixi și timpii explicativi, fără schimbarea dificultății. Parent gate este
-  dialog modal real, captează/restaurează focusul și acceptă apăsare lungă de la
-  pointer sau tastatură; scenele drag expun obiectele înaintea destinațiilor.
-- R3 visual polish: Home a fost migrat din DOM imperativ în React și redesenat
-  responsive pentru un joc, toate cele 15 jocuri și landscape. Acțiunea
-  principală, Lumi și biblioteca formează acum o compoziție unitară, cu motion
-  controlat integral de Reduced Motion. Instrucțiunea dispare înainte de
-  control, astfel încât niciun reflow al shell-ului nu mai poate deplasa
-  canvasul în timpul unui drag. Splash, co-play și finalul calm sunt acum React,
-  folosesc aceeași ierarhie vizuală responsive și trec Axe + baseline-uri
-  Chromium/WebKit; Splash este verificat separat și în landscape 844×390.
-  Parent Mode are acum Rezumat/Setări/Date, progres bazat numai pe dovezi,
-  layout telefon/tabletă și acces direct la reactivarea sesiunii. Shell-ul comun
-  al jocurilor este React, cu timere și cleanup legate de lifecycle, replay
-  semantic pe Lumi și controale statice ale căror animații nu afectează
-  hit-testing-ul. Cinci cicluri mount/unmount consecutive pe Chromium și WebKit
-  readuc la zero canvasurile, overlay-urile, clonele de drag, vocea, tonurile și
-  referințele cache-ului SVG; dimensiunea cache-ului rămâne stabilă.
-- R3 Android performance: închis pe OnePlus 6T, Android 11, Chrome 150,
-  ecran fizic 1080×2340/60 Hz și viewport 384×699 la DPR 2,8125. Trei ferestre
-  consecutive de aproximativ 10,1 s au susținut 59,55–59,84 FPS, frame p95
-  16,8 ms, input-to-frame 5,8–7,3 ms și zero long tasks peste 100 ms. Tranziția
-  completă eroare–indiciu–simplificare–nivel nou a susținut 59,62 FPS, input
-  10,6 ms și zero long tasks. Shell-ul React și contextul WebGL sunt reutilizate
-  între niveluri; cinci cicluri complete readuc toate resursele active la zero,
-  cu cache SVG stabil la 9/64. Suspendarea Android oprește
-  `requestAnimationFrame` la `visibilitychange=hidden`, iar revenirea păstrează
-  exact o scenă.
+# 1. Obiectiv și strategie
 
-## 1. Obiectiv
+Construim o aplicație PWA premium, calmă și complet locală pentru copii de
+aproximativ 30–72 luni. Produsul trebuie să exerseze abilități concrete, nu să
+pretindă creșterea IQ-ului și nu să ofere diagnostic.
 
-Construim o aplicație educațională calmă, foarte interactivă și performantă,
-care exersează abilități concrete fără promisiuni despre IQ sau diagnostic.
+Strategia aprobată:
 
-Experiența copilului trebuie să pară o lume coerentă, nu un catalog de carduri:
+- dezvoltarea și auditurile continuă pe branch;
+- serverul este folosit numai după închiderea porților P0;
+- GitHub Actions nu rulează la fiecare commit; există o singură validare manuală
+  finală;
+- nu extindem catalogul până când golden-slice-ul este validat;
+- nu introducem backend cloud, cont, analytics, TTS online sau remote content;
+- păstrăm React/Pixi/core/IndexedDB și îmbunătățim incremental;
+- trei jocuri excelente au prioritate față de multe jocuri doar funcționale.
 
-- obiectele răspund imediat la atingere;
-- drag-ul rămâne sub deget și are ținte magnetice;
-- personajele reacționează contextual, nu prin animații decorative repetitive;
-- sunetul, mișcarea și feedback-ul explică acțiunea fără citit;
-- sesiunile se termină calm și mută periodic atenția în lumea reală.
-
-Rămân obligatorii toate limitele de privacy, siguranță și non-dependență din
-`AGENTS.md`.
-
-## 2. Adevărul curent
-
-### De păstrat
-
-- `@little-logic-lab/core`: logică TypeScript pură și deterministă;
-- 80 familii de jocuri, 19 arhetipuri și 10 domenii;
-- 1.030 ancore parametrice de dificultate cu schimbare pe o singură axă;
-- generatoare, runtime-uri, mastery, suport și planificatorul sesiunii;
-- schemele JSON, politica offline/privacy și cele 23 teste core;
-- toate cele 15 familii P0 au implementare funcțională;
-
-### Înlocuit în R1/R2
-
-- `localStorage` cu IndexedDB și migrări;
-- vocea sintetică din browser cu audio românesc local, versionat;
-- service worker-ul cu cache versionat din manifestul build-ului;
-- testele temporare/brute-force cu teste Playwright versionate și aserțiuni;
-- registrul manual duplicat cu un loader TypeScript generat, lazy și cache-uit;
-- metadatele `sample-items`/`placeholder/*` cu manifestul canonic `p0-items`,
-  generare TypeScript și biblioteca procedurală originală în stil unitar.
-
-### Probleme care blochează extinderea
-
-- cele 321 clipuri RO locale trebuie revizuite auditiv de un vorbitor nativ;
-- VoiceOver, gesturile TalkBack cu explorare tactilă și observația copil–adult
-  nu sunt încă închise. Traversarea și activarea semantică TalkBack asistată
-  sunt verificate pe Android real.
-
-## 3. Stack țintă
-
-Versiunile exacte sunt fixate în ADR 005 și actualizate numai printr-o
-schimbare verificată.
-
-| Zonă | Alegere |
-|---|---|
-| Limbaj | TypeScript 7 native, strict |
-| Shell și parent mode | React 19.2 |
-| Scene interactive | PixiJS 8, WebGL |
-| Build | Vite 8 |
-| Logică pedagogică | `@little-logic-lab/core`, fără dependențe UI |
-| Persistență | IndexedDB, repositories și migrări versionate |
-| Audio | clipuri RO locale, versionate + Web Audio |
-| PWA | precache generat cu revizii per asset |
-| Testare | Node/Vitest, property tests, Playwright, Axe |
-| Hosting | Cloudflare Tunnel + Caddy static; Pages rămâne opțional |
-
-PixiJS este renderer, nu sursă de adevăr. Reducerul pur decide corectitudinea;
-coordonatele, animația și callback-urile vizuale nu decid mastery.
-
-Nu există backend, cont, cloud sync, analytics, reclame sau remote content.
-
-## 4. Arhitectura țintă
-
-```text
-apps/web
-  React shell · child flow · parent gate · settings
-        │
-packages/game-runtime
-  lifecycle · input · hints · accessibility bridge · replay
-        │
-packages/game-renderers
-  Pixi scenes · motion · particles · asset/audio registry
-        │
-packages/core
-  generators · reducers · evaluation · mastery · scheduler
-        │
-packages/content
-  catalog · ladders · typed manifests · bundled assets/audio
-        │
-packages/storage
-  IndexedDB · migrations · export/delete · recovery
-```
-
-Dependențele merg numai în jos. Starea de animație nu intră în core sau în
-persistența pedagogică.
-
-## 5. Roadmap de livrare
-
-### R0 — Stabilizare și checkpoint
-
-Țintă: 1–2 zile.
-
-- salvează munca OpenCode într-un checkpoint Git clar;
-- configurează repository privat și `origin`;
-- adoptă TypeScript 7 și un singur workspace/lockfile;
-- elimină documentele și task-urile Expo/OpenCode depășite;
-- aduce testele utile în repo și rescrie aserțiunile de produs;
-- repară update-ul PWA, seed/replay, setările conservative și age gating;
-- publică un preview reproductibil la `logic-lab.astancu.eu`.
-
-Exit:
-
-- `npm test`, `npm run typecheck`, `npm run build:web` trec;
-- instalarea PWA primește build nou fără ștergere manuală de cache;
-- fiecare attempt salvează seed, game ID, ladder stage și rezultat;
-- Git și deployment-ul corespund aceluiași commit.
-
-### R1 — Platforma premium
-
-Țintă: 3–5 zile.
-
-- React shell pentru navigație, parent mode și semantică;
-- runtime Pixi cu lifecycle explicit;
-- input comun: tap, press, drag, snap, trace, reorder;
-- hit slop, ținte magnetice, anulare și revenire elastică;
-- content loader tipizat din catalog/ladders;
-- IndexedDB cu migrare, recovery, export și delete;
-- asset/audio manifests și încărcare predictibilă;
-- accessibility overlay și reduced-motion contract.
-
-Exit:
-
-- o scenă demonstrativă rulează pe telefon/tabletă fără leak-uri;
-- input-to-visual sub 50 ms;
-- rendererul poate fi distrus și recreat fără stare reziduală;
-- rețeaua poate fi blocată complet după instalare.
-
-### R2 — Golden slice
-
-Țintă: 5–7 zile.
-
-Se reconstruiesc la standard final:
+Golden slice:
 
 1. `same-picture`;
 2. `sort-by-color`;
 3. `inset-puzzle`.
 
-Standard vizual/interactiv:
+---
 
-- Lumi are stări și reacții contextuale;
-- fiecare obiect are idle, touch, drag, correct, incorrect și exit;
-- squash/stretch, anticipație, follow-through și particule controlate;
-- drag-ul urmărește degetul la frame rate, fără clonă DOM;
-- sunete locale distincte și voce românească înregistrată;
-- scenă coerentă, fără text necesar copilului;
-- feedback calm, specific și fără recompense variabile.
+# 2. Starea curentă confirmată static
 
-Exit:
+## 2.1 Produs și Child Mode
 
-- 60 FPS susținut pe dispozitivul Android țintă;
-- toate ladder stages relevante pentru 30–36 luni sunt consumate;
-- replay determinist din seed;
-- Chromium și WebKit touch E2E;
-- test observat cu copilul, cu problemele majore rezolvate.
+Implementat:
 
-Migrarea arhetipurilor poate continua după exit-ul automat și aprobarea
-explicită a ownerului. Poarta Android este închisă; pilotul privat rămâne
-blocat până la observația și reviziile umane.
+- Home cu o singură acțiune principală: `CONTINUĂ AVENTURA`;
+- trei opriri vizibile din prima pornire;
+- jocul promis de Home este primul joc al sesiunii;
+- progresul traseului este derivat din istoricul complet;
+- golden-slice-ul nu poate bloca întreg produsul prin cerințe de perfecțiune;
+- biblioteca manuală este exclusiv în Parent Mode;
+- preview-ul adultului este separat de progresul copilului.
 
-### R3 — Starter release P0
+## 2.2 Frontend/runtime
 
-Țintă: încă 2–3 săptămâni.
+Implementat:
 
-- implementează toate cele 15 familii P0;
-- construiește arhetipurile comune înaintea skin-urilor;
-- consolidează `spatial-fit` pentru `inset-puzzle` și `drag-and-fit`;
-- conectează progresia reală, deblocarea graduală și scheduler-ul;
-- finalizează audio RO, parent dashboard și transfer prompts;
-- testează ecrane mici/mari, audio off, Reduce Motion și offline.
-- după încheiere, ascunde toate intrările de joc până când un adult permite o
-  sesiune nouă din Parent Mode.
-- persistă în profil v4 contrastul ridicat, țintele extra-mari și viteza
-  demonstrațiilor; păstrează migrarea fără pierderi din v1/v2/v3.
+- React pentru shell și ecrane;
+- PixiJS/WebGL pentru scene;
+- overlay semantic DOM;
+- input `inert`/`aria-busy` în timpul narațiunii;
+- excepție controlată numai pentru go/no-go;
+- cleanup izolat pe ecran și pe fiecare joc;
+- fallback React pentru bootstrap și import dinamic;
+- lifecycle pentru hidden/pagehide/freeze;
+- Reduced Motion, contrast și ținte extra-mari.
 
-Exit:
+## 2.3 Audio
 
-- 15/15 P0 trec contractul comun;
-- jocurile hibride/deschise nu influențează mastery;
-- părintele vede progres calitativ, nu clasamente sau scor competitiv;
-- private family pilot gata.
+Implementat:
 
-### R4 — Extindere 3–4 ani
+- Web Audio `AudioBuffer`;
+- o singură replică activă;
+- voice/SFX buses separate;
+- ducking;
+- cache LRU maximum 48;
+- maximum trei preload-uri concurente;
+- timeout fetch/decode/playback;
+- watchdog de final;
+- vocile procedurale ale obiectelor eliminate;
+- cue IDs stabile pentru golden slice;
+- playback și offline gate folosesc asset-urile release-ului curent;
+- repair same-origin versionat.
 
-Țintă: P0 + cele 26 familii P1.
+## 2.4 Offline/PWA
 
-- pattern AB/ABB/ABC;
-- memory sequence;
-- quantity-symbol;
-- semantic classification;
-- story order și gentle maze extins;
-- limbaj și social helping.
+Implementat:
 
-Extinderea se face prin arhetipuri și conținut, nu prin duplicarea shell-ului.
+- service worker controller înainte de Child Mode;
+- release identity commit ↔ HTML;
+- scanarea tuturor cache-urilor pentru manifestul curent;
+- asset-uri acceptate numai din cache-ul release-ului curent sau repair cache-ul
+  curent;
+- pachete logice `core-shell`, `golden-journey`, `extended-p0`;
+- verificarea statusului, content type și dimensiunii;
+- Splash fail-closed;
+- repair al clipurilor obligatorii;
+- update automat numai la Splash și aplicare la limita sesiunii;
+- build gate pentru toate chunk-urile și toate clipurile startup.
 
-### R5 — Extindere 4–6 ani
+## 2.5 Persistență/backend local
 
-- 27 familii P2;
-- 12 familii P3;
-- rule switching, symmetry, tangram, mental rotation;
-- rime, inferență, operații concrete și trasee algoritmice;
-- activități open-ended și hibride mai bogate.
+Implementat:
 
-Estimare realistă până la toate cele 80 de familii la calitate ridicată:
-10–16 săptămâni, incluzând artă, audio, device QA și iterații de utilizare.
+- IndexedDB cu migrări v1/v2/v3 → v4;
+- sanitizare profundă;
+- fallback localStorage;
+- snapshot sincron de urgență;
+- token de generație pentru snapshot;
+- timeout open/write/bootstrap;
+- închiderea conexiunii IndexedDB întârziate;
+- storage health în Parent Mode;
+- recovery vizibil;
+- export și delete local;
+- Preview Mode fără attempt/mastery/difficulty/session lock.
 
-## 6. Bugete de performanță
+## 2.6 Scheduler și progres
 
-- 60 FPS; frame time p95 în maximum un interval de refresh: 16,7 ms nominal,
-  maximum 16,8 ms raportat de ceasul browserului pe panoul țintă de 60 Hz;
-- răspuns vizual la input sub 50 ms;
-- drag-ul nu pierde pointerul și rămâne sub deget;
-- shell inițial sub 100 KB gzip; runtime-urile/jocurile sunt lazy-loaded;
-- asset packs sunt împărțite pe teme și preîncărcate numai pentru sesiune;
-- zero long task peste 100 ms în gameplay normal;
-- zero creștere persistentă de listeners, textures sau audio nodes după scene;
-- start offline cald sub o secundă pe tableta țintă.
+Implementat:
 
-`?diagnostics=1` expune local `window.__logicLabPerformance.snapshot()` pentru
-frame p95, input-to-frame, long tasks și resursele runtime active. Playwright
-impune input sub 50 ms și zero resurse reziduale după cicluri repetate;
-pragul de 60 FPS se evaluează pe dispozitivul Android real, nu în
-headless/SwiftShader.
+- mastery explicabil;
+- recență;
+- suport recent;
+- abandon;
+- latență prudentă;
+- diversitate de domeniu;
+- seed unic pe sesiune;
+- unlock tolerant la succes cu sprijin;
+- latența nu penalizează singură mastery-ul.
 
-Pixi folosește WebGL în producție. WebGPU poate fi evaluat ulterior, nu este
-poartă pentru v1.
+## 2.7 Teste și garduri
 
-## 7. Contract de interactivitate
+Există:
 
-Fiecare obiect acționabil trebuie să aibă:
+- `check:v2-runtime`;
+- `check-stability-hardening`;
+- `validate:audio-packs`;
+- `audit:speech`;
+- teste core/property;
+- Playwright Chromium/WebKit;
+- migration tests;
+- profile recovery;
+- cache repair;
+- preview isolation;
+- child session lock;
+- pair lifecycle;
+- continuous trace;
+- full-catalog smoke;
+- Axe;
+- benchmark sintetic;
+- build identity și precache gate.
 
-- hit area de minimum 96 px și toleranță suplimentară;
-- reacție imediată la pointer down;
-- stare clară selected/dragging/hover/placed;
-- snap magnetic și revenire fără penalizare;
-- feedback audio-off echivalent;
-- reduced-motion equivalent;
-- semantică accesibilă în overlay;
-- cleanup complet la ieșirea din scenă.
+## 2.8 Ce NU este încă demonstrat
 
-Animațiile ambientale nu concurează cu obiectivul și se opresc în Reduce
-Motion. Nu folosim loop-uri rapide, confetti excesiv sau stimuli fără rol.
+Nu se declară ca trecute:
 
-## 8. Conținut și progresie
+- `npm ci`;
+- typecheck;
+- build;
+- testele Node;
+- Playwright;
+- snapshot-urile;
+- full-catalog smoke;
+- trace-touch;
+- benchmark;
+- update real;
+- airplane mode real;
+- memoria Android;
+- accesibilitatea manuală;
+- observația copilului.
 
-`content/game-catalog.json` și `content/level-ladders.json` devin input de
-build, nu documentație inertă.
+---
 
-Pipeline:
+# 3. Reguli de trecere între etape
 
-1. validare JSON/schema;
-2. generare manifest TypeScript tipizat;
-3. verificare asset/audio IDs;
-4. property test de solvabilitate;
-5. verificare tranziție pe o singură axă;
-6. preview determinist din seed;
-7. review vizual și audio;
-8. bundle local.
+Nicio etapă ulterioară nu poate compensa un eșec P0 anterior.
 
-Vârsta selectează doar intrarea conservatoare pentru dificultate. Avansarea
-vine din dovezi, dar toate familiile implementate sunt vizibile și selectabile
-direct în instalarea personală; catalogul neimplementat rămâne în afara UI.
+Reguli:
 
-## 9. Persistență și replay
+- nu se face merge pentru a „testa mai ușor”;
+- nu se slăbesc testele;
+- nu se regenerează snapshot-uri fără inspecție;
+- nu se modifică lockfile-ul fără motiv documentat;
+- nu se activează workflow-ul GitHub înainte de validarea locală;
+- nu se publică buildul pe serverul final înainte de R8;
+- nu se generează tot pachetul Higgs înainte de copy freeze;
+- nu se extind cele 80 de familii înainte de R7;
+- orice compromis nou de arhitectură primește ADR.
 
-Fiecare eveniment local include:
+---
 
-- `sessionId`;
-- `gameId`;
-- `levelSeed`;
-- `ladderStageId`;
-- content/app version;
-- acțiune și rezultat structurat;
-- fără free text, media sau identificatori externi.
+# R0 — Înghețarea checkpoint-ului și reproducibilitate
 
-Un nivel trebuie reprodus exact din seed + stage + content version. Exportul și
-ștergerea sunt locale și protejate de parent gate.
+Prioritate: **P0**  
+Loc de execuție: workstation/server de validare, nu producție
 
-## 10. Testare și porți
+## Scop
 
-Pentru fiecare candidat:
+Obținerea unui checkout curat, reproductibil și identificabil înaintea oricărei
+remedieri executabile.
+
+## Pași
 
 ```bash
+git fetch origin --prune
+git checkout agent/v2-runtime-reboot
+git status --short
+git rev-parse HEAD
+git rev-parse origin/main
+git merge-base origin/main HEAD
+git diff --stat origin/main...HEAD
+node --version
+npm --version
+```
+
+Condiții:
+
+- Node 22;
+- niciun fișier modificat sau neversionat;
+- branch-ul nu este resetat la baza veche;
+- `main` este integrat controlat numai dacă a avansat;
+- SHA-ul și tree-ul sunt notate în raportul de validare.
+
+## Dovezi obligatorii
+
+- output-ul comenzilor;
+- SHA branch;
+- SHA `origin/main`;
+- merge-base;
+- diff stat;
+- versiuni Node/npm;
+- confirmare worktree curat.
+
+## Exit
+
+- checkout curat;
+- lockfile nemodificat;
+- diferența față de `main` înțeleasă;
+- nu există conflict nerezolvat.
+
+---
+
+# R1 — Baseline executabil: static, core, typecheck și build
+
+Prioritate: **P0**
+
+## Scop
+
+Transformarea branch-ului din „confirmat static” în „compilează și produce un
+artefact valid”.
+
+## Comenzi
+
+```bash
+npm ci --no-audit --no-fund
+npm run check:v2-runtime
+npm run validate:audio-packs
+npm run audit:speech
 npm test
 npm run typecheck
 npm run build:web
 ```
 
-În plus:
+## Ce trebuie verificat explicit
 
-- property tests pentru generator/runtime;
-- teste de lifecycle și storage migrations;
-- Playwright pe Chromium și WebKit, touch + desktop;
-- offline cu toate request-urile de rețea blocate;
-- update PWA de la versiunea precedentă;
-- Axe plus verificare manuală VoiceOver/TalkBack;
-- visual regression pentru golden slice;
-- măsurare frame time/input latency pe dispozitiv real.
+### Static guards
 
-E2E verifică comportament observabil și rezultate, nu doar lipsa excepțiilor.
+- zero `new Audio()`;
+- zero voce procedurală de obiect;
+- current-release cache;
+- repair cache versionat;
+- Preview Mode;
+- cleanup izolat;
+- snapshot generation-safe;
+- timeout IndexedDB/audio/bootstrap;
+- toate cue-urile stabile cunoscute.
 
-## 11. Livrare Cloudflare
+### Core
 
-Livrarea canonică actuală este Cloudflare Tunnel → Caddy static:
+- generatoare deterministe;
+- solvabilitate;
+- mastery;
+- scheduler;
+- dificultate pe o singură axă;
+- teste de latență;
+- teste de unlock.
 
-- build din commitul verificat;
-- output `apps/web/dist`;
-- custom domain `logic-lab.astancu.eu`;
-- assets hash-uite și cache immutable;
-- HTML/service worker cu strategie de update sigură;
-- CSP fără endpoint-uri externe;
-- artefact sincronizat în `/opt/websites/logic-lab/dist`.
+### Typecheck
 
-Nu folosim Vite preview ca serviciu de producție și nu rulăm produsul pe
-`dell-standby`.
+- zero erori TypeScript;
+- fără `any` nou în codul produsului;
+- contractele `previewMode` și `persistProgress` coerente;
+- importurile dintre audio/app fără ciclu runtime defect.
 
-Cloudflare Pages rămâne o opțiune administrată, nu o dependență și nu o poartă
-de produs.
+### Build
 
-## 12. Ordinea imediată de lucru
+- release identity egal cu HEAD;
+- tree egal cu HEAD tree;
+- lockfile hash corect;
+- shell inițial sub 100 KiB gzip;
+- 15 chunk-uri P0 precached;
+- toate clipurile startup precached;
+- fără asset lipsă;
+- fără warning critic ignorat.
 
-1. revizuiește auditiv cele 321 clipuri RO și înlocuiește pronunțiile slabe;
-2. verifică manual VoiceOver și gesturile TalkBack cu explorare tactilă;
-3. rulează observația cu copilul și rezolvă blocajele majore;
-4. începe R4 numai după închiderea problemelor P0 observate.
+## Regula de remediere
 
-## Definition of done
+Dacă o comandă eșuează:
 
-O funcție nu este gata doar pentru că arată bine sau compilează. Este gata
-când logica, seed-ul, ladder-ul, persistența, animația, audio, accesibilitatea,
-offline-ul, testele și comportamentul observat sunt aliniate.
+1. păstrează logul complet;
+2. repară cauza, nu simptomul;
+3. nu șterge testul;
+4. nu crește bugetul fără analiză;
+5. rulează din nou toate comenzile R1;
+6. documentează remedierea în auditul final.
+
+## Exit
+
+- toate comenzile verzi;
+- worktree curat după generare;
+- build reproducibil;
+- output-ul verifică required audio;
+- raport R1 salvat.
+
+---
+
+# R2 — Browser baseline Chromium și WebKit
+
+Prioritate: **P0**
+
+## Scop
+
+Validarea fluxurilor principale pe două motoare mobile înainte de testele scumpe.
+
+## Comenzi
+
+```bash
+npm run test:web -- --project chromium-touch
+npm run test:web -- --project webkit-touch
+```
+
+## Contracte obligatorii
+
+- Splash → Home;
+- offline ready;
+- un singur CTA copil;
+- Parent gate;
+- setări persistente;
+- Parent preview fără mutații;
+- child attempt cu replay metadata;
+- child session lock;
+- profile recovery;
+- storage migrations;
+- cache repair;
+- pair cancellation;
+- Axe;
+- audio local;
+- scene cleanup.
+
+## Snapshot-uri
+
+Pentru fiecare diferență:
+
+1. deschide imaginea veche și nouă;
+2. verifică telefon și tabletă;
+3. verifică text tăiat, overflow, poziția CTA și Lumi;
+4. verifică contrast și Reduced Motion;
+5. aprobă explicit sau repară;
+6. abia apoi actualizează baseline-ul.
+
+Este interzisă regenerarea globală oarbă.
+
+## Repetare critică
+
+După remediere:
+
+```bash
+for i in 1 2 3; do
+  npm run check:v2-runtime || exit 1
+  npm run typecheck || exit 1
+  npm run build:web || exit 1
+  npm run test:web -- --project chromium-touch || exit 1
+done
+```
+
+## Exit
+
+- Chromium verde;
+- WebKit verde;
+- snapshot-uri aprobate;
+- zero flake în trei runde Chromium;
+- zero pageerror neexplicat.
+
+---
+
+# R3 — Matricea completă a jocurilor și stage-urilor
+
+Prioritate: **P0**
+
+## Scop
+
+Dovedirea faptului că refactorizarea nu a stabilizat doar golden-slice-ul și a
+stricat jocurile mai vechi.
+
+## 3.1 Full-catalog smoke
+
+```bash
+npm run test:web:all-games
+```
+
+Trebuie să dovedească pentru toate cele 15 jocuri:
+
+- catalogul adultului le poate porni când sunt eligibile/deblocate;
+- `data-game-ready=true` apare;
+- există exact un canvas;
+- modul este `preview`;
+- Home eliberează canvas, overlay și shell;
+- zero pageerror.
+
+## 3.2 Continuous trace
+
+```bash
+npm run test:web:trace-touch
+```
+
+Criterii:
+
+- pointer continuu real;
+- progres intermediar;
+- finalizare traseu;
+- revenire curată;
+- zero canvas rezidual.
+
+## 3.3 High-stage UI contracts
+
+Se adaugă teste dedicate, preferabil câte unul per arhetip, nu câte unul per skin:
+
+### Choice
+
+- 8 opțiuni;
+- touch target ≥96 px;
+- target cue ascuns/temporizat;
+- similaritate maximă;
+- replay audio limitat.
+
+Jocuri reprezentative:
+
+- `same-picture`;
+- `shadow-match`;
+- `listen-find`;
+- `emotion-match`.
+
+### Sort
+
+- 12 obiecte;
+- 4 destinații;
+- batch-uri responsive;
+- schimbare de regulă;
+- toate obiectele plasabile;
+- un singur canvas.
+
+Jocuri:
+
+- `sort-by-color`;
+- `sort-by-shape`;
+- `sort-by-size`.
+
+### Spatial fit
+
+- 10 piese în batch-uri;
+- rotație;
+- outline none;
+- forme similare;
+- auto-complete;
+- cleanup.
+
+Jocuri:
+
+- `inset-puzzle`;
+- `drag-and-fit`.
+
+### Sequence
+
+- 6 pași;
+- 3 distractori;
+- suport verbal minim;
+- ordonare completabilă.
+
+### Count
+
+- 20 destinatari;
+- paginare;
+- 8 opțiuni;
+- fiecare primește exact unul.
+
+### Peek/memory
+
+- 9 locații;
+- transformare;
+- răspuns semantic ascuns;
+- delay maxim testat prin ceas controlat.
+
+### Go/no-go
+
+- 16 semnale;
+- schimbare de regulă;
+- prompt no-go neblocant;
+- fără recompensarea vitezei.
+
+### Hybrid
+
+- 6 misiuni;
+- două reguli;
+- delay de memorie controlat;
+- fără attempt/mastery.
+
+## 3.4 Completion contracts
+
+Smoke-ul `ready` nu este suficient. Pentru fiecare arhetip trebuie cel puțin un
+test care completează stage-ul maxim și verifică rezultatul.
+
+## Exit
+
+- toate cele 15 jocuri pornesc și se curăță;
+- fiecare arhetip are high-stage layout test;
+- fiecare arhetip are minimum un completion test;
+- zero resurse reziduale;
+- scripturile dedicate găsesc testele corecte.
+
+---
+
+# R4 — Persistență, crash, migrare și Preview Mode
+
+Prioritate: **P0**
+
+## Scop
+
+Dovedirea că datele copilului nu se pierd și că instrumentele adultului nu le
+contaminează.
+
+## Scenarii automate
+
+1. v1 localStorage → v4;
+2. v2 IndexedDB → v4;
+3. v3 session lock → v4;
+4. profil parțial corupt;
+5. attempt sănătos + secțiune coruptă;
+6. snapshot emergency înainte de confirmare;
+7. două snapshot-uri concurente, confirmare veche;
+8. IndexedDB open blocat;
+9. write timeout;
+10. fallback localStorage;
+11. localStorage full/indisponibil;
+12. Preview Mode completat;
+13. Preview Mode abandonat;
+14. Preview Mode când child session este locked;
+15. export după flush;
+16. delete cu cleanup complet.
+
+## Criterii Preview Mode
+
+Profilul înainte și după trebuie să păstreze identic:
+
+- `attempts`;
+- `sessions`;
+- `sessionLocked`;
+- `masteryBySkill`;
+- `progressByGame`;
+- difficulty;
+- timesPlayed.
+
+Sunt permise numai efecte tranzitorii UI/audio.
+
+## Test fizic kill/restart
+
+1. finalizează un răspuns;
+2. închide imediat aplicația;
+3. redeschide;
+4. verifică attempt-ul;
+5. repetă la final de sesiune;
+6. repetă în fallback mode.
+
+## Datorie de arhitectură
+
+După ce toate testele sunt verzi:
+
+- elimină API-ul istoric de scriere din `storage.ts`;
+- păstrează un singur repository de write;
+- `storage.ts` rămâne schema/load/migration/export;
+- `durableProfile.ts` sau un repository redenumit deține toate scrierile;
+- adaugă guard care interzice scrierea directă în afara repository-ului.
+
+## Exit
+
+- zero pierdere în scenariile automate;
+- kill/restart real verde;
+- Preview Mode zero mutații;
+- storage health corect;
+- o singură cale de write.
+
+---
+
+# R5 — Offline, update și autoreparare pe dispozitiv
+
+Prioritate: **P0**
+
+## Scop
+
+Dovedirea promisiunii principale: produsul instalat funcționează fără internet și
+se actualizează fără blocaj sau pierdere de progres.
+
+## 5.1 Clean install
+
+Măsoară:
+
+- timpul până la service worker ready;
+- timpul până la controller;
+- timpul până la offline ready;
+- numărul de cache-uri;
+- dimensiunea Cache Storage;
+- dimensiunea core-shell;
+- dimensiunea golden-journey;
+- dimensiunea extended-p0.
+
+Criterii:
+
+- Splash explică pregătirea;
+- Home apare numai după pachet complet;
+- zero request extern;
+- release commit egal cu HTML.
+
+## 5.2 Restart airplane mode
+
+1. close/force stop;
+2. airplane mode;
+3. restart;
+4. Splash;
+5. Home;
+6. toate cele trei jocuri golden;
+7. voce, hint, praise și final;
+8. Parent Mode și export local.
+
+Criteriu: zero rețea necesară.
+
+## 5.3 Repair
+
+1. șterge un clip core;
+2. confirmă fail-closed;
+3. conectează internetul;
+4. repară;
+5. verifică content type și bytes;
+6. force stop;
+7. airplane mode;
+8. redă exact clipul reparat.
+
+## 5.4 Update vechi → nou
+
+1. instalează buildul anterior valid;
+2. creează progres;
+3. publică buildul candidat într-un mediu de test;
+4. deschide vechiul build;
+5. verifică activarea noului worker la Splash;
+6. verifică update amânat în sesiune;
+7. verifică progresul;
+8. verifică eliminarea cache-urilor vechi;
+9. verifică repair cache versioning.
+
+## 5.5 Eviction/quota
+
+- simulează clip lipsă;
+- simulează cache parțial;
+- inspectează storage estimate;
+- verifică mesajul Parent Mode;
+- nu permite joc indisponibil.
+
+## Decizie privind pack split
+
+După măsurare:
+
+### Păstrează monolitic dacă
+
+- timpul este acceptabil;
+- dimensiunea este acceptabilă;
+- memoria nu crește;
+- update-ul este rezonabil.
+
+### Separă fizic dacă
+
+- prima pregătire este prea lungă;
+- quota este riscantă;
+- extended-p0 domină dimensiunea;
+- update-ul retransferă prea multe asset-uri.
+
+Split țintă:
+
+- shell + core audio;
+- golden pack obligatoriu;
+- extended packs instalate numai din Parent Mode;
+- jocul apare copilului numai dacă pack-ul este ready.
+
+## Exit
+
+- clean install verde;
+- restart offline verde;
+- repair + offline verde;
+- update verde;
+- progres păstrat;
+- decizie pack split documentată cu cifre.
+
+---
+
+# R6 — Performanță, memorie și lifecycle fizic
+
+Prioritate: **P0**
+
+## Comandă sintetică
+
+```bash
+npm run test:web:performance
+```
+
+## Măsurători dispozitiv
+
+- FPS mediu;
+- frame p95;
+- input-to-frame p95;
+- long tasks >100 ms;
+- memorie înainte de sesiune;
+- memorie după 30 de replici distincte;
+- cache audio decodat;
+- texturi Pixi;
+- listeners;
+- canvas;
+- accessibility layers;
+- audio nodes;
+- drag clones.
+
+## Scenarii
+
+1. same-picture cu 8 opțiuni;
+2. sort 12/4;
+3. puzzle 10 piese;
+4. hint → simplify → success;
+5. Home în timpul tween-ului;
+6. Home în timpul vocii;
+7. suspend în instrucțiune;
+8. suspend în drag;
+9. suspend în feedback;
+10. 5 cicluri complete;
+11. 30 de clipuri;
+12. portrait ↔ landscape.
+
+## Bugete
+
+- input-to-visual <50 ms;
+- frame p95 aproximativ 16,7–16,8 ms la 60 Hz;
+- zero long task >100 ms în gameplay normal;
+- maximum 48 buffer-e;
+- maximum o voce activă;
+- maximum 3 decode concurente;
+- zero resurse active după cleanup;
+- memoria revine aproape de baseline după cicluri.
+
+## Exit
+
+- benchmark sintetic verde;
+- dispozitiv minim în buget;
+- cinci cicluri fără leak;
+- suspend/resume fără blocaj;
+- raport cu dispozitiv/OS/browser.
+
+---
+
+# R7 — Golden slice premium final
+
+Prioritate: **P1**, dar **poartă de pilot**
+
+## Principii comune
+
+- o singură sarcină vizuală;
+- feedback în <50 ms;
+- motion semantic;
+- voce și animație sincronizate;
+- fără text necesar copilului;
+- fără branding extern;
+- Reduced Motion echivalent;
+- accesibilitate semantică;
+- feedback calm și specific;
+- fără confetti excesiv.
+
+## 7.1 Same Picture
+
+Dezvoltare:
+
+- scene finală de atelier;
+- modelul și opțiunile au aceeași scară perceptivă;
+- distractori validați la 2/3/4/5/6/8 opțiuni;
+- ținta temporară nu produce confuzie;
+- perechea se unește vizual;
+- hint-ul evidențiază atributul comun;
+- simplificarea demonstrează, nu doar luminează;
+- feedback audio specific vehiculului;
+- anulare în fiecare fază.
+
+Exit:
+
+- toate stage-urile golden relevante completabile;
+- zero confuzie model/opțiune în pilot;
+- visual baselines aprobate;
+- cleanup verde.
+
+## 7.2 Sort by Color
+
+Dezvoltare:
+
+- garaje ca destinații reale;
+- preview de drop/magnetism;
+- obiect sub deget;
+- snap și feedback coordonat;
+- culoarea se termină înainte de batch nou;
+- batch-ul nu pare ecran nou;
+- schimbarea regulii este explicită;
+- tap și drag echivalente;
+- 12 obiecte/4 garaje fără aglomerare.
+
+Exit:
+
+- drag real pe telefon;
+- target-uri lizibile;
+- zero drop accidental;
+- full stage completion verde.
+
+## 7.3 Inset Puzzle
+
+Dezvoltare:
+
+- pickup/shadow;
+- magnetism;
+- snap scurt;
+- target opacity calibrat;
+- rotația după mastery;
+- auto-complete demonstrativ;
+- forme similare validate;
+- clip real pentru hexagon;
+- 10 piese în batch-uri coerente.
+
+Exit:
+
+- copilul înțelege targetul fără explicație suplimentară;
+- max stage verde;
+- audio complet;
+- layout telefon mic verde.
+
+## 7.4 Lumi și art direction
+
+Livrabile:
+
+- character bible;
+- paletă;
+- contur;
+- umbre;
+- perspectivă;
+- scară;
+- stări Lumi: idle, ascultă, arată, așteaptă, hint, bucurie calmă, odihnă;
+- variante Reduced Motion;
+- asset approval list;
+- fără asset final în afara golden până la aprobare.
+
+## Exit R7
+
+- cele trei jocuri au calitate vizuală consistentă;
+- toate interacțiunile sunt semantic animate;
+- art/audio/copy sunt aprobate;
+- nu există P0/P1 UX cunoscut în golden slice.
+
+---
+
+# R8 — Audio Higgs și copy freeze
+
+Prioritate: **P1**, poartă de pilot
+
+Higgs este unealtă offline de producție, nu dependență runtime.
+
+## 8.1 Copy freeze
+
+Pentru fiecare cue:
+
+- ID stabil;
+- text românesc final;
+- scop;
+- joc/fază;
+- ton;
+- viteză;
+- variantă scurtă;
+- fallback vizual.
+
+Nu genera audio înainte de aprobarea copy-ului.
+
+## 8.2 Pipeline
+
+```text
+cue ID + copy aprobat
+→ Higgs WAV
+→ trim leading/trailing silence
+→ loudness normalization
+→ clipping detection
+→ sample-rate/channel validation
+→ MP3/Opus
+→ duration/hash manifest
+→ audit nativ
+→ pack import
+```
+
+## 8.3 Ordine
+
+1. core-shell;
+2. praise/support;
+3. same-picture;
+4. sort-by-color;
+5. inset-puzzle;
+6. hexagon;
+7. restul P0 numai după golden approval.
+
+## 8.4 Validări
+
+- pronunție;
+- accent românesc;
+- naturalețe;
+- lipsa entuziasmului artificial;
+- volum consistent;
+- tăceri;
+- clipping;
+- lipsa artefactelor;
+- durată potrivită copilului;
+- zero schimbare de text fără regenerare.
+
+## Comenzi
+
+```bash
+npm run validate:audio
+npm run validate:audio-packs
+npm run audit:speech
+npm run audit:speech:strict
+```
+
+`audit:speech:strict` poate fi aplicat pe întreaga aplicație numai când suprafața
+publicată este complet migrată. Până atunci, golden-slice-ul trebuie să aibă zero
+lipsuri.
+
+## Exit
+
+- golden audio complet;
+- hexagon cue real;
+- manifest cu hash/durată;
+- audit nativ aprobat;
+- airplane mode verde cu pachetul nou;
+- înlocuirea audio nu cere modificarea jocurilor.
+
+---
+
+# R9 — Parent Mode, evidence V2 și scheduler explicabil
+
+Prioritate: **P1**
+
+## 9.1 Parent recommendations
+
+Adaugă secțiuni:
+
+- ce a exersat;
+- ce pare stabil;
+- unde a avut nevoie de sprijin;
+- recomandarea următoare;
+- motivul recomandării;
+- activitate fără telefon;
+- starea pachetelor;
+- starea salvării.
+
+Fără:
+
+- procente psihometrice;
+- comparații;
+- diagnostic;
+- etichete despre inteligență.
+
+## 9.2 Evidence schema V2
+
+Câmpuri candidate:
+
+- task success;
+- independence;
+- latency band;
+- self-correction;
+- instruction repeats;
+- motor assist;
+- drag cancelled;
+- difficulty stage;
+- session role;
+- selection reason.
+
+Reguli:
+
+- date locale;
+- fără coordonate brute persistente;
+- fără audio;
+- fără identificator extern;
+- limite de retenție;
+- migrare versionată.
+
+## 9.3 Scheduler reason
+
+Persistă pentru fiecare intrare:
+
+- warm-up familiar;
+- obiectiv principal;
+- variație;
+- transfer;
+- recuperare după abandon;
+- revenire după pauză.
+
+## 9.4 Storage simplification
+
+- un singur write repository;
+- schema/migration separate de write;
+- teste fuzz/property pentru profil;
+- health/recovery documentate.
+
+## Exit
+
+- Parent Mode produce o recomandare utilă și prudentă;
+- motivul selecției poate fi explicat;
+- preview nu contaminează date;
+- schema migrează fără pierderi;
+- zero scoruri false de precizie.
+
+---
+
+# R10 — Pilot observat copil–adult
+
+Prioritate: **P0 release gate**
+
+## Protocol minim
+
+Minimum trei sesiuni golden-slice, în zile/momente diferite, supravegheate de
+adult.
+
+Se notează:
+
+- înțelege CTA-ul;
+- înțelege instrucțiunea;
+- apasă înainte de ready;
+- repetă cerința;
+- ezită;
+- abandonează;
+- confundă targetul;
+- are dificultăți motorii;
+- reacționează la feedback;
+- solicită ajutor;
+- durata adecvată;
+- semnale de oboseală/frustrare;
+- transferul în lumea reală.
+
+Nu se filmează sau stochează date în aplicație fără o decizie separată. Observația
+poate fi notată manual de părinte.
+
+## Clasificare probleme
+
+- P0: nu poate continua, date pierdute, audio/input blocat, confuzie majoră;
+- P1: are nevoie frecvent de ajutor, feedback ambiguu, layout slab;
+- P2: polish, preferință, variație.
+
+## Exit
+
+- zero P0 observat;
+- P1 majore remediate;
+- cele trei jocuri pot fi folosite fără explicație permanentă a adultului;
+- sesiunea se termină calm;
+- roadmap-ul este actualizat cu dovezi reale.
+
+---
+
+# R11 — Release candidate și validare GitHub manuală
+
+Prioritate: **P0**
+
+## Pregătire
+
+1. toate etapele R0–R10 închise;
+2. worktree curat;
+3. commit unic identificat;
+4. documentație actualizată;
+5. snapshot-uri aprobate;
+6. raport dispozitiv;
+7. rollback pregătit.
+
+## Comenzi finale locale
+
+```bash
+npm ci --no-audit --no-fund
+npm run check:v2-runtime
+npm run validate:audio-packs
+npm run audit:speech
+npm test
+npm run typecheck
+npm run build:web
+npm run test:web -- --project chromium-touch
+npm run test:web -- --project webkit-touch
+npm run test:web:all-games
+npm run test:web:trace-touch
+npm run test:web:performance
+```
+
+## GitHub Actions
+
+Workflow-ul `Validate architecture and content` se lansează manual o singură dată.
+
+Trebuie să treacă:
+
+- `npm ci`;
+- `npm test`;
+- typecheck;
+- build;
+- generated artifacts clean.
+
+Workflow-ul nu înlocuiește Playwright pe dispozitiv și testul fizic.
+
+## Release report
+
+Include:
+
+- SHA;
+- tree;
+- lockfile hash;
+- Node;
+- shell gzip;
+- cache total;
+- clipuri obligatorii;
+- test counts;
+- dispozitive;
+- FPS/memorie;
+- offline/update;
+- accessibility;
+- pilot;
+- probleme cunoscute;
+- rollback.
+
+## Exit
+
+- toate porțile verzi;
+- PR poate fi marcat Ready;
+- auditul trece de la NO-GO la GO explicit;
+- commitul candidat nu se mai modifică fără reluarea porților.
+
+---
+
+# R12 — Instalare pe server și rollout controlat
+
+Prioritate: **finală**
+
+Serverul este utilizat abia aici pentru build/release sau servirea preview-ului
+final. Nu începe R12 pentru a descoperi erori de tip, teste sau arhitectură.
+
+## 12.1 Staging
+
+- build din SHA aprobat;
+- output separat de producție;
+- permisiuni normalizate;
+- release.json verificat;
+- CSP verificat;
+- service worker verificat;
+- URL de test separat.
+
+## 12.2 Smoke staging
+
+- Splash;
+- Home;
+- golden session;
+- Parent Mode;
+- Preview Mode;
+- export;
+- offline;
+- update;
+- repair;
+- release identity.
+
+## 12.3 Backup și rollback
+
+Înainte de publicare:
+
+- păstrează dist-ul anterior;
+- păstrează SHA-ul anterior;
+- comandă atomică de rollback;
+- nu șterge cache-ul utilizatorului ca mecanism de update;
+- documentează permisiunile Caddy/container.
+
+## 12.4 Publicare
+
+- sincronizare atomică;
+- verificare HTTP;
+- verificare `release.json`;
+- verificare asset audio;
+- PWA update de pe dispozitivul real;
+- monitorizare manuală inițială.
+
+## 12.5 Post-release
+
+- test offline după update;
+- progres păstrat;
+- zero 403;
+- zero asset lipsă;
+- zero cache loop;
+- raport final.
+
+## Exit
+
+- producție servește exact SHA-ul aprobat;
+- rollback funcționează;
+- dispozitivul instalat trece update + offline;
+- documentația reflectă release-ul real.
+
+---
+
+# R13 — Dezvoltări ulterioare după release
+
+Prioritate: **P2/P3**
+
+Numai după release-ul golden stabil:
+
+## Studio local
+
+- catalog browser;
+- seed/difficulty controls;
+- preview multi-device;
+- audio QA;
+- pack builder;
+- asset approvals;
+- profile import;
+- report generator;
+- snapshot approval.
+
+## Pack-uri opționale
+
+- classification;
+- visual attention;
+- memory;
+- inhibition;
+- spatial;
+- language/social;
+- real-world.
+
+## Wrapper Android
+
+Capacitor/TWA doar dacă PWA este stabilă:
+
+- aceeași aplicație;
+- fără logică duplicată;
+- fără Firebase;
+- fără permisiuni inutile;
+- golden pack inclus;
+- update/rollback documentat.
+
+## Extinderea catalogului
+
+Loturi mici:
+
+1. jocuri cu valoare observată;
+2. arhetipuri deja validate;
+3. asset/audio în buget;
+4. teste complete;
+5. pilot înainte de următorul lot.
+
+---
+
+# 4. Matricea porților
+
+| Poartă | Automat | Manual | Dispozitiv | Blochează serverul |
+|---|---:|---:|---:|---:|
+| Static guards | da | nu | nu | da |
+| Core/property | da | nu | nu | da |
+| Typecheck | da | nu | nu | da |
+| Build/identity | da | inspectare | nu | da |
+| Chromium | da | snapshot | nu | da |
+| WebKit | da | snapshot | nu | da |
+| Full catalog | da | nu | nu | da |
+| High-stage contracts | da | layout | nu | da |
+| Trace touch | da | nu | emulat CDP | da |
+| Performance sintetic | da | nu | nu | da |
+| Clean install | nu | da | da | da |
+| Airplane mode | nu | da | da | da |
+| Update | parțial | da | da | da |
+| Repair | da | da | da | da |
+| Crash/recovery | da | da | da | da |
+| TalkBack/VoiceOver | Axe | da | da | da |
+| Audio review | validare | da | da | da |
+| Pilot copil | nu | da | da | da |
+| GitHub workflow | da, manual | nu | nu | da |
+
+---
+
+# 5. Definition of done finală
+
+Aplicația poate fi considerată gata pentru server numai dacă:
+
+- toate comenzile sunt verzi;
+- high-stage contracts sunt complete;
+- Preview Mode nu modifică date;
+- storage recovery este demonstrat;
+- current-release cache este demonstrat;
+- repair urmat de offline playback este demonstrat;
+- update vechi → nou este demonstrat;
+- toate jocurile P0 pornesc și se curăță;
+- golden-slice-ul este completabil în airplane mode;
+- memoria și performanța sunt în buget;
+- audio golden este aprobat;
+- accesibilitatea manuală este aprobată;
+- pilotul nu are P0;
+- workflow-ul manual este verde;
+- commitul și artefactul sunt identice;
+- rollback-ul este pregătit.
+
+Până atunci:
+
+**PR Draft. NO-GO pentru merge, instalare și release.**

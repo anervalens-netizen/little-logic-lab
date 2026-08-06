@@ -1,7 +1,6 @@
 /**
  * Fabrică pentru jocuri de tip „alege imaginea corectă":
  * same-picture, shadow-match, listen-find, emotion-match.
- * Mecanica pură vine din core (generateVisualChoice + reduceChoice).
  */
 
 import {
@@ -13,25 +12,30 @@ import {
   type DifficultyVector,
   type Scalar,
 } from "@core";
+import type { SpeechCueId } from "../audio/speech";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { choiceRow, targetStage } from "./widgets";
 import { el, clear, wait } from "../ui/dom";
-import { markCorrect, showHintGlow, danceItem, particlesAt, jelly } from "../ui/feedback";
+import {
+  markCorrect,
+  showHintGlow,
+  danceItem,
+  particlesAt,
+  jelly,
+} from "../ui/feedback";
 import { playItemVoice } from "../audio/voices";
-import { speak } from "../audio/speech";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
 
 export interface ChoiceRound {
-  /** SVG-ul țintei (modelul); null pentru jocuri doar audio. */
   readonly targetSvg: string | null;
   readonly targetLabel: string;
-  /** Text rostit când începe runda (poate diferi de instrucțiunea jocului). */
   readonly roundSpeech: string;
-  /** Acțiune accesibilă pe reperul central (de ex. repetarea promptului audio). */
+  readonly roundSpeechCueId?: SpeechCueId;
   readonly targetActionLabel?: string;
   readonly options: readonly { id: string; svg: string; label: string }[];
   readonly correctId: string;
+  readonly joinTargetOnSuccess?: boolean;
 }
 
 export interface ChoiceGameSpec {
@@ -40,27 +44,33 @@ export interface ChoiceGameSpec {
   readonly skillId: string;
   readonly domain: string;
   readonly instruction: string;
+  readonly instructionCueId?: SpeechCueId;
   readonly coPlayPrompt: string;
   readonly icon: () => string;
   readonly bubbleColor: string;
   readonly axes: readonly DifficultyAxisSpec[];
   readonly initialDifficulty: DifficultyVector;
-  /** Golden-slice games use the lazy-loaded Pixi renderer. */
   readonly renderer?: "dom" | "pixi";
-  /** Conținutul din care generează core-ul (id + atribute). */
   readonly content: readonly ContentItem[];
-  /** Construiește runda vizuală din nivelul generat. */
   readonly buildRound: (
-    level: { targetId: string; choiceIds: readonly string[]; correctChoiceId: string },
+    level: {
+      targetId: string;
+      choiceIds: readonly string[];
+      correctChoiceId: string;
+    },
     difficulty: DifficultyVector,
   ) => ChoiceRound;
-  /** Atribut de similitudine pentru distractori (opțional). */
   readonly similarityAttribute?: string;
-  /** Axa care activează distractorii similari; implicit `distractorSimilarity`. */
   readonly similarityAxis?: string;
   readonly similarityAttributeForDifficulty?: (
     difficulty: DifficultyVector,
   ) => string | undefined;
+}
+
+function speakRound(ctx: GameContext, round: ChoiceRound): Promise<void> {
+  return round.roundSpeechCueId
+    ? ctx.speakCue(round.roundSpeechCueId, round.roundSpeech)
+    : ctx.speak(round.roundSpeech);
 }
 
 export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
@@ -70,6 +80,9 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
     skillId: spec.skillId,
     domain: spec.domain,
     instruction: spec.instruction,
+    ...(spec.instructionCueId
+      ? { instructionCueId: spec.instructionCueId }
+      : {}),
     coPlayPrompt: spec.coPlayPrompt,
     icon: spec.icon,
     bubbleColor: spec.bubbleColor,
@@ -77,11 +90,16 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
     initialDifficulty: spec.initialDifficulty,
     scored: true,
 
-    async play(ctx: GameContext, difficulty: DifficultyVector, seed: string): Promise<PlayResult> {
+    async play(
+      ctx: GameContext,
+      difficulty: DifficultyVector,
+      seed: string,
+    ): Promise<PlayResult> {
       const choiceCount = Number(difficulty["choiceCount"] ?? 2);
       const useSimilarity =
-        Number(difficulty[spec.similarityAxis ?? "distractorSimilarity"] ?? 0) >=
-        1;
+        Number(
+          difficulty[spec.similarityAxis ?? "distractorSimilarity"] ?? 0,
+        ) >= 1;
       const similarityAttribute =
         spec.similarityAttributeForDifficulty?.(difficulty) ??
         (useSimilarity ? spec.similarityAttribute : undefined);
@@ -92,7 +110,6 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
         choiceCount: Math.max(2, Math.min(choiceCount, spec.content.length)),
         ...(similarityAttribute ? { similarityAttribute } : {}),
       });
-
       const round = spec.buildRound(level.payload, difficulty);
 
       if (spec.renderer === "pixi" && round.targetSvg !== null) {
@@ -103,28 +120,32 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
         );
       }
 
-      let state = initializeChoice(level.payload.correctChoiceId, level.payload.choiceIds);
+      let state = initializeChoice(
+        level.payload.correctChoiceId,
+        level.payload.choiceIds,
+      );
       const support = new SupportTracker();
-
       clear(ctx.mount);
 
       const layout = el("div", {});
       layout.style.cssText =
         "display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;width:100%;height:100%;gap:8px;";
-
-      if (round.targetSvg !== null) {
-        layout.append(targetStage(round.targetSvg, ""));
-      }
+      if (round.targetSvg !== null) layout.append(targetStage(round.targetSvg, ""));
 
       const { row, cards } = choiceRow(
-        round.options.map((o) => ({ id: o.id, svg: o.svg, label: o.label })),
+        round.options.map((option) => ({
+          id: option.id,
+          svg: option.svg,
+          label: option.label,
+        })),
       );
       layout.append(row);
       ctx.mount.append(layout);
 
-      // Anunț + scurtă demonstrație: mânuța atinge ținta, apoi copilul alege.
-      speak(round.roundSpeech);
-      await wait(demonstrationDelay(1300));
+      await Promise.all([
+        speakRound(ctx, round),
+        wait(demonstrationDelay(1300)),
+      ]);
       if (ctx.isCancelled()) return aborted();
 
       const correctCard = cards.get(round.correctId);
@@ -137,9 +158,17 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
 
       return await new Promise<PlayResult>((resolve) => {
         let settled = false;
+        let inputReady = true;
+        let operationGeneration = 0;
+        let cancelWatch: number | null = null;
+        const active = (generation: number) =>
+          generation === operationGeneration && !settled && !ctx.isCancelled();
         const finish = (result: PlayResult) => {
           if (settled) return;
           settled = true;
+          inputReady = false;
+          operationGeneration += 1;
+          if (cancelWatch !== null) window.clearInterval(cancelWatch);
           resolve(result);
         };
 
@@ -147,12 +176,16 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
           const card = cards.get(option.id);
           if (!card) continue;
           card.addEventListener("click", () => {
-            if (settled || state.completed) return;
+            if (!inputReady || settled || state.completed) return;
             const before = state;
-            state = reduceChoice(state, { type: "select", value: option.id as Scalar });
+            state = reduceChoice(state, {
+              type: "select",
+              value: option.id as Scalar,
+            });
             if (state === before) return;
 
             if (state.completed) {
+              inputReady = false;
               support.registerSuccess();
               markCorrect(card);
               danceItem(card);
@@ -165,35 +198,46 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
                 cardRect.top - shellRect.top + cardRect.height / 2,
               );
               const correctFirstTry = state.correctFirstTry;
-              setTimeout(
-                () =>
-                  finish({
-                    completed: true,
-                    correctFirstTry,
-                    correctEventually: true,
-                    hintsUsed: support.hintsUsed,
-                    wrongAttempts: support.wrongAttempts,
-                  }),
-                ctx.reducedMotion ? 350 : 1100,
-              );
+              const generation = ++operationGeneration;
+              void wait(ctx.reducedMotion ? 350 : 1100).then(() => {
+                if (!active(generation)) return;
+                finish({
+                  completed: true,
+                  correctFirstTry,
+                  correctEventually: true,
+                  hintsUsed: support.hintsUsed,
+                  wrongAttempts: support.wrongAttempts,
+                });
+              });
               return;
             }
 
             const verdict = support.registerError(card);
             if (verdict === "hint" && correctCard) {
+              inputReady = false;
               showHintGlow(correctCard);
               jelly(correctCard);
-              speak("Uite, acesta e la fel!");
+              const generation = ++operationGeneration;
+              void ctx.speakCue("same-hint", "Uite, acesta e la fel!").then(() => {
+                if (active(generation)) inputReady = true;
+              });
             } else if (verdict === "simplify" && correctCard) {
-              // Încheiem cu succes: arătăm răspunsul bucuroși, fără presiune.
+              inputReady = false;
               for (const other of round.options) {
                 if (other.id !== round.correctId) {
                   cards.get(other.id)?.classList.add("dimmed");
                 }
               }
               showHintGlow(correctCard);
-              speak("Uite! Aceasta este perechea. Bravo că ai încercat!");
-              setTimeout(() => {
+              const generation = ++operationGeneration;
+              void Promise.all([
+                ctx.speakCue(
+                  "same-help",
+                  "Uite! Aceasta este perechea. Bravo că ai încercat!",
+                ),
+                wait(2200),
+              ]).then(() => {
+                if (!active(generation)) return;
                 markCorrect(correctCard);
                 finish({
                   completed: true,
@@ -202,24 +246,21 @@ export function createChoiceGame(spec: ChoiceGameSpec): WebGame {
                   hintsUsed: support.hintsUsed + 1,
                   wrongAttempts: support.wrongAttempts,
                 });
-              }, 2200);
+              });
             }
           });
         }
 
-        // Ieșire din ecran în timpul nivelului.
-        const cancelWatch = setInterval(() => {
-          if (ctx.isCancelled()) {
-            clearInterval(cancelWatch);
-            finish({
-              completed: false,
-              correctFirstTry: false,
-              correctEventually: false,
-              hintsUsed: support.hintsUsed,
-              wrongAttempts: support.wrongAttempts,
-              abandoned: true,
-            });
-          }
+        cancelWatch = window.setInterval(() => {
+          if (!ctx.isCancelled()) return;
+          finish({
+            completed: false,
+            correctFirstTry: false,
+            correctEventually: false,
+            hintsUsed: support.hintsUsed,
+            wrongAttempts: support.wrongAttempts,
+            abandoned: true,
+          });
         }, 250);
       });
     },
@@ -240,6 +281,7 @@ async function playPixiRound(
   );
   let inputReady = false;
   let settled = false;
+  let operationGeneration = 0;
   let cancelWatch: number | null = null;
   let resolveResult: (result: PlayResult) => void = () => undefined;
   let repeatsUsed = 0;
@@ -247,9 +289,13 @@ async function playPixiRound(
   const result = new Promise<PlayResult>((resolve) => {
     resolveResult = resolve;
   });
+  const active = (generation: number) =>
+    generation === operationGeneration && !settled && !ctx.isCancelled();
   const finish = (outcome: PlayResult) => {
     if (settled) return;
     settled = true;
+    inputReady = false;
+    operationGeneration += 1;
     if (cancelWatch !== null) window.clearInterval(cancelWatch);
     resolveResult(outcome);
   };
@@ -267,7 +313,11 @@ async function playPixiRound(
       ? {
           targetActionLabel: round.targetActionLabel,
           onTargetActivate: () => {
-            speak(round.roundSpeech);
+            inputReady = false;
+            const generation = ++operationGeneration;
+            void speakRound(ctx, round).then(() => {
+              if (active(generation)) inputReady = true;
+            });
             repeatsUsed += 1;
             return repeatAvailability !== "limited" || repeatsUsed < 1;
           },
@@ -283,34 +333,57 @@ async function playPixiRound(
       if (state === before) return;
 
       if (state.completed) {
+        inputReady = false;
         support.registerSuccess();
-        scene.markCorrect(optionId);
-        playItemVoice(optionId);
-        window.setTimeout(
-          () =>
-            finish({
-              completed: true,
-              correctFirstTry: state.correctFirstTry,
-              correctEventually: true,
-              hintsUsed: support.hintsUsed,
-              wrongAttempts: support.wrongAttempts,
-            }),
-          ctx.reducedMotion ? 350 : 950,
-        );
+        const correctFirstTry = state.correctFirstTry;
+        const generation = ++operationGeneration;
+        void (async () => {
+          if (round.joinTargetOnSuccess) {
+            await scene.moveTargetToOption(optionId);
+            if (!active(generation)) return;
+          }
+          if (!active(generation)) return;
+          scene.markCorrect(optionId);
+          playItemVoice(optionId);
+          await wait(ctx.reducedMotion ? 350 : 950);
+          if (!active(generation)) return;
+          finish({
+            completed: true,
+            correctFirstTry,
+            correctEventually: true,
+            hintsUsed: support.hintsUsed,
+            wrongAttempts: support.wrongAttempts,
+          });
+        })();
         return;
       }
 
       scene.markIncorrect(optionId);
       const verdict = support.registerError(scene.readyElement);
       if (verdict === "hint") {
+        inputReady = false;
         scene.emphasize(round.correctId);
-        speak("Uite, acesta e la fel!");
+        const generation = ++operationGeneration;
+        void ctx.speakCue("same-hint", "Uite, acesta e la fel!").then(() => {
+          if (active(generation)) inputReady = true;
+        });
       } else if (verdict === "simplify") {
         inputReady = false;
         scene.dimExcept(round.correctId);
         scene.emphasize(round.correctId);
-        speak("Uite! Aceasta este perechea. Bravo că ai încercat!");
-        window.setTimeout(() => {
+        const generation = ++operationGeneration;
+        void Promise.all([
+          ctx.speakCue(
+            "same-help",
+            "Uite! Aceasta este perechea. Bravo că ai încercat!",
+          ),
+          wait(1800),
+        ]).then(async () => {
+          if (!active(generation)) return;
+          if (round.joinTargetOnSuccess) {
+            await scene.moveTargetToOption(round.correctId);
+            if (!active(generation)) return;
+          }
           scene.markCorrect(round.correctId);
           finish({
             completed: true,
@@ -319,14 +392,19 @@ async function playPixiRound(
             hintsUsed: support.hintsUsed + 1,
             wrongAttempts: support.wrongAttempts,
           });
-        }, 1800);
+        });
       }
     },
   });
-  ctx.onCleanup(scene.destroy);
+  ctx.onCleanup(() => {
+    operationGeneration += 1;
+    scene.destroy();
+  });
 
-  speak(round.roundSpeech);
-  await wait(demonstrationDelay(900));
+  await Promise.all([
+    speakRound(ctx, round),
+    wait(demonstrationDelay(900)),
+  ]);
   if (ctx.isCancelled()) return aborted();
   if (!ctx.reducedMotion) scene.emphasize(round.correctId);
   await wait(demonstrationDelay(400));
@@ -336,23 +414,24 @@ async function playPixiRound(
   const targetCueDuration = Number(difficulty["targetCueDuration"] ?? -1);
   if (targetCueDuration > 0) {
     const hideTargetTimer = window.setTimeout(
-      () => scene.setTargetVisible(false),
+      () => {
+        if (!ctx.isCancelled() && !settled) scene.setTargetVisible(false);
+      },
       targetCueDuration,
     );
     ctx.onCleanup(() => window.clearTimeout(hideTargetTimer));
   }
 
   cancelWatch = window.setInterval(() => {
-    if (ctx.isCancelled()) {
-      finish({
-        completed: false,
-        correctFirstTry: false,
-        correctEventually: false,
-        hintsUsed: support.hintsUsed,
-        wrongAttempts: support.wrongAttempts,
-        abandoned: true,
-      });
-    }
+    if (!ctx.isCancelled()) return;
+    finish({
+      completed: false,
+      correctFirstTry: false,
+      correctEventually: false,
+      hintsUsed: support.hintsUsed,
+      wrongAttempts: support.wrongAttempts,
+      abandoned: true,
+    });
   }, 200);
 
   return result;

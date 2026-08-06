@@ -1,6 +1,6 @@
 /**
  * Motorul care rulează un joc în shell:
- * instrucțiune → joc → laudă → mastery → ajustare dificultate (o axă).
+ * instrucțiune → joc → evidence → mastery → persistență → laudă → cleanup.
  */
 
 import {
@@ -9,8 +9,20 @@ import {
   type DifficultyVector,
 } from "@core";
 import type { GameContext, WebGame, PlayResult } from "./types";
-import { getProfile, recordAttempt, setGameDifficulty } from "../app/appState";
-import { speak, stopSpeaking } from "../audio/speech";
+import { observeRoundEvidence } from "./roundEvidence";
+import {
+  flushPendingProfileWrites,
+  getProfile,
+  recordAttempt,
+  setGameDifficulty,
+  type StoredAttemptWithEvidence,
+} from "../app/appState";
+import {
+  speakAndWait,
+  speakCueAndWait,
+  stopSpeaking,
+  waitForSpeechIdle,
+} from "../audio/speech";
 import { praise, isMotionReduced } from "../ui/feedback";
 import { demoTap, demoHand } from "../ui/feedback";
 import { wait } from "../ui/dom";
@@ -21,9 +33,20 @@ import {
   stepLadderDifficulty,
 } from "../app/content";
 
+const WORKSHOP_GAMES = new Set([
+  "same-picture",
+  "sort-by-color",
+  "inset-puzzle",
+]);
+
 export interface RunOutcome {
   readonly result: PlayResult;
   readonly cancelled: boolean;
+}
+
+export interface RunGameOptions {
+  /** Preview-ul adultului nu modifică mastery, dificultatea sau profilul. */
+  readonly persistProgress?: boolean;
 }
 
 let cancelFlag = false;
@@ -33,7 +56,6 @@ export function cancelCurrentGame(): void {
   stopSpeaking();
 }
 
-/** Sesiunea resetează flag-ul O DATĂ la start — niciodată între niveluri. */
 export function resetCancelFlag(): void {
   cancelFlag = false;
 }
@@ -50,7 +72,9 @@ export function makeContext(
   return {
     mount,
     shell,
-    speak: (text, opts) => speak(text, opts),
+    speak: (text, opts) => speakAndWait(text, opts),
+    speakCue: (cueId, fallbackText, opts) =>
+      speakCueAndWait(cueId, fallbackText, opts),
     hush: () => stopSpeaking(),
     reducedMotion: isMotionReduced(),
     demonstrate: async (target) => {
@@ -63,14 +87,15 @@ export function makeContext(
   };
 }
 
-/** Rulează un nivel: returnează rezultatul; se ocupă de tot ce e transversal. */
 export async function runGame(
   game: WebGame,
   mount: HTMLElement,
   shell: HTMLElement,
   sessionId: string,
   seedSalt: string,
+  options: RunGameOptions = {},
 ): Promise<RunOutcome> {
+  const persistProgress = options.persistProgress !== false;
   const profile = getProfile();
   const stored = profile.progressByGame[game.id];
   const storedOrInitial: DifficultyVector =
@@ -84,14 +109,34 @@ export async function runGame(
   const seed = `${game.id}:${new Date().toISOString().slice(0, 10)}:${seedSalt}:${stored?.timesPlayed ?? 0}`;
   const cleanups: Array<() => void> = [];
   const ctx = makeContext(mount, shell, (cleanup) => cleanups.push(cleanup));
+  const evidence = observeRoundEvidence(mount);
+  cleanups.push(evidence.destroy);
+
+  mount.dataset.gameId = game.id;
+  mount.dataset.gameTheme = WORKSHOP_GAMES.has(game.id)
+    ? "toy-workshop"
+    : "meadow";
+  mount.dataset.progressMode = persistProgress ? "record" : "preview";
+  cleanups.push(() => {
+    delete mount.dataset.gameId;
+    delete mount.dataset.gameTheme;
+    delete mount.dataset.progressMode;
+  });
 
   try {
-    const result = await game.play(ctx, difficulty, seed);
+    const rawResult = await game.play(ctx, difficulty, seed);
+    const measured = evidence.snapshot();
+    const result: PlayResult = {
+      ...rawResult,
+      ...(rawResult.responseMs === undefined && measured.responseMs !== undefined
+        ? { responseMs: measured.responseMs }
+        : {}),
+    };
     if (cancelFlag) {
       return { result: { ...result, abandoned: true }, cancelled: true };
     }
 
-    if (game.scored) {
+    if (game.scored && persistProgress) {
       recordAttempt(game.id, game.skillId, result, {
         sessionId,
         levelSeed: seed,
@@ -99,15 +144,20 @@ export async function runGame(
         contentVersion: CONTENT_VERSION,
       });
 
-      // Ajustare dificultate: o singură axă, pe baza ultimelor rezultate.
       const updated = getProfile().progressByGame[game.id];
-      const outcomes = (updated?.recentOutcomes ?? []).map((a) => ({
-        completed: a.completed,
-        correctFirstTry: a.correctFirstTry,
-        correctEventually: a.correctEventually,
-        hintsUsed: a.hintsUsed,
-        wrongAttempts: a.wrongAttempts,
-      }));
+      const outcomes = (updated?.recentOutcomes ?? []).map((attempt) => {
+        const withEvidence = attempt as StoredAttemptWithEvidence;
+        return {
+          completed: attempt.completed,
+          correctFirstTry: attempt.correctFirstTry,
+          correctEventually: attempt.correctEventually,
+          hintsUsed: attempt.hintsUsed,
+          wrongAttempts: attempt.wrongAttempts,
+          ...(withEvidence.responseMs === undefined
+            ? {}
+            : { responseMs: withEvidence.responseMs }),
+        };
+      });
       const direction = recommendDifficultyDirection(outcomes);
       if (direction !== 0) {
         const ladderStep = stepLadderDifficulty(
@@ -129,14 +179,28 @@ export async function runGame(
       } else if (!stored || Object.keys(stored.difficulty).length === 0) {
         setGameDifficulty(game.id, { ...difficulty });
       }
+
+      await flushPendingProfileWrites().catch(() => undefined);
     }
 
+    await waitForSpeechIdle();
     if (result.completed && !cancelFlag) {
       await praise(shell, { win: result.correctFirstTry });
     }
     await wait(250);
     return { result, cancelled: false };
   } finally {
-    for (const cleanup of cleanups.reverse()) cleanup();
+    let cleanupFailed = false;
+    for (const cleanup of cleanups.reverse()) {
+      try {
+        cleanup();
+      } catch (reason) {
+        cleanupFailed = true;
+        console.error("Game cleanup failed", reason);
+      }
+    }
+    document.documentElement.dataset.gameCleanupState = cleanupFailed
+      ? "failed"
+      : "healthy";
   }
 }

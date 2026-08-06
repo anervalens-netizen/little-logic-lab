@@ -9,7 +9,7 @@ import {
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { clear, wait } from "../ui/dom";
-import { speak } from "../audio/speech";
+import { waitForSpeechIdle } from "../audio/speech";
 import { sfxPlace } from "../audio/sfx";
 import { playItemVoice } from "../audio/voices";
 import { drawItem } from "../art/items";
@@ -133,7 +133,6 @@ export const oneToOneCountGame: WebGame = {
     let inputReady = false;
     let simplifying = false;
     let cancelWatch: number | null = null;
-    let completionTimer: number | null = null;
     let readyElement: HTMLElement | null = null;
     let resolveResult: (result: PlayResult) => void = () => undefined;
     const result = new Promise<PlayResult>((resolve) => {
@@ -142,8 +141,8 @@ export const oneToOneCountGame: WebGame = {
     const finish = (outcome: PlayResult) => {
       if (settled) return;
       settled = true;
+      inputReady = false;
       if (cancelWatch !== null) window.clearInterval(cancelWatch);
-      if (completionTimer !== null) window.clearTimeout(completionTimer);
       resolveResult(outcome);
     };
     const updatePageMetadata = (pageIndex: number) => {
@@ -152,7 +151,11 @@ export const oneToOneCountGame: WebGame = {
       readyElement.dataset.batchCount = String(batchCount);
       if (pageIndex > 0) {
         const remaining = Math.max(0, total - pageIndex * batchSize);
-        speak(`Mai avem ${remaining} prieteni. Continuăm!`);
+        void waitForSpeechIdle().then(() => {
+          if (!settled && !ctx.isCancelled()) {
+            return ctx.speak(`Mai avem ${remaining} prieteni. Continuăm!`);
+          }
+        });
       }
     };
 
@@ -188,15 +191,22 @@ export const oneToOneCountGame: WebGame = {
         if (!inputReady || settled || simplifying) return "ignore";
         if (served.has(targetId)) {
           const verdict = support.registerError();
-          speak("Acest prieten are deja unul!", { rate: 1 });
+          inputReady = false;
           const nextTarget = friendIds.find((id) => !served.has(id));
           if (nextTarget && verdict === "hint") {
-            window.setTimeout(() => scene.emphasizeTarget(nextTarget), 150);
+            scene.emphasizeTarget(nextTarget);
           }
           if (verdict === "simplify") {
             simplifying = true;
-            inputReady = false;
-            void autoCompleteRemaining();
+            void ctx
+              .speak("Acest prieten are deja unul!", { rate: 1 })
+              .then(() => autoCompleteRemaining());
+          } else {
+            void ctx
+              .speak("Acest prieten are deja unul!", { rate: 1 })
+              .then(() => {
+                if (!settled && !ctx.isCancelled()) inputReady = true;
+              });
           }
           return "incorrect";
         }
@@ -207,21 +217,28 @@ export const oneToOneCountGame: WebGame = {
         spokenCount += 1;
         sfxPlace();
         playItemVoice(treat);
-        speak(`${COUNT_WORDS[spokenCount - 1] ?? spokenCount}!`, {
-          rate: 0.95,
-        });
+        inputReady = false;
+        const countSpeech = ctx.speak(
+          `${COUNT_WORDS[spokenCount - 1] ?? spokenCount}!`,
+          { rate: 0.95 },
+        );
         if (placed.size >= total) {
-          completionTimer = window.setTimeout(
-            () =>
-              finish({
-                completed: true,
-                correctFirstTry: support.wasFirstTryClean,
-                correctEventually: true,
-                hintsUsed: support.hintsUsed,
-                wrongAttempts: support.wrongAttempts,
-              }),
-            ctx.reducedMotion ? 240 : 560,
+          void Promise.all([
+            countSpeech,
+            wait(ctx.reducedMotion ? 240 : 560),
+          ]).then(() =>
+            finish({
+              completed: true,
+              correctFirstTry: support.wasFirstTryClean,
+              correctEventually: true,
+              hintsUsed: support.hintsUsed,
+              wrongAttempts: support.wrongAttempts,
+            }),
           );
+        } else {
+          void countSpeech.then(() => {
+            if (!settled && !simplifying && !ctx.isCancelled()) inputReady = true;
+          });
         }
         return "correct";
       },
@@ -230,7 +247,8 @@ export const oneToOneCountGame: WebGame = {
     readyElement = scene.readyElement;
 
     async function autoCompleteRemaining(): Promise<void> {
-      speak("Hai să dăm împreună câte unul fiecăruia!");
+      inputReady = false;
+      await ctx.speak("Hai să dăm împreună câte unul fiecăruia!");
       const remainingItems = treatIds.filter((id) => !placed.has(id));
       const remainingTargets = friendIds.filter((id) => !served.has(id));
       for (let index = 0; index < remainingItems.length; index += 1) {
@@ -253,10 +271,12 @@ export const oneToOneCountGame: WebGame = {
       });
     }
 
-    speak(
-      `Avem ${total <= 4 ? COUNT_WORDS[total - 1] : total} prieteni! Dă fiecăruia câte unul!`,
-    );
-    await wait(demonstrationDelay(700));
+    await Promise.all([
+      ctx.speak(
+        `Avem ${total <= 4 ? COUNT_WORDS[total - 1] : total} prieteni! Dă fiecăruia câte unul!`,
+      ),
+      wait(demonstrationDelay(700)),
+    ]);
     if (ctx.isCancelled()) {
       scene.destroy();
       return {

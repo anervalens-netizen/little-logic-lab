@@ -1,15 +1,51 @@
-/** Jocul 1: „Găsește perechea identică" — potrivire vizuală exactă. */
+/** Golden slice 1: perechi de vehicule-jucărie într-o lume coerentă. */
 
 import type { ContentItem } from "@core";
 import { createChoiceGame } from "./choiceGame";
-import { ITEMS, getItem } from "../art/items";
-import { drawItem } from "../art/items";
-import { drawLumi } from "../art/lumi";
+import { ITEMS, getItem, drawItem } from "../art/items";
+import { LEARN_COLORS, learnColor } from "../art/palette";
 
-const CONTENT: readonly ContentItem[] = ITEMS.map((item) => ({
-  id: item.id,
-  attributes: { category: item.category, color: item.color },
-}));
+const VEHICLES = ITEMS.filter((item) => item.category === "vehicle");
+const STARTER_COLORS = LEARN_COLORS.slice(0, 4);
+
+const CONTENT: readonly ContentItem[] = VEHICLES.flatMap<ContentItem>((item) =>
+  item.recolorable
+    ? STARTER_COLORS.map((color) => ({
+        id: `${item.id}--${color.id}`,
+        attributes: {
+          category: item.category,
+          baseItem: item.id,
+          color: color.id,
+        },
+      }))
+    : [
+        {
+          id: item.id,
+          attributes: {
+            category: item.category,
+            baseItem: item.id,
+            color: item.color,
+          },
+        },
+      ],
+);
+
+function vehicleVisual(id: string): {
+  readonly svg: string;
+  readonly label: string;
+  readonly labelDef: string;
+  readonly speechCueId: `same-${string}`;
+} {
+  const [baseId, colorId] = id.split("--");
+  const item = getItem(baseId ?? id);
+  const color = colorId ? learnColor(colorId) : null;
+  return {
+    svg: drawItem(item.id, color?.hex),
+    label: color ? `${item.label}, culoare ${color.label}` : item.label,
+    labelDef: item.labelDef,
+    speechCueId: `same-${item.id}`,
+  };
+}
 
 export const samePictureGame = createChoiceGame({
   id: "same-picture",
@@ -17,14 +53,15 @@ export const samePictureGame = createChoiceGame({
   skillId: "visual_discrimination",
   domain: "visual_attention",
   instruction: "Uită-te la imagine! Găsește una la fel!",
-  coPlayPrompt: "Hai să căutăm prin casă două lucruri care arată la fel!",
-  icon: () => drawItem("cat"),
+  coPlayPrompt:
+    "Alegeți două mașinuțe sau două obiecte care arată la fel și puneți-le împreună.",
+  icon: () => drawItem("car"),
   bubbleColor: "#FFD35C",
   axes: [
-    { name: "choiceCount", values: [2, 3] },
-    { name: "distractorSimilarity", values: [0, 1] },
-    { name: "targetCueDuration", values: [-1, 2500] },
-    { name: "sceneClutter", values: [0, 1] },
+    { name: "choiceCount", values: [2, 3, 4, 5, 6, 8] },
+    { name: "distractorSimilarity", values: [0, 1, 2, 3, 4] },
+    { name: "targetCueDuration", values: [-1, 2500, 1500, 800, 0] },
+    { name: "sceneClutter", values: [0, 1, 2, 3, 4] },
   ],
   initialDifficulty: {
     choiceCount: 2,
@@ -34,20 +71,20 @@ export const samePictureGame = createChoiceGame({
   },
   renderer: "pixi",
   content: CONTENT,
-  similarityAttribute: "category",
+  similarityAttribute: "baseItem",
   buildRound: (level) => {
-    const target = getItem(level.targetId);
+    const target = vehicleVisual(level.targetId);
     return {
-      targetSvg: drawItem(target.id),
-      targetLabel: target.labelDef,
+      targetSvg: target.svg,
+      targetLabel: target.label,
       roundSpeech: `Uită-te! Aici e ${target.labelDef}. Găsește una la fel!`,
+      roundSpeechCueId: target.speechCueId,
       options: level.choiceIds.map((id) => {
-        const item = getItem(id);
-        return { id, svg: drawItem(id), label: item.label };
+        const visual = vehicleVisual(id);
+        return { id, svg: visual.svg, label: visual.label };
       }),
       correctId: level.correctChoiceId,
+      joinTargetOnSuccess: true,
     };
   },
 });
-
-export { drawLumi };

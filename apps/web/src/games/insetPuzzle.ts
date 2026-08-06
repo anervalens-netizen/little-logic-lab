@@ -1,17 +1,21 @@
-/** „Pune forma la loc" — puzzle spațial pe arhetipul comun spatial-fit. */
+/** Golden slice 3: puzzle spațial pe masa atelierului de jucării. */
 
 import { chooseDistinct, createRng } from "@core";
 import {
   ALL_SHAPES,
-  drawShape,
-  drawShapeHole,
+  drawWorkshopShape,
+  drawWorkshopShapeHole,
   SHAPE_LABELS,
   type ShapeId,
 } from "../art/shapes";
 import { LEARN_COLORS } from "../art/palette";
 import { createSpatialFitGame } from "./spatialFitGame";
 
-const EASY: readonly ShapeId[] = ALL_SHAPES;
+// Hexagonul nu are încă un clip local real. Nu îl introducem în nivelurile mici;
+// rămâne disponibil numai în stage-ul maxim până la pachetul Higgs revizuit.
+const SHAPES_WITH_AUDIO: readonly ShapeId[] = ALL_SHAPES.filter(
+  (shape) => shape !== "hexagon",
+);
 const SIMILAR_PAIRS: readonly ShapeId[][] = [
   ["circle", "oval"],
   ["square", "diamond"],
@@ -20,8 +24,8 @@ const SIMILAR_PAIRS: readonly ShapeId[][] = [
 ];
 
 function outlineOpacity(value: unknown): number {
-  if (value === "none") return 0.12;
-  if (value === "partial") return 0.5;
+  if (value === "none") return 0.16;
+  if (value === "partial") return 0.56;
   return 1;
 }
 
@@ -31,8 +35,13 @@ export const insetPuzzleGame = createSpatialFitGame({
   skillId: "spatial_matching",
   domain: "spatial_planning",
   instruction: "Pune fiecare formă în gaura ei!",
+  instructionCueId: "inset-instruction",
+  hintSpeech: "Uite, aici se potrivește!",
+  hintCueId: "inset-hint",
+  helpSpeech: "Hai să le punem împreună!",
+  helpCueId: "inset-help",
   coPlayPrompt: "Căutați acasă capace și cutii care se potrivesc între ele!",
-  icon: () => drawShape("heart", "#FF9EC6"),
+  icon: () => drawWorkshopShape("heart", "#FF9EC6"),
   bubbleColor: "#FF9EC6",
   axes: [
     { name: "pieceCount", values: [2, 3, 4, 5, 6, 7, 8, 10] },
@@ -47,14 +56,18 @@ export const insetPuzzleGame = createSpatialFitGame({
     similarity: 0,
   },
   buildRound(difficulty, seed) {
-    const pieceCount = Math.max(2, Number(difficulty["pieceCount"] ?? 2));
+    const requestedCount = Math.max(2, Number(difficulty["pieceCount"] ?? 2));
     const similarity = Number(difficulty["similarity"] ?? 0);
     const rotationEnabled = difficulty["rotationEnabled"] === true;
     const rng = createRng(seed);
-    const count = Math.min(pieceCount, EASY.length);
-    const prioritized = SIMILAR_PAIRS.slice(0, similarity).flat();
+    const availableShapes =
+      requestedCount > SHAPES_WITH_AUDIO.length ? ALL_SHAPES : SHAPES_WITH_AUDIO;
+    const count = Math.min(requestedCount, availableShapes.length);
+    const prioritized = SIMILAR_PAIRS.slice(0, similarity)
+      .flat()
+      .filter((shape) => availableShapes.includes(shape));
     const priority = [...new Set(prioritized)].slice(0, count);
-    const remainder = EASY.filter((shape) => !priority.includes(shape));
+    const remainder = availableShapes.filter((shape) => !priority.includes(shape));
     const shapes = [
       ...priority,
       ...chooseDistinct(remainder, count - priority.length, rng),
@@ -69,11 +82,14 @@ export const insetPuzzleGame = createSpatialFitGame({
         id: shape,
         label: SHAPE_LABELS[shape],
         speech: SHAPE_LABELS[shape],
-        pieceSvg: drawShape(
+        ...(shape === "hexagon"
+          ? {}
+          : { speechCueId: `shape-${shape}` }),
+        pieceSvg: drawWorkshopShape(
           shape,
           colors[index % colors.length]?.hex ?? "#F25C4C",
         ),
-        targetSvg: drawShapeHole(shape),
+        targetSvg: drawWorkshopShapeHole(shape),
         targetOpacity: outlineOpacity(difficulty["outlineSupport"]),
         rotation: rotationEnabled
           ? (rng() > 0.5 ? 1 : -1) * (Math.PI / 8 + rng() * Math.PI / 5)

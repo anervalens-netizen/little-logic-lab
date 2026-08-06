@@ -1,5 +1,7 @@
 /** Helperi minusculi pentru construit DOM fără framework. */
 
+import { waitForSpeechIdle } from "../audio/speech";
+
 type Child = Node | string | null | undefined | false;
 
 export function el<K extends keyof HTMLElementTagNameMap>(
@@ -34,8 +36,15 @@ export function clear(node: HTMLElement): void {
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
-export function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Menține durata vizuală minimă, dar nu permite secvenței să depășească vocea
+ * activă. Acoperă runtime-urile vechi care folosesc `speak(); await wait(...)`.
+ */
+export async function wait(ms: number): Promise<void> {
+  await Promise.all([
+    new Promise<void>((resolve) => window.setTimeout(resolve, ms)),
+    waitForSpeechIdle(),
+  ]);
 }
 
 /** Așteaptă următorul cadru de animație. */

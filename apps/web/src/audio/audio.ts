@@ -1,12 +1,15 @@
 /** Context audio partajat; se deblochează la prima atingere (regula browserelor). */
 
 let ctx: AudioContext | null = null;
-let master: GainNode | null = null;
+let output: GainNode | null = null;
+let sfxBus: GainNode | null = null;
+let voiceBus: GainNode | null = null;
 let enabled = true;
+let voiceDuckingActive = false;
 
 export function setAudioEnabled(value: boolean): void {
   enabled = value;
-  if (master) master.gain.value = value ? 1 : 0;
+  if (output) output.gain.value = value ? 1 : 0;
 }
 
 export function audioEnabled(): boolean {
@@ -19,9 +22,15 @@ export function getAudioContext(): AudioContext | null {
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return null;
     ctx = new Ctor();
-    master = ctx.createGain();
-    master.gain.value = 1;
-    master.connect(ctx.destination);
+    output = ctx.createGain();
+    sfxBus = ctx.createGain();
+    voiceBus = ctx.createGain();
+    output.gain.value = 1;
+    sfxBus.gain.value = voiceDuckingActive ? 0.32 : 1;
+    voiceBus.gain.value = 1;
+    sfxBus.connect(output);
+    voiceBus.connect(output);
+    output.connect(ctx.destination);
   }
   if (ctx.state === "suspended") {
     void ctx.resume();
@@ -29,7 +38,24 @@ export function getAudioContext(): AudioContext | null {
   return ctx;
 }
 
+/** Compatibilitate: efectele existente se conectează la magistrala SFX. */
 export function getMaster(): GainNode | null {
   getAudioContext();
-  return master;
+  return sfxBus;
+}
+
+export function getVoiceBus(): GainNode | null {
+  getAudioContext();
+  return voiceBus;
+}
+
+/** Reduce efectele cât timp vocea vorbește, fără a le opri complet. */
+export function setVoiceDucking(active: boolean): void {
+  voiceDuckingActive = active;
+  // Nu crea un AudioContext doar pentru a restabili starea idle înaintea
+  // primei interacțiuni. Valoarea este aplicată la inițializare.
+  if (!ctx || !sfxBus) return;
+  const target = active ? 0.32 : 1;
+  sfxBus.gain.cancelScheduledValues(ctx.currentTime);
+  sfxBus.gain.setTargetAtTime(target, ctx.currentTime, active ? 0.025 : 0.08);
 }

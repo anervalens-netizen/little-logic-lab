@@ -1,27 +1,130 @@
-# Logic Lab — PWA React/Pixi
+# Minte în joacă — PWA React/Pixi V2
 
-Aplicația P0 este live la `https://logic-lab.astancu.eu/`. Producția servește
-build-ul static Vite prin Cloudflare Tunnel → Caddy; nu folosește un backend.
+V2 se dezvoltă pe `agent/v2-runtime-reboot`. Branch-ul este Draft și nu se publică
+sau instalează pe serverul final înainte de închiderea roadmap-ului canonic.
 
-## Rulare locală
+Audit curent: `../../docs/17-final-audit-2026-07-29.md`  
+Roadmap: `../../docs/12-roadmap.md`
+
+## Baseline local
 
 ```bash
 cd ../..
-npm install
-npm run dev --workspace @little-logic-lab/web
+npm ci --no-audit --no-fund
+npm run check:v2-runtime
+npm run validate:audio-packs
+npm run audit:speech
+npm test
+npm run typecheck
 npm run build:web
 npm run preview --workspace @little-logic-lab/web
 ```
 
-`preview` este numai pentru verificare locală. `npm run build:web` impune
-bugetul de shell și verifică precache-ul tuturor implementărilor lazy.
+Browser baseline:
+
+```bash
+npm run test:web -- --project chromium-touch
+npm run test:web -- --project webkit-touch
+```
+
+Release gates speciale:
+
+```bash
+npm run test:web:all-games
+npm run test:web:trace-touch
+npm run test:web:performance
+```
+
+## Child și Parent Mode
+
+- Home are o singură acțiune: Continuă aventura;
+- golden journey conține pereche, sortare culoare și puzzle;
+- catalogul manual este numai în Parent Mode;
+- `Previzualizează nivelul` rulează cu `previewMode=true`;
+- preview-ul nu modifică attempt, mastery, difficulty, session sau session lock;
+- o sesiune reală a copilului rămâne singura cale care modifică progresul.
+
+## Runtime audio
+
+- voce locală decodată în `AudioBuffer`;
+- maximum o replică activă;
+- cache LRU maximum 48;
+- maximum trei preload-uri concurente;
+- timeout fetch/decode/playback;
+- playback rate limitat;
+- watchdog de final;
+- voice bus separat de SFX;
+- ducking;
+- input `inert`/`aria-busy` în timpul narațiunii;
+- excepție numai pentru go/no-go;
+- stable cue IDs pentru golden slice;
+- vocile procedurale ale obiectelor dezactivate;
+- muzica și vocea se opresc la background/freeze.
+
+## Offline și update
+
+Child Mode pornește numai când:
+
+1. service worker-ul este ready;
+2. pagina este controlată;
+3. unul dintre `release.json`-urile cache-uite corespunde commitului HTML curent;
+4. asset-urile provin din cache-ul acelui release sau din repair cache-ul curent;
+5. toate clipurile `core-shell` și `golden-journey` au status bun, content type
+   audio și corp nenul.
+
+La eșec:
+
+- Splash rămâne fail-closed;
+- adultul poate repara asset-urile obligatorii same-origin;
+- repair cache-urile vechi sunt ignorate și șterse;
+- playback-ul citește direct repair cache-ul în airplane mode.
+
+Update-ul workerului este aplicat numai la Splash sau la final de sesiune.
+
+## Persistență locală
+
+- IndexedDB;
+- migrări v1/v2/v3 → v4;
+- sanitizare profundă;
+- snapshot sincron de urgență;
+- token de generație;
+- timeout open/write/bootstrap;
+- fallback localStorage;
+- storage health;
+- recovery vizibil;
+- export și delete.
+
+După validarea executabilă trebuie unificată calea de scriere, eliminând API-ul
+istoric redundant din `storage.ts`.
+
+## Build gate
+
+`npm run build:web` verifică:
+
+- commit/tree/lockfile/Node;
+- shell inițial sub 100 KiB gzip;
+- toate cele 15 chunk-uri P0;
+- toate clipurile startup în service worker;
+- release identity în precache.
+
+## Testare
+
+- suita principală: fluxuri child/parent/preview, Axe, persistence, offline;
+- migrations: v1/v2/v3;
+- profile recovery;
+- emergency snapshot;
+- content pack repair;
+- pair lifecycle;
+- full catalog smoke;
+- continuous trace;
+- benchmark sintetic.
+
+Rămâne de implementat high-stage layout + completion per arhetip, conform R3 din
+roadmap.
 
 ## Livrare statică
 
-Serviciul Astra rulează cu `UMask=0077`, deci un build creat de Manager poate
-avea moduri private chiar dacă artefactele sunt corecte. Pe hostul Caddy,
-staging-ul se normalizează înainte de publicare, iar `rsync` impune aceleași
-moduri în destinație:
+Staging-ul trebuie normalizat înainte de rsync:
 
 ```bash
 find "$STAGING" -type d -exec chmod 0755 {} +
@@ -31,58 +134,25 @@ rsync -a --chmod=D755,F644 --delete-delay --delay-updates \
 docker exec unihub-caddy test -r /srv/logic-lab/index.html
 ```
 
-După publicare se verifică `/release.json` prin URL-ul public. Un răspuns `403`
-nu se atribuie Cloudflare înainte de verificarea permisiunilor din container.
+După publicare se verifică `/release.json`, commitul, tree-ul, asset-urile audio și
+update-ul pe dispozitiv. Un 403 se investighează mai întâi în permisiunile
+containerului.
 
-## Stare curentă
+## Înainte de serverul final
 
-- TypeScript 7 strict, React 19 pentru Splash/Home/tranziții/shell/Parent Mode,
-  PixiJS 8/WebGL pentru scene și Vite 8;
-- 15/15 familii P0 funcționale și selectabile direct de la prima pornire, cu
-  toate stage-urile ladder consumate;
-- registry TypeScript generat din catalog + ordinea P0, fără listă manuală;
-- 36 ilustrații procedurale originale, cu metadate canonice și ID-uri tipizate,
-  plus trei fundaluri storybook WebP originale și precached;
-- jocurile și runtime-urile Pixi sunt chunk-uri lazy, precached pentru offline;
-- profil, replay, progres și setări în IndexedDB cu migrări/recovery;
-- snapshot local v4, migrări v1/v2/v3 și blocare calmă după sesiune,
-  deblocată numai din Parent Mode;
-- 321 clipuri românești locale, cu feedback despre strategie/efort, și efecte
-  Web Audio, fără servicii remote;
-- overlay semantic, Reduced Motion, contrast ridicat, ținte de 112 px,
-  demonstrații 1,5× mai lente, Axe și baseline-uri Chromium/WebKit;
-- PWA versionată, CSP strict și zero egress de gameplay;
-- buildurile de release pornesc fail-closed numai dintr-un worktree Git curat,
-  expun commitul și tree-ul în HTML plus `/release.json`, iar identitatea este
-  inclusă în precache-ul offline și validată de `check:web-build`;
-- Parent Mode și orchestratorul sesiunii sunt chunk-uri lazy, precached;
-- diagnostics verifică cinci cicluri consecutive fără canvas, overlay, clone,
-  voce, tonuri sau lease-uri SVG reziduale;
-- shell inițial 69,98 KiB JS gzip, sub bugetul de 100 KiB.
+Obligatoriu:
 
-## Structură
+- toate comenzile verzi;
+- high-stage contracts;
+- clean install/update/repair/airplane mode;
+- Preview Mode fără mutații;
+- crash/recovery;
+- memorie și FPS;
+- cinci cicluri fără resurse;
+- TalkBack/VoiceOver;
+- audio golden aprobat;
+- pilot copil–adult;
+- workflow GitHub manual verde;
+- rollback documentat.
 
-```text
-src/
-  main.tsx           bootstrap React
-  app/               sesiuni, profil, IndexedDB, update PWA
-  generated/         content, asset manifest și registry lazy generate
-  games/             implementările P0 și engine-ul transversal
-  runtime/           scene Pixi reutilizabile
-  screens/           splash, home, joc și Parent Mode
-  audio/             manifest RO, playback local și efecte
-  art/               Lumi, scene și renderere SVG procedurale locale
-  ui/                input/feedback/parent gate
-```
-
-## Porți rămase pentru pilot
-
-- audiția celor 321 clipuri de un vorbitor nativ;
-- verificare manuală TalkBack/VoiceOver;
-- observație copil–adult și remedierea blocajelor constatate.
-
-Poarta Android este închisă pe OnePlus 6T/Android 11/Chrome 150:
-59,55–59,84 FPS, frame p95 16,8 ms, input 5,8–7,3 ms, zero long tasks și
-zero resurse active după cinci cicluri.
-
-Roadmap-ul canonic este `../../docs/12-roadmap.md`.
+Instrucțiuni: `../../tasks/20-v2-server-handoff.md`.

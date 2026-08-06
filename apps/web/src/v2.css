@@ -1,0 +1,421 @@
+/* V2 premium product layer. */
+
+/* Vocea este autoritară pentru ritmul rundei. Excepțiile go/no-go setează
+   explicit speechBlocksInput=false, deoarece atingerea este comportamentul testat. */
+html[data-speech-blocks-input="true"] .game-play-area {
+  pointer-events: none;
+}
+
+.home-screen--journey {
+  background: #dff4ff;
+}
+
+.home-journey-scenery,
+.home-journey-scenery svg {
+  width: 100%;
+  height: 100%;
+}
+
+.home-content--journey {
+  justify-content: space-between;
+  gap: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.home-adventure--primary {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: space-between;
+  width: min(940px, calc(100% - 12px));
+  min-height: 0;
+  margin: 0 auto 8px;
+  padding: clamp(16px, 3vw, 28px);
+  border: 3px solid rgba(255, 255, 255, 0.86);
+  border-radius: clamp(30px, 5vw, 52px);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 249, 230, 0.76));
+  box-shadow:
+    0 10px 0 rgba(74, 63, 53, 0.08),
+    0 24px 54px rgba(74, 63, 53, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.home-adventure-intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  max-width: 740px;
+  margin: 0 auto;
+  gap: clamp(14px, 4vw, 28px);
+}
+
+.home-adventure-intro .home-lumi {
+  width: clamp(104px, 18vmin, 154px);
+}
+
+.home-adventure-copy {
+  min-width: 0;
+}
+
+.home-adventure-kicker {
+  margin: 0 0 4px;
+  color: var(--ink-soft);
+  font-size: clamp(15px, 2.5vw, 20px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.home-adventure-copy h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(27px, 5vw, 48px);
+  line-height: 1;
+}
+
+.home-adventure-copy p:last-child {
+  margin: 8px 0 0;
+  color: var(--ink-soft);
+  font-size: clamp(16px, 2.6vw, 21px);
+  font-weight: 650;
+}
+
+.home-adventure-map {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  width: min(100%, 780px);
+  min-height: 210px;
+  margin: 8px auto;
+  padding: 22px 14px 12px;
+  gap: clamp(16px, 4vw, 48px);
+}
+
+.home-adventure-path {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: 9%;
+  left: 9%;
+  height: 18px;
+  border: 4px solid rgba(166, 123, 91, 0.27);
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.92) 0 18px,
+      rgba(255, 255, 255, 0.08) 18px 32px
+    ),
+    #d6aa79;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
+  transform: rotate(-2deg);
+}
+
+.home-adventure-stop {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  width: min(100%, 210px);
+  min-height: 168px;
+  margin: auto;
+  padding: 16px 14px 12px;
+  border: 4px solid rgba(74, 63, 53, 0.1);
+  border-radius: 34px;
+  background: rgba(255, 253, 247, 0.94);
+  box-shadow:
+    0 7px 0 rgba(74, 63, 53, 0.11),
+    0 15px 26px rgba(74, 63, 53, 0.11);
+  place-items: center;
+  transition: transform 180ms ease, opacity 180ms ease, box-shadow 180ms ease;
+}
+
+.home-adventure-stop--1 {
+  transform: translateY(14px) rotate(-1.5deg);
+}
+
+.home-adventure-stop--2 {
+  transform: translateY(-14px) rotate(1deg);
+}
+
+.home-adventure-stop--3 {
+  transform: translateY(10px) rotate(-0.5deg);
+}
+
+.home-adventure-stop.is-current {
+  border-color: #e8b23c;
+  box-shadow:
+    0 8px 0 rgba(214, 165, 65, 0.24),
+    0 0 0 8px rgba(255, 211, 92, 0.2),
+    0 18px 34px rgba(74, 63, 53, 0.14);
+}
+
+.home-adventure-stop.is-upcoming {
+  opacity: 0.64;
+}
+
+.home-journey-art,
+.home-journey-art svg {
+  display: block;
+  width: clamp(98px, 15vw, 136px);
+  height: clamp(98px, 15vw, 136px);
+}
+
+.home-journey-label {
+  max-width: 170px;
+  color: var(--ink);
+  font-size: clamp(15px, 2.2vw, 19px);
+  font-weight: 850;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.home-adventure-number {
+  position: absolute;
+  z-index: 2;
+  top: -16px;
+  left: -8px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  border: 4px solid white;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 4px 0 rgba(74, 63, 53, 0.18);
+  color: white;
+  font-size: 21px;
+  font-weight: 850;
+  place-items: center;
+}
+
+.home-continue-button {
+  width: min(100%, 520px);
+  min-height: 92px;
+  margin: 6px auto 0;
+  font-size: clamp(24px, 4.2vw, 36px);
+  box-shadow:
+    0 9px 0 rgba(78, 154, 81, 0.28),
+    0 18px 36px rgba(74, 63, 53, 0.13);
+}
+
+html[data-high-contrast="true"] .home-adventure--primary,
+html[data-high-contrast="true"] .home-adventure-stop {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+
+.reduced-motion .home-adventure-stop,
+.reduced-motion .home-adventure-path {
+  transform: none;
+  transition: none;
+}
+
+/* Parent Mode premium: informație calitativă și catalog separat de runtime. */
+.parent-skill-card,
+.parent-game-catalog-item,
+.parent-storage-health {
+  border: 2px solid rgba(74, 63, 53, 0.1);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 5px 0 rgba(74, 63, 53, 0.07);
+}
+
+.parent-skill-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 15px 17px;
+  gap: 12px;
+}
+
+.parent-skill-card strong,
+.parent-game-catalog-copy strong {
+  display: block;
+  color: var(--ink);
+  font-size: 17px;
+}
+
+.parent-skill-card p,
+.parent-game-catalog-copy p,
+.parent-storage-health p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+.parent-skill-state,
+.parent-game-status {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #eef6e8;
+  color: #386d3a;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.parent-game-catalog {
+  display: grid;
+  gap: 12px;
+}
+
+.parent-game-catalog-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 15px 17px;
+  gap: 14px;
+}
+
+.parent-game-catalog-item.is-locked {
+  opacity: 0.64;
+}
+
+.parent-game-launch {
+  min-width: 122px;
+  min-height: 52px;
+  padding: 10px 16px;
+  border: 2px solid rgba(74, 63, 53, 0.12);
+  border-radius: 18px;
+  background: var(--grass);
+  color: var(--ink);
+  font-weight: 850;
+  box-shadow: 0 4px 0 rgba(74, 63, 53, 0.1);
+}
+
+.parent-storage-health {
+  padding: 14px 16px;
+}
+
+.parent-storage-health.is-warning {
+  border-color: #d79d45;
+  background: #fff6df;
+}
+
+@media (max-width: 620px) and (orientation: portrait) {
+  .home-content--journey {
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+
+  .home-adventure--primary {
+    width: 100%;
+    padding: 16px 13px 18px;
+    border-radius: 30px;
+  }
+
+  .home-adventure-intro {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .home-adventure-intro .home-lumi {
+    width: 92px;
+  }
+
+  .home-adventure-map {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 12px 0 6px;
+    gap: 13px;
+  }
+
+  .home-adventure-path {
+    top: 6%;
+    right: auto;
+    bottom: 6%;
+    left: 50%;
+    width: 15px;
+    height: auto;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.92) 0 18px,
+        rgba(255, 255, 255, 0.08) 18px 32px
+      ),
+      #d6aa79;
+    transform: translateX(-50%);
+  }
+
+  .home-adventure-stop,
+  .home-adventure-stop--1,
+  .home-adventure-stop--2,
+  .home-adventure-stop--3 {
+    grid-template-columns: 88px minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    width: min(100%, 340px);
+    min-height: 104px;
+    padding: 9px 18px;
+    transform: none;
+  }
+
+  .home-journey-art,
+  .home-journey-art svg {
+    width: 84px;
+    height: 84px;
+  }
+
+  .home-journey-label {
+    max-width: none;
+    font-size: 18px;
+    text-align: left;
+  }
+
+  .home-continue-button {
+    min-height: 82px;
+    font-size: 24px;
+  }
+
+  .parent-skill-card,
+  .parent-game-catalog-item {
+    grid-template-columns: 1fr;
+  }
+
+  .parent-game-launch {
+    width: 100%;
+  }
+}
+
+@media (max-height: 620px) and (orientation: landscape) {
+  .home-adventure--primary {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.8fr) minmax(420px, 1.5fr);
+    grid-template-rows: 1fr auto;
+    align-items: center;
+    gap: 6px 18px;
+    padding: 10px 18px 14px;
+  }
+
+  .home-adventure-intro {
+    grid-row: 1 / 3;
+  }
+
+  .home-adventure-map {
+    min-height: 150px;
+    margin: 0;
+    padding: 14px 4px 4px;
+  }
+
+  .home-adventure-stop {
+    min-height: 126px;
+    padding: 8px;
+  }
+
+  .home-journey-art,
+  .home-journey-art svg {
+    width: 86px;
+    height: 86px;
+  }
+
+  .home-continue-button {
+    min-height: 64px;
+    margin-top: 0;
+    padding: 8px 22px;
+    font-size: 22px;
+  }
+}

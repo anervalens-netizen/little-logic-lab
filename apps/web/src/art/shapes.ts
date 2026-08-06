@@ -1,4 +1,4 @@
-/** Forme geometrice drăgălașe, colorabile, cu față opțională. */
+/** Forme geometrice colorabile pentru jocuri, puzzle și umbre. */
 
 import { svg, cuteFace } from "./svg";
 import { shade } from "./palette";
@@ -41,7 +41,6 @@ export const ALL_SHAPES: readonly ShapeId[] = [
   "cross",
 ];
 
-/** Silueta formei (folosită și la umbre și la puzzle). */
 export function shapePath(id: ShapeId): string {
   switch (id) {
     case "circle":
@@ -75,16 +74,48 @@ export function drawShape(
   const withFace = opts.face ?? true;
   const edge = shade(color, 0.78);
   const body = `<g fill="${color}" stroke="${edge}" stroke-width="4" stroke-linejoin="round">${shapePath(id)}</g>`;
-  const face = withFace ? cuteFace(60, id === "triangle" ? 72 : 54, 13, { eyeR: 4.2 }) : "";
+  const face = withFace
+    ? cuteFace(60, id === "triangle" ? 72 : 54, 13, { eyeR: 4.2 })
+    : "";
   return svg(body + face);
 }
 
-/** Siluetă complet neagră — pentru jocul „Potrivește umbra". */
+/** Piesă premium pentru masa de lucru: volum, highlight și mâner discret. */
+export function drawWorkshopShape(id: ShapeId, color: string): string {
+  const edge = shade(color, 0.68);
+  const shadow = shade(color, 0.52);
+  return svg(`
+    <defs>
+      <filter id="piece-shadow" x="-30%" y="-30%" width="160%" height="170%">
+        <feDropShadow dx="0" dy="7" stdDeviation="4" flood-color="#4A3F35" flood-opacity="0.22"/>
+      </filter>
+      <linearGradient id="piece-light" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"/>
+        <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <g filter="url(#piece-shadow)" transform="translate(0 3)">
+      <g fill="${shadow}" stroke="${edge}" stroke-width="5" stroke-linejoin="round" transform="translate(0 4)">${shapePath(id)}</g>
+      <g fill="${color}" stroke="${edge}" stroke-width="5" stroke-linejoin="round">${shapePath(id)}</g>
+      <g fill="url(#piece-light)" stroke="none" transform="translate(-4 -5) scale(.94) translate(4 5)">${shapePath(id)}</g>
+      <circle cx="60" cy="57" r="9" fill="#FFF8EC" stroke="${edge}" stroke-width="4"/>
+      <circle cx="57" cy="54" r="2.5" fill="#FFFFFF" opacity=".9"/>
+    </g>
+  `);
+}
+
+/** Locaș de atelier cu adâncime vizuală, dar contrast blând. */
+export function drawWorkshopShapeHole(id: ShapeId): string {
+  return svg(`
+    <g transform="translate(0 3)" fill="rgba(74,63,53,0.18)" stroke="rgba(74,63,53,0.42)" stroke-width="7" stroke-linejoin="round">${shapePath(id)}</g>
+    <g fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.55)" stroke-width="3" stroke-linejoin="round" transform="translate(0 -2)">${shapePath(id)}</g>
+  `);
+}
+
 export function drawShapeShadow(id: ShapeId): string {
   return svg(`<g fill="#3A3440">${shapePath(id)}</g>`);
 }
 
-/** Contur punctat — „gaura" din puzzle. */
 export function drawShapeHole(id: ShapeId): string {
   return svg(
     `<g fill="rgba(74,63,53,0.08)" stroke="rgba(74,63,53,0.35)" stroke-width="4" stroke-dasharray="9 7" stroke-linejoin="round">${shapePath(id)}</g>`,

@@ -4,7 +4,6 @@ import { createRng, chooseOne, shuffle, type DifficultyVector } from "@core";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { SupportTracker } from "./support";
 import { clear, wait } from "../ui/dom";
-import { speak } from "../audio/speech";
 import { sfxPlace } from "../audio/sfx";
 import { demonstrationDelay } from "../ui/accessibilityPreferences";
 import {
@@ -96,7 +95,6 @@ export const dailyOrderGame: WebGame = {
     let inputReady = false;
     let simplifying = false;
     let cancelWatch: number | null = null;
-    let completionTimer: number | null = null;
     let resolveResult: (result: PlayResult) => void = () => undefined;
     const result = new Promise<PlayResult>((resolve) => {
       resolveResult = resolve;
@@ -104,8 +102,8 @@ export const dailyOrderGame: WebGame = {
     const finish = (outcome: PlayResult) => {
       if (settled) return;
       settled = true;
+      inputReady = false;
       if (cancelWatch !== null) window.clearInterval(cancelWatch);
-      if (completionTimer !== null) window.clearTimeout(completionTimer);
       resolveResult(outcome);
     };
 
@@ -126,11 +124,18 @@ export const dailyOrderGame: WebGame = {
           if (verdict === "hint" && expected) {
             scene.emphasize(expected);
             if (verbalSupport !== "minimal") {
-              speak(
-                `Uite, asta facem ${STEP_WORDS[
-                  Math.min(nextIndex, 2)
-                ]?.toLowerCase()}!`,
-              );
+              inputReady = false;
+              void ctx
+                .speak(
+                  `Uite, asta facem ${STEP_WORDS[
+                    Math.min(nextIndex, 2)
+                  ]?.toLowerCase()}!`,
+                )
+                .then(() => {
+                  if (!settled && !simplifying && !ctx.isCancelled()) {
+                    inputReady = true;
+                  }
+                });
             }
           } else if (verdict === "simplify") {
             simplifying = true;
@@ -149,37 +154,38 @@ export const dailyOrderGame: WebGame = {
     async function acceptStep(id: RoutineId): Promise<void> {
       const slotIndex = nextIndex;
       sfxPlace();
-      if (verbalSupport === "full" || verbalSupport === "brief") {
-        speak(
-          STEP_WORDS[Math.min(slotIndex, STEP_WORDS.length - 1)] ?? "Apoi",
-          { rate: 1 },
-        );
-      }
-      await scene.accept(id, slotIndex);
+      const narration =
+        verbalSupport === "full" || verbalSupport === "brief"
+          ? ctx.speak(
+              STEP_WORDS[Math.min(slotIndex, STEP_WORDS.length - 1)] ??
+                "Apoi",
+              { rate: 1 },
+            )
+          : Promise.resolve();
+      await Promise.all([narration, scene.accept(id, slotIndex)]);
       nextIndex += 1;
       if (nextIndex >= steps.length) {
-        completionTimer = window.setTimeout(
-          () =>
-            finish({
-              completed: true,
-              correctFirstTry: support.wasFirstTryClean,
-              correctEventually: true,
-              hintsUsed: support.hintsUsed,
-              wrongAttempts: support.wrongAttempts,
-            }),
-          ctx.reducedMotion ? 260 : 560,
-        );
+        await wait(ctx.reducedMotion ? 260 : 560);
+        finish({
+          completed: true,
+          correctFirstTry: support.wasFirstTryClean,
+          correctEventually: true,
+          hintsUsed: support.hintsUsed,
+          wrongAttempts: support.wrongAttempts,
+        });
         return;
       }
       if (verbalSupport === "full") {
-        speak(`${STEP_WORDS[Math.min(nextIndex, STEP_WORDS.length - 1)]}?`);
+        await ctx.speak(
+          `${STEP_WORDS[Math.min(nextIndex, STEP_WORDS.length - 1)]}?`,
+        );
       }
-      inputReady = true;
+      if (!simplifying && !settled && !ctx.isCancelled()) inputReady = true;
     }
 
     async function autoCompleteRemaining(): Promise<void> {
-      speak("Hai să le punem împreună!");
-      while (nextIndex < steps.length && !ctx.isCancelled()) {
+      await ctx.speak("Hai să le punem împreună!");
+      while (nextIndex < steps.length && !ctx.isCancelled() && !settled) {
         const step = steps[nextIndex];
         if (!step) break;
         await acceptStep(step);
@@ -194,16 +200,18 @@ export const dailyOrderGame: WebGame = {
       });
     }
 
-    if (verbalSupport === "full") {
-      speak(
-        `${STEP_WORDS[0]}: ce facem ${
-          steps.length === 2 ? "întâi" : "la început"
-        }?`,
-      );
-    } else if (verbalSupport === "brief") {
-      speak("Ce facem întâi?");
-    }
-    await wait(demonstrationDelay(800));
+    const initialSpeech =
+      verbalSupport === "full"
+        ? `${STEP_WORDS[0]}: ce facem ${
+            steps.length === 2 ? "întâi" : "la început"
+          }?`
+        : verbalSupport === "brief"
+          ? "Ce facem întâi?"
+          : null;
+    await Promise.all([
+      initialSpeech ? ctx.speak(initialSpeech) : Promise.resolve(),
+      wait(demonstrationDelay(800)),
+    ]);
     if (ctx.isCancelled()) {
       scene.destroy();
       return {

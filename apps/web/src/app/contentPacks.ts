@@ -1,0 +1,346 @@
+/** Inspectează și repară pachetele locale folosind numai asset-uri same-origin. */
+
+import {
+  AUDIO_PACKS,
+  AUDIO_PACK_VERSION,
+  REQUIRED_AUDIO_PACKS,
+  type AudioPack,
+} from "../audio/audioPacks";
+
+export interface AudioPackStatus {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly requiredAtStartup: boolean;
+  readonly gameIds: readonly string[];
+  readonly cachedAssets: number;
+  readonly totalAssets: number;
+  readonly totalBytes: number | null;
+  readonly ready: boolean;
+  /** Include atât căile absente, cât și răspunsurile cache-uite invalide. */
+  readonly missingPaths: readonly string[];
+}
+
+interface CachedLocation {
+  readonly cacheName: string;
+  readonly request: Request;
+}
+
+interface CacheIndex {
+  readonly locationsByPath: ReadonlyMap<string, readonly CachedLocation[]>;
+  readonly cacheByName: ReadonlyMap<string, Cache>;
+}
+
+interface CacheInspection {
+  readonly usablePaths: ReadonlySet<string>;
+  readonly bytesByPath: ReadonlyMap<string, number>;
+}
+
+const MAX_CACHE_INSPECTION_CONCURRENCY = 4;
+const MAX_CACHE_REPAIR_CONCURRENCY = 3;
+const REPAIR_CACHE_PREFIX = "logic-lab-audio-repair-";
+const REPAIR_CACHE_NAME = `${REPAIR_CACHE_PREFIX}${AUDIO_PACK_VERSION}`;
+
+function isObsoleteRepairCache(cacheName: string): boolean {
+  return (
+    cacheName.startsWith(REPAIR_CACHE_PREFIX) &&
+    cacheName !== REPAIR_CACHE_NAME
+  );
+}
+
+function htmlReleaseIdentity(): string | undefined {
+  return document.querySelector<HTMLMetaElement>(
+    'meta[name="logic-lab-release"]',
+  )?.content;
+}
+
+async function buildRawCacheIndex(): Promise<CacheIndex> {
+  const locationsByPath = new Map<string, CachedLocation[]>();
+  const cacheByName = new Map<string, Cache>();
+  if (!("caches" in window)) return { locationsByPath, cacheByName };
+
+  for (const cacheName of await caches.keys()) {
+    if (isObsoleteRepairCache(cacheName)) {
+      await caches.delete(cacheName);
+      continue;
+    }
+    const cache = await caches.open(cacheName);
+    cacheByName.set(cacheName, cache);
+    for (const request of await cache.keys()) {
+      const pathname = new URL(request.url).pathname;
+      const locations = locationsByPath.get(pathname) ?? [];
+      locations.push({ cacheName, request });
+      locationsByPath.set(pathname, locations);
+    }
+  }
+  return { locationsByPath, cacheByName };
+}
+
+async function currentReleaseCacheNames(
+  index: CacheIndex,
+): Promise<ReadonlySet<string>> {
+  const allowed = new Set<string>([REPAIR_CACHE_NAME]);
+  const expectedCommit = htmlReleaseIdentity();
+  if (!expectedCommit) return allowed;
+
+  for (const location of index.locationsByPath.get("/release.json") ?? []) {
+    const cache = index.cacheByName.get(location.cacheName);
+    if (!cache) continue;
+    const response = await cache.match(location.request);
+    if (!response?.ok) continue;
+    try {
+      const release = (await response.clone().json()) as {
+        readonly commit?: string;
+      };
+      if (release.commit === expectedCommit) allowed.add(location.cacheName);
+    } catch {
+      // Cache-ul cu manifest invalid nu poate furniza asset-uri pentru buildul curent.
+    }
+  }
+  return allowed;
+}
+
+async function buildCurrentAssetIndex(): Promise<CacheIndex> {
+  const raw = await buildRawCacheIndex();
+  const allowedNames = await currentReleaseCacheNames(raw);
+  const cacheByName = new Map<string, Cache>();
+  for (const [cacheName, cache] of raw.cacheByName) {
+    if (allowedNames.has(cacheName)) cacheByName.set(cacheName, cache);
+  }
+  const locationsByPath = new Map<string, CachedLocation[]>();
+  for (const [pathname, locations] of raw.locationsByPath) {
+    const allowed = locations.filter((location) =>
+      allowedNames.has(location.cacheName),
+    );
+    if (allowed.length > 0) locationsByPath.set(pathname, allowed);
+  }
+  return { locationsByPath, cacheByName };
+}
+
+function responseLooksUsable(
+  response: Response | undefined,
+  pathname?: string,
+): response is Response {
+  if (!response?.ok) return false;
+  if (pathname?.endsWith(".mp3")) {
+    const type = response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (!type.startsWith("audio/")) return false;
+  }
+  const contentLength = response.headers.get("content-length");
+  if (contentLength === null) return true;
+  const parsed = Number(contentLength);
+  return !Number.isFinite(parsed) || parsed > 0;
+}
+
+async function inspectCachedPaths(
+  paths: readonly string[],
+  index: CacheIndex,
+  includeBytes: boolean,
+): Promise<CacheInspection> {
+  const queue = [...new Set(paths)];
+  const usablePaths = new Set<string>();
+  const bytesByPath = new Map<string, number>();
+  let nextIndex = 0;
+  const workerCount = Math.min(MAX_CACHE_INSPECTION_CONCURRENCY, queue.length);
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < queue.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        const pathname = queue[currentIndex];
+        if (!pathname) continue;
+
+        const locations = index.locationsByPath.get(pathname) ?? [];
+        for (const location of locations) {
+          const cache = index.cacheByName.get(location.cacheName);
+          if (!cache) continue;
+          const response = await cache.match(location.request);
+          if (!responseLooksUsable(response, pathname)) continue;
+
+          let bytes: number | null = null;
+          if (includeBytes) {
+            const contentLength = Number(response.headers.get("content-length"));
+            bytes =
+              Number.isFinite(contentLength) && contentLength > 0
+                ? contentLength
+                : (await response.clone().blob()).size;
+            if (bytes <= 0) continue;
+          }
+
+          usablePaths.add(pathname);
+          if (bytes !== null) bytesByPath.set(pathname, bytes);
+          break;
+        }
+      }
+    }),
+  );
+
+  return { usablePaths, bytesByPath };
+}
+
+function requiredAssetPaths(): readonly string[] {
+  return [...new Set(REQUIRED_AUDIO_PACKS.flatMap((pack) => pack.assetPaths))];
+}
+
+/** Manifestele de release sunt căutate în toate cache-urile neînvechite. */
+export async function findCachedResponsesByPathname(
+  pathname: string,
+): Promise<readonly Response[]> {
+  const index = await buildRawCacheIndex();
+  const responses: Response[] = [];
+  for (const location of index.locationsByPath.get(pathname) ?? []) {
+    const cache = index.cacheByName.get(location.cacheName);
+    if (!cache) continue;
+    const response = await cache.match(location.request);
+    if (responseLooksUsable(response, pathname)) responses.push(response);
+  }
+  return responses;
+}
+
+/** Asset-urile runtime provin numai din buildul curent sau reparația sa curentă. */
+export async function findCurrentCachedAssetResponse(
+  pathname: string,
+): Promise<Response | undefined> {
+  const index = await buildCurrentAssetIndex();
+  for (const location of index.locationsByPath.get(pathname) ?? []) {
+    const cache = index.cacheByName.get(location.cacheName);
+    if (!cache) continue;
+    const response = await cache.match(location.request);
+    if (responseLooksUsable(response, pathname)) return response;
+  }
+  return undefined;
+}
+
+function statusForPack(
+  pack: AudioPack,
+  inspection: CacheInspection,
+  includeBytes: boolean,
+): AudioPackStatus {
+  const missingPaths = pack.assetPaths.filter(
+    (pathname) => !inspection.usablePaths.has(pathname),
+  );
+  const totalBytes = includeBytes
+    ? pack.assetPaths.reduce(
+        (total, pathname) => total + (inspection.bytesByPath.get(pathname) ?? 0),
+        0,
+      )
+    : null;
+
+  return {
+    id: pack.id,
+    title: pack.title,
+    description: pack.description,
+    requiredAtStartup: pack.requiredAtStartup,
+    gameIds: pack.gameIds,
+    cachedAssets: pack.assetPaths.length - missingPaths.length,
+    totalAssets: pack.assetPaths.length,
+    totalBytes,
+    ready: missingPaths.length === 0 && pack.assetPaths.length > 0,
+    missingPaths,
+  };
+}
+
+export async function inspectAudioPacks(
+  options: { readonly includeBytes?: boolean } = {},
+): Promise<readonly AudioPackStatus[]> {
+  const includeBytes = options.includeBytes === true;
+  const index = await buildCurrentAssetIndex();
+  const inspection = await inspectCachedPaths(
+    AUDIO_PACKS.flatMap((pack) => pack.assetPaths),
+    index,
+    includeBytes,
+  );
+  return AUDIO_PACKS.map((pack) =>
+    statusForPack(pack, inspection, includeBytes),
+  );
+}
+
+export async function requiredStartupAudioReady(): Promise<boolean> {
+  const paths = requiredAssetPaths();
+  if (paths.length === 0) return false;
+  const index = await buildCurrentAssetIndex();
+  const inspection = await inspectCachedPaths(paths, index, true);
+  return paths.every(
+    (pathname) =>
+      inspection.usablePaths.has(pathname) &&
+      (inspection.bytesByPath.get(pathname) ?? 0) > 0,
+  );
+}
+
+async function removeObsoleteRepairCaches(): Promise<void> {
+  for (const cacheName of await caches.keys()) {
+    if (isObsoleteRepairCache(cacheName)) {
+      await caches.delete(cacheName);
+    }
+  }
+}
+
+/**
+ * Repară numai asset-urile obligatorii lipsă. Parametrul de query evită ca ruta
+ * precache defectă să intercepteze din nou aceeași cheie; răspunsul este salvat
+ * sub pathname-ul canonic într-un cache local versionat.
+ */
+export async function repairRequiredStartupAudio(): Promise<boolean> {
+  if (!("caches" in window) || navigator.onLine === false) return false;
+  const paths = requiredAssetPaths();
+  if (paths.length === 0) return false;
+
+  const beforeIndex = await buildCurrentAssetIndex();
+  const before = await inspectCachedPaths(paths, beforeIndex, true);
+  const missing = paths.filter(
+    (pathname) =>
+      !before.usablePaths.has(pathname) ||
+      (before.bytesByPath.get(pathname) ?? 0) <= 0,
+  );
+  if (missing.length === 0) return true;
+
+  await removeObsoleteRepairCaches();
+  const repairCache = await caches.open(REPAIR_CACHE_NAME);
+  let nextIndex = 0;
+  let failed = false;
+  const workerCount = Math.min(MAX_CACHE_REPAIR_CONCURRENCY, missing.length);
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < missing.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        const pathname = missing[currentIndex];
+        if (!pathname) continue;
+        try {
+          const url = new URL(pathname, window.location.origin);
+          url.searchParams.set("__logic_lab_repair", AUDIO_PACK_VERSION);
+          const response = await fetch(url, {
+            cache: "reload",
+            credentials: "same-origin",
+          });
+          if (!responseLooksUsable(response, pathname)) {
+            failed = true;
+            continue;
+          }
+          const size = (await response.clone().blob()).size;
+          if (size <= 0) {
+            failed = true;
+            continue;
+          }
+          await repairCache.put(pathname, response.clone());
+        } catch {
+          failed = true;
+        }
+      }
+    }),
+  );
+
+  if (failed && !(await requiredStartupAudioReady())) return false;
+  return await requiredStartupAudioReady();
+}
+
+export function formatPackBytes(bytes: number | null): string {
+  if (bytes === null) return "nemăsurat";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) {
+    return `${new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 0 }).format(bytes / 1024)} KB`;
+  }
+  return `${new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 1 }).format(bytes / (1024 * 1024))} MB`;
+}

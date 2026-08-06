@@ -6,7 +6,6 @@ import { createRng, shuffle, type DifficultyVector } from "@core";
 import type { GameContext, PlayResult, WebGame } from "./types";
 import { clear, wait } from "../ui/dom";
 import { confettiBurst } from "../ui/feedback";
-import { speak } from "../audio/speech";
 import { LEARN_COLORS } from "../art/palette";
 import { svg } from "../art/svg";
 
@@ -96,6 +95,7 @@ export const realColorHuntGame: WebGame = {
       if (ctx.isCancelled()) break;
       clear(ctx.mount);
       let settled = false;
+      let inputReady = false;
       let resolveStep: (found: boolean) => void = () => undefined;
       const stepResult = new Promise<boolean>((resolve) => {
         resolveStep = resolve;
@@ -126,7 +126,8 @@ export const realColorHuntGame: WebGame = {
         ],
         reducedMotion: ctx.reducedMotion,
         onSelect(id) {
-          if (settled || id !== "found") return;
+          if (!inputReady || settled || id !== "found") return;
+          inputReady = false;
           settled = true;
           scene.markCorrect(id);
           completionTimer = window.setTimeout(
@@ -136,28 +137,41 @@ export const realColorHuntGame: WebGame = {
         },
       });
       ctx.onCleanup(scene.destroy);
+      scene.setOptionEnabled("found", false);
       scene.readyElement.dataset.sceneReady = "true";
       scene.readyElement.dataset.stepCount = String(stepCount);
       scene.readyElement.dataset.ruleCount = String(ruleCount);
       scene.readyElement.dataset.memoryDelaySec = String(memoryDelaySec);
       scene.readyElement.dataset.parentPromptSupport = parentPromptSupport;
       scene.readyElement.dataset.stepIndex = String(stepIndex + 1);
-      speak(`${spokenTask} Apasă când ai găsit!`);
+
+      await ctx.speak(`${spokenTask} Apasă când ai găsit!`);
+      if (ctx.isCancelled()) {
+        scene.destroy();
+        break;
+      }
+
       if (memoryDelaySec > 0) {
-        scene.setOptionEnabled("found", false);
         await wait(ctx.reducedMotion ? 650 : 1_200);
         scene.setTargetVisible(false);
-        speak("Ține minte și caută!");
+        await ctx.speak("Ține minte și caută!");
         if (!(await waitUntilReady(ctx, memoryDelaySec * 1_000))) {
           scene.destroy();
           break;
         }
-        scene.setOptionEnabled("found", true);
-        speak("Acum poți arăta că ai găsit!");
+        await ctx.speak("Acum poți arăta că ai găsit!");
       }
+
+      if (ctx.isCancelled()) {
+        scene.destroy();
+        break;
+      }
+      scene.setOptionEnabled("found", true);
+      inputReady = true;
       scene.readyElement.dataset.gameReady = "true";
       cancelWatch = window.setInterval(() => {
         if (!ctx.isCancelled() || settled) return;
+        inputReady = false;
         settled = true;
         resolveStep(false);
       }, 200);
