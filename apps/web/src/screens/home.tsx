@@ -240,7 +240,10 @@ function HomeScreen({
               type="button"
               className="btn-big green home-play-button home-continue-button"
               aria-label="Continuă aventura"
-              onClick={() => void startSession(activeGame?.id)}
+              onClick={() => {
+                const start = { preferredGameId: activeGame?.id };
+                void startSession(start.preferredGameId);
+              }}
             >
               <Artwork markup={PLAY_ICON} className="home-play-icon" />
               <span>CONTINUĂ AVENTURA</span>

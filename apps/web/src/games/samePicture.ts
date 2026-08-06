@@ -8,7 +8,7 @@ import { LEARN_COLORS, learnColor } from "../art/palette";
 const VEHICLES = ITEMS.filter((item) => item.category === "vehicle");
 const STARTER_COLORS = LEARN_COLORS.slice(0, 4);
 
-const CONTENT: readonly ContentItem[] = VEHICLES.flatMap((item) =>
+const CONTENT: readonly ContentItem[] = VEHICLES.flatMap<ContentItem>((item) =>
   item.recolorable
     ? STARTER_COLORS.map((color) => ({
         id: `${item.id}--${color.id}`,

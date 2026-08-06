@@ -101,7 +101,8 @@ function sanitizeProgress(
     typeof progress.difficulty === "object" && progress.difficulty !== null
       ? Object.fromEntries(
           Object.entries(progress.difficulty as Record<string, unknown>).filter(
-            ([axis, axisValue]) => axis.length > 0 && scalar(axisValue),
+            (entry): entry is [string, string | number | boolean] =>
+              entry[0].length > 0 && scalar(entry[1]),
           ),
         )
       : {};

@@ -40,7 +40,7 @@ class RootErrorBoundary extends Component<
   { readonly children: ReactNode },
   { readonly message: string | null }
 > {
-  state: { readonly message: string | null } = { message: null };
+  override state: { readonly message: string | null } = { message: null };
 
   static getDerivedStateFromError(error: unknown) {
     return {
@@ -48,11 +48,11 @@ class RootErrorBoundary extends Component<
     };
   }
 
-  componentDidCatch(_error: unknown, _info: ErrorInfo): void {
+  override componentDidCatch(_error: unknown, _info: ErrorInfo): void {
     document.documentElement.dataset.bootstrapState = "failed";
   }
 
-  render() {
+  override render() {
     return this.state.message ? (
       <BootstrapFailure message={this.state.message} />
     ) : (

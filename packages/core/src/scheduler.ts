@@ -117,7 +117,8 @@ export function buildSessionPlan(
     if (chosen === null) return;
     used.add(chosen.gameId);
     if (chosen.domain) usedDomains.add(chosen.domain);
-    entries.push({ gameId: chosen.gameId, skillId: chosen.skillId, role });
+    const finalRole: SessionRole = role;
+    entries.push({ gameId: chosen.gameId, skillId: chosen.skillId, role: finalRole });
   };
 
   const warmups = eligible.filter(
@@ -139,14 +140,14 @@ export function buildSessionPlan(
   addFrom(warmups, "warmup", "warmup");
   addFrom(growth, "growth", "growth-1");
 
+  if (transfer.length > 0 && maxGames >= 4 && entries.length < maxGames) {
+    addFrom(transfer, "transfer", "transfer");
+  }
   if (entries.length < maxGames) {
     addFrom(novelty, "novelty", "novelty");
   }
   if (entries.length < maxGames) {
     addFrom(growth, "growth", "growth-2");
-  }
-  if (transfer.length > 0 && maxGames >= 4) {
-    addFrom(transfer, "transfer", "transfer");
   }
 
   let fallbackIndex = 0;
