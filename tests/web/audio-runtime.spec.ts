@@ -85,7 +85,7 @@ test("current release is cached and speech gates child input", async ({
   );
   test.fixme(
     true,
-    "FIXME (validare 2026-08-06): Playwright raportează elementul choice-row ca "hidden" deși atributul data-game-ready="true" este setat și bounding rect este nenul. Probabil legat de cum Playwright 1.62.0 + chromium 1234 evaluează visibility pentru elemente cu pointer-events:none și display:block absolute.",
+    "FIXME (validare 2026-08-06): Playwright raportează elementul choice-row ca ascuns deși atributul data-game-ready este setat și bounding rect este nenul. Probabil legat de cum Playwright 1.62.0 + chromium 1234 evaluează visibility pentru elemente cu pointer-events:none și display:block absolute.",
   );
 
   await page.goto("/");
