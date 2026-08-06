@@ -7,12 +7,13 @@ Proiectul este construit pentru un copil real, dar repository-ul nu conține num
 fotografii, data nașterii sau alte date personale. Personalizarea și progresul
 rămân exclusiv pe dispozitiv.
 
-## Status V2
+## Status
 
-Rebuild-ul activ este `agent/v2-runtime-reboot`, pornit din commitul
-`3b8f0c92ec49f1098c262d6ed8abba5970ab1651`.
-
-Stare: **Draft / NO-GO pentru merge, instalare pe server sau release**.
+Live pe `main` (commit `d7afd02`). V2 a fost integrat și curățat pe 6 august 2026:
+branch-urile `agent-validation` și `agent/v2-runtime-reboot` au fost șterse, PR-urile
+Dependabot au fost închise. Branch-uri active: doar `main`. Raport de validare:
+`VALIDATION-REPORT.md`. Deploy pe server: `logic-lab.astancu.eu` (commit de pe
+main).
 
 Branch-ul include:
 
