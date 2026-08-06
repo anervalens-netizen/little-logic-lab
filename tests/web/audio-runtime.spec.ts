@@ -56,6 +56,11 @@ async function seedJourneyProgress(
     });
     db.close();
   }, gameIds);
+  // Profilul este citit și cached în memorie la bootstrap. Fără reîncărcare,
+  // getProfile() din shell-ul V2 returnează în continuare profilul vechi,
+  // iar data-unlocked-count / data-journey-stop rămân incorecte.
+  await page.reload();
+  await page.waitForTimeout(500);
 }
 
 test("current release is cached and speech gates child input", async ({
