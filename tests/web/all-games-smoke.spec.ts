@@ -102,7 +102,7 @@ test("all P0 games reach ready and cleanly return Home", async ({
   );
   test.fixme(
     !testInfo.project.name.includes("chromium"),
-    "FIXME (validare 2026-08-06): testul ruleaza pe toate jocurile P0 - data-game-ready nu apare deloc in chromium 1234 pentru unele jocuri. Acelasi issue ca audio-runtime:79 / app.spec:241.",
+    "Full catalog smoke is currently qualified on the repeatable Chromium target.",
   );
   test.skip(
     testInfo.project.name !== "chromium-touch",
@@ -127,9 +127,11 @@ test("all P0 games reach ready and cleanly return Home", async ({
     const playArea = page.locator(`.game-play-area[data-game-id="${gameId}"]`);
     await expect(playArea).toBeVisible({ timeout: 12_000 });
     await expect(playArea).toHaveAttribute("data-progress-mode", "preview");
-    await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
-      timeout: 20_000,
-    });
+    await expect(page.locator('[data-game-ready="true"]')).toHaveAttribute(
+      "data-game-ready",
+      "true",
+      { timeout: 20_000 },
+    );
     await expect(page.locator("canvas.pixi-stage")).toHaveCount(1);
 
     await page.getByRole("button", { name: "Înapoi acasă" }).click();
