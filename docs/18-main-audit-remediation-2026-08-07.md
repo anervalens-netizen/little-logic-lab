@@ -27,8 +27,8 @@ Remediere: lifecycle-ul nu mai creează un snapshot nou. La limitele browserului
 încearcă doar confirmarea cozii deja protejate. Snapshot-ul de urgență rămâne scris
 sincron la fiecare mutație reală prin `queueProfileSave()`.
 
-Au fost reactivate șapte teste direct legate de această zonă sau sărite cu o
-justificare stale din aceeași categorie:
+Au fost reactivate nouă teste direct legate de zonele reparate sau sărite cu o
+justificare stale:
 
 - recovery după profil parțial corupt;
 - confirmarea emergency snapshot la boot;
@@ -36,7 +36,9 @@ justificare stale din aceeași categorie:
 - migrare IndexedDB v3 → v4;
 - Home/journey baseline;
 - selecția următoarei opriri după progres persistat;
-- unlock-ul următorului joc după progres persistat.
+- unlock-ul următorului joc după progres persistat;
+- release/offline + speech input gate;
+- cleanup-ul scenei Pixi în timpul feedback-ului de pereche.
 
 ### P0 operațional/mobile — buildul PWA de producție cere HTTPS
 
@@ -54,14 +56,19 @@ Vite preview ca serviciu final.
 
 ### P1 — baseline Playwright incomplet
 
-Raportul din 6 august avea 23 teste sărite/proiect. Șapte teste au fost reactivate
-în această remediere. Rămân categorii ce trebuie validate executabil:
+Raportul din 6 august avea 23 teste sărite/proiect. Nouă teste au fost reactivate
+în această remediere. Pentru Pixi, readiness-ul se validează acum prin contractul
+`data-game-ready="true"`, nu prin „vizibilitatea” overlay-ului semantic aproape
+transparent; full-catalog smoke folosește aceeași regulă.
 
-- `data-game-ready`/Pixi visibility;
+Rămân categorii ce trebuie validate executabil:
+
 - Axe timeout;
 - continuous pointer path pentru `trace-road`;
 - content-pack mutation/repair;
 - snapshot-uri vizuale;
+- câteva teste istorice care folosesc încă vechea aserțiune Pixi și trebuie
+  revizuite individual;
 - alte skip-uri istorice care trebuie revizuite individual, nu eliminate în masă.
 
 Nu se vor elimina aserțiuni sau mări timeout-uri doar pentru a obține verde.
@@ -87,7 +94,7 @@ fără resurse reziduale.
 ## Plan de remediere/dezvoltare
 
 1. **Acum:** reparare race profil + diagnostic HTTPS + reactivare teste recovery,
-   migration și journey dependente de persistență.
+   migration, journey și readiness Pixi dependente de zonele remediate.
 2. **Pe server înainte de deploy:** `npm ci`, static/core/typecheck/build și browser
    gates; remediază orice eșec real, fără skip nou.
 3. **Deploy:** publică exclusiv `apps/web/dist` prin Caddy și HTTPS; verifică
@@ -100,6 +107,7 @@ fără resurse reziduale.
 
 ## Criteriu de acceptare pentru următorul deploy
 
-Minimum: static/core/typecheck/build verzi, cele șapte teste reactivate verzi,
-domeniul HTTPS servește buildul curent, telefonul intră din Splash în Home și o
-sesiune golden poate fi terminată fără pageerror.
+Minimum: static/core/typecheck/build verzi, cele nouă teste reactivate verzi,
+full-catalog smoke fără regresii de readiness, domeniul HTTPS servește buildul
+curent, telefonul intră din Splash în Home și o sesiune golden poate fi terminată
+fără pageerror.
