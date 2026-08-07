@@ -142,10 +142,6 @@ test("current release is cached and speech gates child input", async ({
 test("child home exposes one journey action and three visual stops", async ({
   page,
 }) => {
-  test.skip(
-    true,
-    "FIXME (validare 2026-08-06): seedJourneyProgress scrie 4 attempt-uri în IndexedDB și verifică înainte de reload că attempts=4. După page.reload(), bootstrap-ul noului page apelează sanitizeProfile cu source.attempts=0 chiar dacă IndexedDB încă le conține. Bug real în fluxul loadProfile/profile-cache din V2, nu în test.",
-  );
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
   await page
@@ -172,10 +168,6 @@ test("child home exposes one journey action and three visual stops", async ({
 test("the session starts with the journey stop promised by Home", async ({
   page,
 }) => {
-  test.skip(
-    true,
-    "FIXME (validare 2026-08-06): same seed/profile-cache issue as audio-runtime:142; data-journey-stop rămâne 1 în loc de 2 după seedJourneyProgress([\"same-picture\"]).",
-  );
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
   await seedJourneyProgress(page, ["same-picture"]);
@@ -203,10 +195,6 @@ test("the session starts with the journey stop promised by Home", async ({
 test("supported success across two journey games unlocks the next catalog game", async ({
   page,
 }) => {
-  test.skip(
-    true,
-    "FIXME (validare 2026-08-06): same seed/profile-cache issue as audio-runtime:142; data-unlocked-count rămâne 3 în loc de 4 după seedJourneyProgress([\"same-picture\", \"sort-by-color\"]).",
-  );
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
   await seedJourneyProgress(page, ["same-picture", "sort-by-color"]);
