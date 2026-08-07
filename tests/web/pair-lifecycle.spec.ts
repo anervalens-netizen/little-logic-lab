@@ -22,18 +22,16 @@ async function openSamePictureTest(page: Page): Promise<void> {
     .filter({ hasText: "Găsește perechea" })
     .getByRole("button", { name: "Previzualizează nivelul" })
     .click();
-  await expect(page.locator('[data-game-ready="true"]')).toBeVisible({
-    timeout: 12_000,
-  });
+  await expect(page.locator('[data-game-ready="true"]')).toHaveAttribute(
+    "data-game-ready",
+    "true",
+    { timeout: 12_000 },
+  );
 }
 
 test("leaving during pair-joining feedback destroys the scene without late errors", async ({
   page,
 }) => {
-  test.skip(
-    true,
-    "FIXME (validare 2026-08-06): data-game-ready visibility timing flakes sub chromium 1234 / Playwright 1.62.0; necesita investigare vezi VALIDATION-REPORT.md § \"data-game-ready ascuns\".",
-  );
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
