@@ -25,10 +25,6 @@ async function enterParentData(page: Page): Promise<void> {
 test("Parent Mode reports required audio packs as locally installed", async ({
   page,
 }) => {
-  test.skip(
-    true,
-    "FIXME (validare 2026-08-06): enterHome intra in home dar testul esueaza - probabil data-unlocked-count sau profile state bug. Vezi VALIDATION-REPORT.md.",
-  );
   const externalRequests: string[] = [];
   page.on("request", (request) => {
     const url = new URL(request.url());
