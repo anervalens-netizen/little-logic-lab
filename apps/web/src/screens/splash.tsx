@@ -18,6 +18,7 @@ import { attachAmbient } from "../ui/ambient";
 
 const START_ICON = `<svg viewBox="0 0 48 48"><path d="M17 11 L39 24 L17 37 Z" fill="#4A3F35"/></svg>`;
 const GREETING = "Salut! Eu sunt Lumi! Hai să ne jucăm împreună!";
+type OfflineIssue = "transport" | "pack" | null;
 
 function Artwork({
   markup,
@@ -40,7 +41,7 @@ function SplashScreen() {
   const ambientHost = useRef<HTMLDivElement>(null);
   const [starting, setStarting] = useState(false);
   const [repairing, setRepairing] = useState(false);
-  const [offlineIssue, setOfflineIssue] = useState(false);
+  const [offlineIssue, setOfflineIssue] = useState<OfflineIssue>(null);
 
   useEffect(() => {
     const host = ambientHost.current;
@@ -51,15 +52,31 @@ function SplashScreen() {
 
   const start = async () => {
     if (started.current) return;
-    const shouldRepair = offlineIssue;
+    const shouldRepair = offlineIssue === "pack";
     started.current = true;
     setStarting(true);
     setRepairing(shouldRepair);
-    setOfflineIssue(false);
+    setOfflineIssue(null);
     getAudioContext();
     sfxTap();
 
     const greeting = speakCueAndWait("hello-lumi", GREETING);
+
+    // Service workers sunt obligatorii pentru Child Mode. În producție, un URL
+    // HTTP de forma http://IP:port nu este un secure context pe telefon și nu
+    // poate satisface contractul offline. Nu mascăm problema ca „pachet lipsă”.
+    const unsupportedTransport =
+      import.meta.env.PROD &&
+      (!window.isSecureContext || !("serviceWorker" in navigator));
+    if (unsupportedTransport) {
+      await greeting;
+      started.current = false;
+      setStarting(false);
+      setRepairing(false);
+      setOfflineIssue("transport");
+      return;
+    }
+
     if (shouldRepair) {
       await repairRequiredStartupAudio().catch(() => false);
     }
@@ -70,7 +87,7 @@ function SplashScreen() {
       started.current = false;
       setStarting(false);
       setRepairing(false);
-      setOfflineIssue(true);
+      setOfflineIssue("pack");
       return;
     }
     setRepairing(false);
@@ -82,9 +99,11 @@ function SplashScreen() {
     ? repairing
       ? "Repar pachetul local pentru folosire fără internet…"
       : "Pregătesc joaca pentru a funcționa și fără internet…"
-    : offlineIssue
-      ? "Pachetul local este incomplet. Conectează telefonul la internet și încearcă din nou."
-      : "Jocuri logice blânde pentru cei mici";
+    : offlineIssue === "transport"
+      ? "Pe telefon, deschide aplicația prin adresa HTTPS. Accesul direct prin HTTP/IP nu poate instala modul offline."
+      : offlineIssue === "pack"
+        ? "Pachetul local este incomplet. Conectează telefonul la internet și încearcă din nou."
+        : "Jocuri logice blânde pentru cei mici";
 
   return (
     <div className="splash-interaction" onPointerDown={() => void start()}>
@@ -104,11 +123,11 @@ function SplashScreen() {
           <div className="splash-lumi-halo" aria-hidden="true" />
           <Artwork
             markup={drawLumi(
-              starting ? "think" : offlineIssue ? "sleepy" : "happy",
+              starting ? "think" : offlineIssue !== null ? "sleepy" : "happy",
               190,
             )}
             className={`splash-lumi lumi ${
-              starting ? "think" : offlineIssue ? "sleepy" : "happy"
+              starting ? "think" : offlineIssue !== null ? "sleepy" : "happy"
             } lll-float`}
           />
           <h1 id="splash-title" className="splash-title">
@@ -129,9 +148,11 @@ function SplashScreen() {
                 ? repairing
                   ? "REPAR…"
                   : "PREGĂTESC…"
-                : offlineIssue
+                : offlineIssue === "pack"
                   ? "REPARĂ ȘI ÎNCEARCĂ DIN NOU"
-                  : "Atinge și joacă-te!"}
+                  : offlineIssue === "transport"
+                    ? "ÎNCEARCĂ DIN NOU"
+                    : "Atinge și joacă-te!"}
             </span>
           </button>
         </section>

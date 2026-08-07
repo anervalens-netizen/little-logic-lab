@@ -40,10 +40,6 @@ async function enterParentData(page: Page): Promise<void> {
 test("partially corrupt local data is repaired without a full reset", async ({
   page,
 }) => {
-  test.skip(
-    true,
-    "FIXME (validare 2026-08-06): testul corupe profilul în IndexedDB după bootstrap, apoi face page.reload(). Noul bootstrap citește IndexedDB dar sanitizeProfile primește source.ageMonths:31 chiar dacă IDB are 47. Același bug ca audio-runtime:142. Vezi VALIDATION-REPORT.md § \"Seed de profil oprit\".",
-  );
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
 
@@ -161,10 +157,6 @@ test("partially corrupt local data is repaired without a full reset", async ({
 test("an emergency snapshot is confirmed into IndexedDB on the next boot", async ({
   page,
 }) => {
-  test.skip(
-    true,
-    "FIXME (validare 2026-08-06): emergency snapshot flow + reload: aceeași IndexedDB/profile-cache race ca profile-recovery:40 și audio-runtime:142.",
-  );
   await page.goto("/");
   await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
 

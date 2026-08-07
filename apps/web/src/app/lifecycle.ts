@@ -1,13 +1,15 @@
 import {
   applySettings,
-  checkpointProfileSynchronously,
   flushPendingProfileWrites,
 } from "./appState";
 import { stopMusic } from "../audio/music";
 import { stopSpeaking } from "../audio/speech";
 
 function persistBestEffort(): void {
-  checkpointProfileSynchronously();
+  // Fiecare mutație a profilului scrie deja sincron un emergency snapshot în
+  // queueProfileSave(), înainte de IndexedDB. Re-snapshot-ul necondiționat aici
+  // putea copia o stare veche din memorie peste un IndexedDB mai nou la reload.
+  // La limitele lifecycle doar lăsăm coada deja protejată să se confirme.
   void flushPendingProfileWrites().catch(() => undefined);
 }
 
