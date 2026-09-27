@@ -152,7 +152,7 @@ test("child home exposes one journey action and three visual stops", async ({
   await expect(home).toBeVisible({ timeout: 35_000 });
   await expect(page.getByText("Aventura lui Lumi", { exact: true })).toBeVisible();
   await expect(page.locator(".home-adventure-stop")).toHaveCount(3);
-  await expect(page.getByText("Găsește perechea", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Găsește perechea", exact: true })).toBeVisible();
   await expect(page.getByText("Coșurile de culori", { exact: true })).toBeVisible();
   await expect(page.getByText("Pune forma la loc", { exact: true })).toBeVisible();
   await expect(
