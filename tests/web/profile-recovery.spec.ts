@@ -41,7 +41,7 @@ test("partially corrupt local data is repaired without a full reset", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
 
   await page.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -109,7 +109,7 @@ test("partially corrupt local data is repaired without a full reset", async ({
   });
 
   await page.reload();
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
 
   await expect
     .poll(async () => await readProfile(page), { timeout: 8_000 })
@@ -158,7 +158,7 @@ test("an emergency snapshot is confirmed into IndexedDB on the next boot", async
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
 
   await page.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -186,7 +186,7 @@ test("an emergency snapshot is confirmed into IndexedDB on the next boot", async
   });
 
   await page.reload();
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
 
   await expect
     .poll(async () => await readProfile(page), { timeout: 8_000 })

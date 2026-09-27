@@ -25,7 +25,7 @@ async function readStoredProfile(
 
 async function enterHome(page: Page, path = "/"): Promise<void> {
   await page.goto(path);
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
     .click();
@@ -398,7 +398,7 @@ test("Romanian voice is bundled and cached for offline use", async ({
   context,
 }, testInfo) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await page.locator("body").click({ position: { x: 20, y: 20 } });
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;

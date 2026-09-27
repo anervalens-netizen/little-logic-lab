@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function enterHome(page: Page): Promise<void> {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
     .click();
@@ -80,7 +80,7 @@ test("a missing required clip blocks Child Mode and can be repaired locally", as
   expect(removed).toBe(true);
 
   await page.reload();
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
     .click();

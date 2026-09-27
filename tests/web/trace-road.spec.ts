@@ -13,7 +13,7 @@ const BEFORE_TRACE = [
 
 async function seedTraceAccess(page: Page): Promise<void> {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await page.evaluate(async (gameIds) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open("minte-in-joaca");

@@ -85,7 +85,7 @@ test("current release is cached and speech gates child input", async ({
   );
 
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
     .click();
@@ -141,7 +141,7 @@ test("child home exposes one journey action and three visual stops", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
     .click();
@@ -167,7 +167,7 @@ test("the session starts with the journey stop promised by Home", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await seedJourneyProgress(page, ["same-picture"]);
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
@@ -194,7 +194,7 @@ test("supported success across two journey games unlocks the next catalog game",
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await seedJourneyProgress(page, ["same-picture", "sort-by-color"]);
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })

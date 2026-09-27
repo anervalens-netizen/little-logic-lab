@@ -89,7 +89,7 @@ test("legacy localStorage v1 migrates without losing settings", async ({ page })
   });
 
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await expect.poll(() => readProfile(page)).toMatchObject({
     schemaVersion: 4,
     ageMonths: 31,
@@ -110,14 +110,14 @@ test("IndexedDB v2 migrates to the current accessibility schema", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await writePreviousProfileVersion(page, {
     schemaVersion: 2,
     ageMonths: 47,
   });
 
   await page.reload();
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await expect.poll(() => readProfile(page)).toMatchObject({
     schemaVersion: 4,
     ageMonths: 47,
@@ -134,14 +134,14 @@ test("IndexedDB v3 preserves the session lock during migration", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await writePreviousProfileVersion(page, {
     schemaVersion: 3,
     sessionLocked: true,
   });
 
   await page.reload();
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await expect.poll(() => readProfile(page)).toMatchObject({
     schemaVersion: 4,
     sessionLocked: true,

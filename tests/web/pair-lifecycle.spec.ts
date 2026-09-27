@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function openSamePictureTest(page: Page): Promise<void> {
   await page.goto("/");
-  await expect(page.getByText("Minte în joacă", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Logic Lab", exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Atinge și joacă-te!" })
     .click();
