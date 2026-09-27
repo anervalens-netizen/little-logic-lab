@@ -63,7 +63,7 @@ function SplashScreen() {
     const greeting = speakCueAndWait("hello-lumi", GREETING);
 
     // Service workers sunt obligatorii pentru Child Mode. În producție, un URL
-    // HTTP de forma http://IP:port nu este un secure context pe telefon și nu
+    // HTTP pe o adresă IP și port nu este un secure context pe telefon și nu
     // poate satisface contractul offline. Nu mascăm problema ca „pachet lipsă”.
     const unsupportedTransport =
       import.meta.env.PROD &&
