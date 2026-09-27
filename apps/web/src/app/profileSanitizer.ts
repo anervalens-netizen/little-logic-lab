@@ -203,6 +203,10 @@ export function sanitizeProfile(value: unknown): ProfileRepairResult {
         : fallback.settings.coPlayPrompts,
   };
 
+  if (Object.entries(settings).some(([key, value]) => settingsSource[key] !== value)) {
+    repairs.push("settings: repaired invalid fields");
+  }
+
   const masterySource =
     typeof source.masteryBySkill === "object" && source.masteryBySkill !== null
       ? (source.masteryBySkill as Record<string, unknown>)

@@ -309,7 +309,7 @@ function clearMigratedLocalStorage(): void {
   localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
-export async function loadProfile(): Promise<StoredProfile> {
+export async function loadProfile(): Promise<unknown> {
   try {
     const db = await database();
     const stored = await db.get(PROFILE_STORE, CURRENT_PROFILE_KEY);
@@ -328,6 +328,12 @@ export async function loadProfile(): Promise<StoredProfile> {
     }
     if (stored !== undefined) {
       await db.put(PROFILE_STORE, stored, RECOVERY_PROFILE_KEY);
+      // A damaged v4 section must reach the field-level sanitizer. Rejecting
+      // the entire profile here would discard healthy history and settings.
+      if (
+        typeof stored === "object" && stored !== null &&
+        (stored as { schemaVersion?: unknown }).schemaVersion === 4
+      ) return stored;
     }
 
     const migrated = readLocalMigrationCandidate();

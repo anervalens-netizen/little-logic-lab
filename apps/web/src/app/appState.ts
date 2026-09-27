@@ -36,7 +36,7 @@ export type StoredAttemptWithEvidence = StoredAttempt & {
 let profile: StoredProfile = defaultProfile();
 let profileRepairs: readonly string[] = [];
 
-async function loadProfileWithTimeout(): Promise<StoredProfile> {
+async function loadProfileWithTimeout(): Promise<unknown> {
   let timeout = 0;
   try {
     return await Promise.race([
