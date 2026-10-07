@@ -64,7 +64,9 @@ const allowedLocalFetches = new Map([
       "new URL(pathname, window.location.origin)",
       'credentials: "same-origin"',
       "__logic_lab_repair",
-      "REPAIR_CACHE_NAME",
+      "repairCacheName",
+      "htmlReleaseIdentity",
+      "serverMatchesRelease",
     ],
   ],
 ]);

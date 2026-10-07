@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { AUDIO_PACK_VERSION } from "../../apps/web/src/audio/audioPacks";
 
 async function enterHome(page: Page): Promise<void> {
   await page.goto("/");
@@ -59,13 +60,10 @@ test("a missing required clip blocks Child Mode and can be repaired locally", as
     testInfo.project.name !== "chromium-touch",
     "Cache mutation is verified on the repeatable Chromium service-worker target.",
   );
-  test.skip(
-    true,
-    "FIXME (validare 2026-08-06): testul sterge un clip din cache si asteapta ca Child Mode sa se blocheze. Timeout 30s sub chromium 1234 - probabil repararea sau blocarea nu reuseste in timp util.",
-  );
 
   await enterHome(page);
-  const removed = await page.evaluate(async () => {
+  const removed = await page.evaluate(async (packVersion) => {
+    let removed = false;
     for (const cacheName of await caches.keys()) {
       const cache = await caches.open(cacheName);
       const request = (await cache.keys()).find(
@@ -73,10 +71,19 @@ test("a missing required clip blocks Child Mode and can be repaired locally", as
           new URL(candidate.url).pathname ===
           "/audio/ro-RO-v1/hello-lumi.mp3",
       );
-      if (request) return await cache.delete(request);
+      if (request) {
+        const response = await cache.match(request);
+        if (response) {
+          // An earlier release used the same pack version. Its repair must not
+          // satisfy current-release readiness after the real asset is removed.
+          const stale = await caches.open(`logic-lab-audio-repair-${packVersion}`);
+          await stale.put("/audio/ro-RO-v1/hello-lumi.mp3", response);
+        }
+        removed = (await cache.delete(request)) || removed;
+      }
     }
-    return false;
-  });
+    return removed;
+  }, AUDIO_PACK_VERSION);
   expect(removed).toBe(true);
 
   await page.reload();

@@ -54,6 +54,7 @@ export interface StoredSession {
 
 export interface StoredProfile {
   readonly schemaVersion: 4;
+  readonly goldenJourneyCompleted?: boolean;
   readonly createdAtLocal: string;
   readonly ageMonths: number;
   readonly sessionLocked: boolean;

@@ -155,7 +155,8 @@ requireText(session, "persistProgress: options.previewMode !== true", "preview e
 forbidText(session, "speakAndWait(game.instruction", "duplicate session narration");
 forbidText(session, "speakCueAndWait(game.instruction", "duplicate session cue narration");
 requireText(unlocks, "GOLDEN_JOURNEY_IDS", "golden journey unlocks");
-requireText(unlocks, "profile.attempts.filter", "stable unlock history");
+requireText(unlocks, "profile.goldenJourneyCompleted === true", "permanent golden completion");
+requireText(unlocks, "hasCompletedGoldenJourney(profile.attempts)", "legacy golden history compatibility");
 requireText(unlocks, "isGoldenJourneyReady", "supportive unlock policy");
 requireText(durableProfile, "flushProfileWrites", "durable local persistence");
 requireText(durableProfile, "writeEmergencyProfileSnapshot", "emergency write");

@@ -2,6 +2,7 @@
 
 import type { StoredProfile, StoredAttempt } from "./storage";
 import { loadProfile, defaultProfile, wipeProfile } from "./storage";
+import { hasCompletedGoldenJourney } from "./goldenJourney";
 import { sanitizeProfile } from "./profileSanitizer";
 import {
   clearEmergencyProfileSnapshot,
@@ -199,6 +200,7 @@ export function recordAttempt(
         timesPlayed: (existing?.timesPlayed ?? 0) + 1,
       },
     },
+    goldenJourneyCompleted: profile.goldenJourneyCompleted === true || hasCompletedGoldenJourney([...profile.attempts, attempt]),
     attempts: [...profile.attempts, attempt].slice(-500),
   };
   persist();

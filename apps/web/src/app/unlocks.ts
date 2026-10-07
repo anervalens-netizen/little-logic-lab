@@ -2,11 +2,8 @@ import type { StoredAttempt, StoredProfile } from "./storage";
 import { isGameAgeEligible } from "./content";
 import { GAME_IDS } from "../generated/game-registry";
 
-export const GOLDEN_JOURNEY_IDS = [
-  "same-picture",
-  "sort-by-color",
-  "inset-puzzle",
-] as const;
+import { GOLDEN_JOURNEY_IDS, hasCompletedGoldenJourney } from "./goldenJourney";
+export { GOLDEN_JOURNEY_IDS } from "./goldenJourney";
 
 const GOLDEN_SET = new Set<string>(GOLDEN_JOURNEY_IDS);
 
@@ -46,13 +43,7 @@ export function unlockedGameIds(
 
 /** Golden slice-ul nu se relochează după ce a fost parcurs cu succes. */
 export function isGoldenJourneyReady(profile: StoredProfile): boolean {
-  const successful = profile.attempts.filter(
-    (attempt) =>
-      GOLDEN_SET.has(attempt.gameId) && isSuccessfulAttempt(attempt),
-  );
-  const practicedGames = new Set(successful.map((attempt) => attempt.gameId));
-
-  return successful.length >= 4 && practicedGames.size >= 2;
+  return profile.goldenJourneyCompleted === true || hasCompletedGoldenJourney(profile.attempts);
 }
 
 export function isReadyForNextGame(

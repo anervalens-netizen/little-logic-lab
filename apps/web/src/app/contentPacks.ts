@@ -39,12 +39,15 @@ interface CacheInspection {
 const MAX_CACHE_INSPECTION_CONCURRENCY = 4;
 const MAX_CACHE_REPAIR_CONCURRENCY = 3;
 const REPAIR_CACHE_PREFIX = "logic-lab-audio-repair-";
-const REPAIR_CACHE_NAME = `${REPAIR_CACHE_PREFIX}${AUDIO_PACK_VERSION}`;
+function repairCacheName(): string | undefined {
+  const release = htmlReleaseIdentity();
+  return release ? `${REPAIR_CACHE_PREFIX}${AUDIO_PACK_VERSION}-${release}` : undefined;
+}
 
 function isObsoleteRepairCache(cacheName: string): boolean {
   return (
     cacheName.startsWith(REPAIR_CACHE_PREFIX) &&
-    cacheName !== REPAIR_CACHE_NAME
+    cacheName !== repairCacheName()
   );
 }
 
@@ -79,7 +82,9 @@ async function buildRawCacheIndex(): Promise<CacheIndex> {
 async function currentReleaseCacheNames(
   index: CacheIndex,
 ): Promise<ReadonlySet<string>> {
-  const allowed = new Set<string>([REPAIR_CACHE_NAME]);
+  const allowed = new Set<string>();
+  const repairName = repairCacheName();
+  if (repairName) allowed.add(repairName);
   const expectedCommit = htmlReleaseIdentity();
   if (!expectedCommit) return allowed;
 
@@ -295,8 +300,23 @@ export async function repairRequiredStartupAudio(): Promise<boolean> {
   );
   if (missing.length === 0) return true;
 
+  const expectedRelease = htmlReleaseIdentity();
+  const serverMatchesRelease = async () => {
+    try {
+      const url = new URL("/release.json", window.location.origin);
+      url.searchParams.set("__logic_lab_repair", expectedRelease ?? "");
+      const response = await fetch(url, {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      return response.ok && (await response.json() as { commit?: string }).commit === expectedRelease;
+    } catch { return false; }
+  };
+  if (!expectedRelease || !(await serverMatchesRelease())) return false;
   await removeObsoleteRepairCaches();
-  const repairCache = await caches.open(REPAIR_CACHE_NAME);
+  const repairName = repairCacheName();
+  if (!repairName) return false;
+  const repairCache = await caches.open(repairName);
   let nextIndex = 0;
   let failed = false;
   const workerCount = Math.min(MAX_CACHE_REPAIR_CONCURRENCY, missing.length);
@@ -332,6 +352,10 @@ export async function repairRequiredStartupAudio(): Promise<boolean> {
     }),
   );
 
+  if (!(await serverMatchesRelease())) {
+    await caches.delete(repairName);
+    return false;
+  }
   if (failed && !(await requiredStartupAudioReady())) return false;
   return await requiredStartupAudioReady();
 }

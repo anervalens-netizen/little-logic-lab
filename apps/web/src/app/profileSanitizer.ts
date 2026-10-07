@@ -4,6 +4,7 @@ import type {
   StoredProfile,
   StoredSession,
 } from "./storage";
+import { hasCompletedGoldenJourney } from "./goldenJourney";
 import { defaultProfile } from "./storage";
 
 export interface ProfileRepairResult {
@@ -247,12 +248,12 @@ export function sanitizeProfile(value: unknown): ProfileRepairResult {
     }),
   );
 
-  const attempts = (Array.isArray(source.attempts) ? source.attempts : [])
+  const allAttempts = (Array.isArray(source.attempts) ? source.attempts : [])
     .map((attempt, index) =>
       sanitizeAttempt(attempt, repairs, `attempts[${index}]`),
     )
-    .filter((attempt): attempt is StoredAttempt => attempt !== null)
-    .slice(-500);
+    .filter((attempt): attempt is StoredAttempt => attempt !== null);
+  const attempts = allAttempts.slice(-500);
   const sessions = (Array.isArray(source.sessions) ? source.sessions : [])
     .map((session, index) => sanitizeSession(session, repairs, index))
     .filter((session): session is StoredSession => session !== null)
@@ -275,6 +276,7 @@ export function sanitizeProfile(value: unknown): ProfileRepairResult {
       settings,
       masteryBySkill,
       progressByGame,
+      goldenJourneyCompleted: source.goldenJourneyCompleted === true || hasCompletedGoldenJourney(allAttempts),
       attempts,
       sessions,
     },

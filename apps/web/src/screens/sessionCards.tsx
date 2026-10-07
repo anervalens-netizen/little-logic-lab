@@ -43,11 +43,14 @@ function mountReactScreen(
 }
 
 export async function showCoPlayCard(prompt: string): Promise<void> {
+  let narrationComplete = false;
+  let completionButton: HTMLButtonElement | null = null;
   let resolveDone: () => void = () => undefined;
   const done = new Promise<void>((resolve) => {
     resolveDone = resolve;
   });
   const finish = () => {
+    if (!narrationComplete) return;
     stopSpeaking();
     resolveDone();
   };
@@ -77,6 +80,7 @@ export async function showCoPlayCard(prompt: string): Promise<void> {
             <button
               type="button"
               className="btn-big green session-card-button"
+              ref={(button) => { completionButton = button; if (button) button.disabled = !narrationComplete; }}
               onClick={finish}
             >
               Am făcut-o!
@@ -86,7 +90,9 @@ export async function showCoPlayCard(prompt: string): Promise<void> {
       </>,
     ),
   );
-  void speakAndWait(prompt);
+  await speakAndWait(prompt);
+  narrationComplete = true;
+  if (completionButton) (completionButton as HTMLButtonElement).disabled = false;
   await done;
 }
 

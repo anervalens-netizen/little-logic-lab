@@ -205,3 +205,29 @@ test("an emergency snapshot is confirmed into IndexedDB on the next boot", async
     )
     .toBeNull();
 });
+
+test('permanent golden completion survives a reload without the old attempt log', async ({ page }) => {
+  await page.goto('/');
+  await expect.poll(async () => (await readProfile(page))?.schemaVersion).toBe(4);
+  await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('minte-in-joaca');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = db.transaction('profiles', 'readwrite');
+    const store = transaction.objectStore('profiles');
+    const request = store.get('current');
+    request.onsuccess = () => store.put({ ...request.result, ageMonths: 60, goldenJourneyCompleted: true, attempts: [] }, 'current');
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  });
+  await page.reload();
+  await expect.poll(async () => (await readProfile(page))?.goldenJourneyCompleted).toBe(true);
+  await page.getByRole('button', { name: 'Atinge și joacă-te!' }).click();
+  await expect(page.locator('[data-screen="home"][data-screen-ready="true"]')).toBeVisible();
+  await expect.poll(async () => Number(await page.locator('[data-unlocked-count]').getAttribute('data-unlocked-count'))).toBeGreaterThan(3);
+});
