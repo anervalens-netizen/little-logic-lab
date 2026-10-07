@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { AUDIO_PACK_VERSION } from "../../apps/web/src/audio/audioPacks";
+import { readFileSync } from "node:fs";
+const AUDIO_PACK_VERSION = (JSON.parse(readFileSync(new URL("../../content/audio-packs.json", import.meta.url), "utf8")) as { version: string }).version;
 
 async function enterHome(page: Page): Promise<void> {
   await page.goto("/");
